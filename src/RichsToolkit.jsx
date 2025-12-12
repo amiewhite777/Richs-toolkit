@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Calculator, ChevronRight, ChevronLeft, Home, Camera, ClipboardList, PaintBucket, Ruler, Grid3X3, Package, Layers, Plus, Building2, Sun, Landmark, Image, FileText, X, Clock, MapPin, Calendar, Phone, Square, AlertTriangle, CheckCircle, Check, Flag, Send, ArrowLeftRight, Receipt, Car, Trash2, Star, MessageSquare, Copy, PhoneCall, Search, Users, Cloud, CloudRain, CloudSnow, CloudDrizzle, CloudLightning, Wind, Droplets, Thermometer, Umbrella, AlertCircle, CloudSun, Moon, Sunrise, Sunset, Eye, Loader2, DollarSign, TrendingUp, PiggyBank, CreditCard, Download, Settings, Move } from 'lucide-react';
+import { Calculator, ChevronRight, ChevronLeft, Home, Camera, ClipboardList, PaintBucket, Ruler, Grid3X3, Package, Layers, Plus, Building2, Sun, Landmark, Image, FileText, X, Clock, MapPin, Calendar, Phone, Square, AlertTriangle, CheckCircle, Check, Flag, Send, ArrowLeftRight, Receipt, Car, Trash2, Star, MessageSquare, Copy, PhoneCall, Search, Users, Cloud, CloudRain, CloudSnow, CloudDrizzle, CloudLightning, Wind, Droplets, Thermometer, Umbrella, AlertCircle, CloudSun, Moon, Sunrise, Sunset, Eye, Loader2, DollarSign, TrendingUp, PiggyBank, CreditCard, Download, Settings } from 'lucide-react';
 import { useWeather } from './useWeather';
 import { useLocalStorage } from './useLocalStorage';
 
@@ -111,45 +111,50 @@ export default function RichsToolkit() {
     }
   }, []);
 
-  // Level tool state
-  const [levelOrientation, setLevelOrientation] = useState({ beta: 0, gamma: 0 });
-  const [levelMode, setLevelMode] = useState('horizontal'); // 'horizontal' or 'vertical'
-  const [levelPermission, setLevelPermission] = useState('pending');
+  // Greeting popup state
+  const [showGreeting, setShowGreeting] = useState(false);
+  const [greetingMessage, setGreetingMessage] = useState('');
 
-  // Request device orientation permission (required for iOS 13+)
-  const requestOrientationPermission = async () => {
-    if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
-      try {
-        const permission = await DeviceOrientationEvent.requestPermission();
-        setLevelPermission(permission);
-        if (permission === 'granted') {
-          window.addEventListener('deviceorientation', handleOrientation);
-        }
-      } catch (error) {
-        console.error('Error requesting orientation permission:', error);
-        setLevelPermission('denied');
-      }
-    } else {
-      // For non-iOS devices, permission is granted by default
-      setLevelPermission('granted');
-      window.addEventListener('deviceorientation', handleOrientation);
-    }
-  };
-
-  // Handle device orientation
-  const handleOrientation = (event) => {
-    setLevelOrientation({
-      beta: event.beta || 0,  // Front-to-back tilt (-180 to 180)
-      gamma: event.gamma || 0  // Left-to-right tilt (-90 to 90)
-    });
-  };
-
-  // Cleanup orientation listener
+  // Check for time-based greeting (morning 7-9am, night 9-11:30pm)
   useEffect(() => {
-    return () => {
-      window.removeEventListener('deviceorientation', handleOrientation);
-    };
-  }, []);
+    const hour = currentTime.getHours();
+    const minute = currentTime.getMinutes();
+    const today = currentTime.toDateString();
+
+    // Check if we've already shown a greeting today
+    const lastGreeting = localStorage.getItem('richs-toolkit-last-greeting');
+
+    if (lastGreeting !== today) {
+      // Morning greeting: 7:00am - 8:59am
+      if (hour >= 7 && hour < 9) {
+        setGreetingMessage('morning :) x');
+        setShowGreeting(true);
+        localStorage.setItem('richs-toolkit-last-greeting', today);
+
+        // Hide after 5 seconds
+        setTimeout(() => {
+          setShowGreeting(false);
+        }, 5000);
+      }
+      // Night greeting: 9:00pm - 11:30pm
+      else if (hour === 21 || hour === 22 || (hour === 23 && minute < 30)) {
+        setGreetingMessage('night x');
+        setShowGreeting(true);
+        localStorage.setItem('richs-toolkit-last-greeting', today);
+
+        // Hide after 5 seconds
+        setTimeout(() => {
+          setShowGreeting(false);
+        }, 5000);
+      }
+    }
+  }, [currentTime]);
+
+  // Gallery state
+  const [photos, setPhotos] = useLocalStorage('richs-toolkit-gallery', []);
+  const [showCamera, setShowCamera] = useState(false);
+  const [capturedPhoto, setCapturedPhoto] = useState(null);
+  const [showAnnotation, setShowAnnotation] = useState(false);
 
   // Work condition assessments
   const getWorkConditions = (temp, rain, wind, condition) => {
@@ -935,21 +940,9 @@ export default function RichsToolkit() {
     );
   };
 
-  // Level Tool Screen
-  const renderLevel = () => {
+  // Gallery Screen
+  const renderGallery = () => {
     const theme = getTheme();
-
-    // Calculate if device is level (tolerance of 2 degrees)
-    const tolerance = 2;
-    const isLevelHorizontal = Math.abs(levelOrientation.beta) < tolerance && Math.abs(levelOrientation.gamma) < tolerance;
-    const isLevelVertical = Math.abs(Math.abs(levelOrientation.beta) - 90) < tolerance && Math.abs(levelOrientation.gamma) < tolerance;
-
-    // Calculate bubble position for horizontal level
-    // Gamma controls left-right tilt (-90 to 90)
-    const bubblePositionX = Math.max(-40, Math.min(40, levelOrientation.gamma * 2));
-
-    // Beta controls front-back tilt for vertical mode
-    const bubblePositionY = Math.max(-40, Math.min(40, (levelOrientation.beta - 90) * 2));
 
     return (
       <div className={`min-h-screen ${theme.bg} p-4 pb-24`}>
@@ -958,163 +951,139 @@ export default function RichsToolkit() {
         </button>
 
         <div className="mb-6">
-          <h2 className={`text-2xl font-bold ${theme.text} mb-2`}>Digital Level</h2>
-          <p className={`${theme.textSecondary}`}>Use your phone as a spirit level</p>
+          <h2 className={`text-2xl font-bold ${theme.text} mb-2`}>Photo Gallery</h2>
+          <p className={`${theme.textSecondary}`}>Capture and annotate site photos</p>
         </div>
 
-        {/* Permission request */}
-        {levelPermission === 'pending' && (
-          <div className="bg-white rounded-xl p-6 shadow-lg text-center mb-6">
-            <Move size={48} className="text-blue-500 mx-auto mb-4" />
-            <h3 className="font-bold text-gray-900 mb-2">Enable Motion Sensors</h3>
-            <p className="text-gray-600 text-sm mb-4">
-              This tool needs access to your device's motion sensors to work as a level.
-            </p>
-            <button
-              onClick={requestOrientationPermission}
-              className="w-full bg-blue-500 text-white py-3 px-6 rounded-lg font-semibold hover:bg-blue-600 transition"
-            >
-              Enable Level
-            </button>
+        {/* Camera button */}
+        <button
+          onClick={() => setShowCamera(true)}
+          className="w-full bg-blue-500 text-white py-4 px-6 rounded-xl font-semibold mb-6 flex items-center justify-center gap-2 active:scale-95 transition"
+        >
+          <Camera size={24} />
+          Take Photo
+        </button>
+
+        {/* Photos grid */}
+        {photos.length === 0 ? (
+          <div className="text-center py-20">
+            <Camera size={64} className="mx-auto text-gray-300 mb-4" />
+            <p className="text-gray-500">No photos yet</p>
+            <p className="text-sm text-gray-400 mt-1">Tap "Take Photo" to get started</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 gap-3">
+            {photos.map((photo) => (
+              <div key={photo.id} className={`${theme.cardBg} rounded-xl overflow-hidden shadow-sm border ${theme.border}`}>
+                <div className="relative aspect-square">
+                  <img
+                    src={photo.dataUrl}
+                    alt={photo.note || 'Site photo'}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+                {photo.note && (
+                  <div className="p-2">
+                    <p className={`text-xs ${theme.textSecondary}`}>{photo.note}</p>
+                  </div>
+                )}
+                <div className="p-2 flex gap-2">
+                  <button
+                    onClick={() => {
+                      setCapturedPhoto(photo.dataUrl);
+                      setShowAnnotation(true);
+                    }}
+                    className="flex-1 text-xs py-2 bg-blue-500 text-white rounded-lg"
+                  >
+                    Annotate
+                  </button>
+                  <button
+                    onClick={() => {
+                      if (confirm('Delete this photo?')) {
+                        setPhotos(photos.filter(p => p.id !== photo.id));
+                      }
+                    }}
+                    className="flex-1 text-xs py-2 bg-red-500 text-white rounded-lg"
+                  >
+                    Delete
+                  </button>
+                </div>
+              </div>
+            ))}
           </div>
         )}
 
-        {levelPermission === 'denied' && (
-          <div className="bg-red-50 border border-red-200 rounded-xl p-6 text-center">
-            <AlertCircle size={48} className="text-red-500 mx-auto mb-4" />
-            <h3 className="font-bold text-red-800 mb-2">Permission Denied</h3>
-            <p className="text-red-600 text-sm">
-              Please enable motion sensors in your browser settings to use the level tool.
-            </p>
+        {/* Camera Modal */}
+        {showCamera && (
+          <div className="fixed inset-0 bg-black z-50 flex flex-col">
+            <div className="p-4 flex items-center justify-between text-white">
+              <button onClick={() => setShowCamera(false)} className="p-2">
+                <X size={24} />
+              </button>
+              <h3 className="font-semibold">Take Photo</h3>
+              <div className="w-10" />
+            </div>
+
+            <div className="flex-1 flex items-center justify-center p-4">
+              <input
+                type="file"
+                accept="image/*"
+                capture="environment"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) {
+                    const reader = new FileReader();
+                    reader.onload = (event) => {
+                      setCapturedPhoto(event.target?.result);
+                      setShowCamera(false);
+                      setShowAnnotation(true);
+                    };
+                    reader.readAsDataURL(file);
+                  }
+                }}
+                className="w-full bg-white text-gray-900 py-4 px-6 rounded-xl font-semibold"
+              />
+            </div>
           </div>
         )}
 
-        {levelPermission === 'granted' && (
-          <>
-            {/* Mode toggle */}
-            <div className="flex gap-2 mb-6">
+        {/* Annotation Modal */}
+        {showAnnotation && capturedPhoto && (
+          <div className="fixed inset-0 bg-white z-50 flex flex-col">
+            <div className="p-4 flex items-center justify-between border-b">
               <button
-                onClick={() => setLevelMode('horizontal')}
-                className={`flex-1 py-3 px-4 rounded-lg font-semibold transition ${
-                  levelMode === 'horizontal'
-                    ? 'bg-blue-500 text-white'
-                    : 'bg-gray-100 text-gray-600'
-                }`}
+                onClick={() => {
+                  setShowAnnotation(false);
+                  setCapturedPhoto(null);
+                }}
+                className="text-gray-600"
               >
-                Horizontal
+                <X size={24} />
               </button>
+              <h3 className="font-semibold">Add Note & Save</h3>
               <button
-                onClick={() => setLevelMode('vertical')}
-                className={`flex-1 py-3 px-4 rounded-lg font-semibold transition ${
-                  levelMode === 'vertical'
-                    ? 'bg-blue-500 text-white'
-                    : 'bg-gray-100 text-gray-600'
-                }`}
+                onClick={() => {
+                  const note = prompt('Add a note for this photo (optional):');
+                  const newPhoto = {
+                    id: Date.now().toString(),
+                    dataUrl: capturedPhoto,
+                    note: note || '',
+                    timestamp: new Date().toISOString(),
+                  };
+                  setPhotos([newPhoto, ...photos]);
+                  setShowAnnotation(false);
+                  setCapturedPhoto(null);
+                }}
+                className="text-blue-500 font-semibold"
               >
-                Vertical
+                Save
               </button>
             </div>
 
-            {/* Status indicator */}
-            <div className={`text-center mb-6 py-4 rounded-xl ${
-              (levelMode === 'horizontal' && isLevelHorizontal) || (levelMode === 'vertical' && isLevelVertical)
-                ? 'bg-green-50 border-2 border-green-500'
-                : 'bg-gray-50 border-2 border-gray-300'
-            }`}>
-              <p className={`text-3xl font-bold ${
-                (levelMode === 'horizontal' && isLevelHorizontal) || (levelMode === 'vertical' && isLevelVertical)
-                  ? 'text-green-600'
-                  : 'text-gray-600'
-              }`}>
-                {(levelMode === 'horizontal' && isLevelHorizontal) || (levelMode === 'vertical' && isLevelVertical)
-                  ? '✓ LEVEL'
-                  : 'NOT LEVEL'
-                }
-              </p>
+            <div className="flex-1 overflow-auto p-4">
+              <img src={capturedPhoto} alt="Preview" className="w-full rounded-xl" />
             </div>
-
-            {/* Bubble level display */}
-            {levelMode === 'horizontal' && (
-              <div className="relative">
-                {/* Level housing */}
-                <div className="bg-gradient-to-b from-amber-500 to-amber-600 rounded-3xl p-6 shadow-2xl">
-                  {/* Bubble vial */}
-                  <div className="relative bg-gradient-to-b from-green-200 to-green-300 rounded-full h-24 overflow-hidden shadow-inner">
-                    {/* Level marks */}
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <div className="absolute h-full w-1 bg-black/20 left-1/2 -translate-x-1/2" />
-                      <div className="absolute h-full w-1 bg-black/10 left-1/3 -translate-x-1/2" />
-                      <div className="absolute h-full w-1 bg-black/10 right-1/3 translate-x-1/2" />
-                    </div>
-                    {/* Center zone */}
-                    <div className="absolute top-0 bottom-0 left-1/2 -translate-x-1/2 w-12 bg-green-400/30" />
-                    {/* Bubble */}
-                    <div
-                      className="absolute top-1/2 left-1/2 -translate-y-1/2 w-16 h-16 rounded-full bg-gradient-to-br from-yellow-200 to-yellow-400 shadow-lg transition-transform duration-100"
-                      style={{
-                        transform: `translate(-50%, -50%) translateX(${bubblePositionX}px)`,
-                        boxShadow: '0 4px 6px rgba(0,0,0,0.3), inset 0 2px 4px rgba(255,255,255,0.5)'
-                      }}
-                    >
-                      <div className="absolute inset-2 rounded-full bg-gradient-to-br from-yellow-100 to-yellow-300 opacity-60" />
-                    </div>
-                  </div>
-                  {/* Measurements */}
-                  <div className="mt-4 text-center">
-                    <p className="text-amber-900 font-mono text-sm">
-                      Tilt: {Math.abs(levelOrientation.gamma).toFixed(1)}°
-                    </p>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {levelMode === 'vertical' && (
-              <div className="relative flex justify-center">
-                {/* Vertical level housing */}
-                <div className="bg-gradient-to-r from-amber-500 to-amber-600 rounded-3xl p-6 shadow-2xl inline-block">
-                  {/* Bubble vial */}
-                  <div className="relative bg-gradient-to-r from-green-200 to-green-300 rounded-full w-24 h-64 overflow-hidden shadow-inner">
-                    {/* Level marks */}
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <div className="absolute w-full h-1 bg-black/20 top-1/2 -translate-y-1/2" />
-                      <div className="absolute w-full h-1 bg-black/10 top-1/3 -translate-y-1/2" />
-                      <div className="absolute w-full h-1 bg-black/10 bottom-1/3 translate-y-1/2" />
-                    </div>
-                    {/* Center zone */}
-                    <div className="absolute left-0 right-0 top-1/2 -translate-y-1/2 h-12 bg-green-400/30" />
-                    {/* Bubble */}
-                    <div
-                      className="absolute left-1/2 top-1/2 -translate-x-1/2 w-16 h-16 rounded-full bg-gradient-to-br from-yellow-200 to-yellow-400 shadow-lg transition-transform duration-100"
-                      style={{
-                        transform: `translate(-50%, -50%) translateY(${bubblePositionY}px)`,
-                        boxShadow: '0 4px 6px rgba(0,0,0,0.3), inset 0 2px 4px rgba(255,255,255,0.5)'
-                      }}
-                    >
-                      <div className="absolute inset-2 rounded-full bg-gradient-to-br from-yellow-100 to-yellow-300 opacity-60" />
-                    </div>
-                  </div>
-                  {/* Measurements */}
-                  <div className="mt-4 text-center">
-                    <p className="text-amber-900 font-mono text-sm">
-                      Tilt: {Math.abs(levelOrientation.beta - 90).toFixed(1)}°
-                    </p>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Instructions */}
-            <div className="mt-6 bg-blue-50 border border-blue-200 rounded-xl p-4">
-              <h4 className="font-semibold text-blue-900 mb-2">How to use:</h4>
-              <ul className="text-sm text-blue-800 space-y-1">
-                <li>• <strong>Horizontal:</strong> Place phone flat on surface</li>
-                <li>• <strong>Vertical:</strong> Hold phone against wall/surface</li>
-                <li>• Bubble should center when level (±{tolerance}°)</li>
-                <li>• Green "LEVEL" text confirms accurate leveling</li>
-              </ul>
-            </div>
-          </>
+          </div>
         )}
       </div>
     );
@@ -1810,12 +1779,12 @@ export default function RichsToolkit() {
           {[
             { id: 'calculators', title: 'Calculators', icon: Calculator, color: 'bg-green-500', desc: 'Materials & quantities' },
             { id: 'snagging', title: 'Snagging', icon: ClipboardList, color: 'bg-amber-500', desc: 'Snag lists' },
-            { id: 'level', title: 'Level', icon: Move, color: 'bg-amber-600', desc: 'Spirit level tool' },
             { id: 'time', title: 'Time & Expenses', icon: Clock, color: 'bg-rose-500', desc: 'Hours & receipts' },
             { id: 'invoices', title: 'Invoices', icon: FileText, color: 'bg-emerald-500', desc: 'Generate & track' },
             { id: 'budget', title: 'Budget', icon: PiggyBank, color: 'bg-pink-500', desc: 'Track spending' },
             { id: 'suppliers', title: 'Suppliers', icon: Phone, color: 'bg-teal-500', desc: 'Quick dial' },
             { id: 'weather', title: 'Weather', icon: Cloud, color: 'bg-sky-500', desc: '7-day forecast' },
+            { id: 'gallery', title: 'Gallery', icon: Camera, color: 'bg-purple-500', desc: 'Photos & notes' },
             { id: 'conversions', title: 'Conversions', icon: ArrowLeftRight, color: 'bg-indigo-500', desc: 'Imperial ↔ Metric' },
           ].map((feature) => {
             const IconComponent = feature.icon;
@@ -2038,7 +2007,7 @@ export default function RichsToolkit() {
     if (currentScreen === 'budget') return renderBudget();
     if (currentScreen === 'suppliers') return renderSuppliers();
     if (currentScreen === 'weather') return renderWeather();
-    if (currentScreen === 'level') return renderLevel();
+    if (currentScreen === 'gallery') return renderGallery();
     if (currentScreen === 'snagging') {
       if (selectedRoom) return renderRoomDetail();
       if (selectedSnaggingProject) return renderProjectSnagging();
@@ -2158,6 +2127,15 @@ export default function RichsToolkit() {
           <div className={`text-sm font-semibold ${theme.text} transition-colors duration-500`}>{formatCurrentTime()}</div>
           <div className={`text-xs ${theme.textSecondary} transition-colors duration-500`}>{formatCurrentDate()}</div>
         </div>
+
+        {/* Greeting popup */}
+        {showGreeting && (
+          <div className="fixed inset-0 flex items-center justify-center z-50 pointer-events-none">
+            <div className="bg-gradient-to-br from-blue-500 to-purple-600 text-white px-8 py-6 rounded-2xl shadow-2xl animate-bounce">
+              <p className="text-3xl font-bold">{greetingMessage}</p>
+            </div>
+          </div>
+        )}
 
         {/* Special event animations */}
         {specialEvent && (
