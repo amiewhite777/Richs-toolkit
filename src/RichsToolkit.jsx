@@ -1289,37 +1289,37 @@ export default function RichsToolkit() {
 
   const [suppliers, setSuppliers] = useLocalStorage('richs-toolkit-suppliers', [
     // Merchants - Builders Merchants
-    { id: 1, name: 'Travis Perkins Bath', category: 'merchants', phone: '01225 444555', email: 'bath@travisperkins.co.uk', address: 'Lower Bristol Road, Bath', website: 'travisperkins.co.uk', favorite: true, notes: 'Ask for trade discount - account #TP4421' },
-    { id: 2, name: 'Jewson Bath', category: 'merchants', phone: '01225 333666', email: 'bath@jewson.co.uk', address: 'Locksbrook Road, Bath', website: 'jewson.co.uk', favorite: true, notes: 'Good for timber, delivers before 7am' },
-    { id: 3, name: 'Selco Builders Warehouse', category: 'merchants', phone: '01225 789456', email: 'bath@selcobw.com', address: 'Brassmill Lane, Bath', website: 'selcobw.com', favorite: false, notes: 'Cash & carry, competitive prices' },
-    { id: 4, name: 'Buildbase Bath', category: 'merchants', phone: '01225 424242', email: 'bath@buildbase.co.uk', address: 'Midland Road, Bath', website: 'buildbase.co.uk', favorite: false, notes: 'Plumbing and heavy materials' },
+    { id: 1, name: 'Travis Perkins Bath', category: 'merchants', phone: '01225 446110', email: '', address: 'Sydenham Wharf, Lower Bristol Road, Bath', website: 'travisperkins.co.uk/contact', favorite: true, notes: 'Ask for trade discount - account #TP4421. Use website contact form' },
+    { id: 2, name: 'Jewson Bath', category: 'merchants', phone: '01225 338744', email: 'branch3629@jewson.co.uk', address: 'Station Road, Bath', website: 'jewson.co.uk', favorite: true, notes: 'Good for timber, delivers before 7am' },
+    { id: 3, name: 'Selco Builders Warehouse', category: 'merchants', phone: '01564 821000', email: 'customerservices@selcobw.com', address: 'Brassmill Lane, Bath', website: 'selcobw.com/contact-us', favorite: false, notes: 'Cash & carry, competitive prices' },
+    { id: 4, name: 'Buildbase Bath', category: 'merchants', phone: '01248 719208', email: 'online@huwsgray.co.uk', address: 'Midland Road, Bath', website: 'huwsgray.co.uk/contact', favorite: false, notes: 'Plumbing and heavy materials. Now part of Huws Gray' },
 
     // Bath Stone & Masonry
-    { id: 5, name: 'Hartham Park Quarry', category: 'stone', phone: '01225 811083', email: 'info@harthamparkquarry.co.uk', address: 'Corsham, Wiltshire', website: '', favorite: true, notes: 'Best for new Bath stone' },
-    { id: 6, name: 'Bath & Portland Stone', category: 'stone', phone: '01225 858555', email: 'sales@bathandportlandstone.co.uk', address: 'Corsham', website: 'bathandportlandstone.co.uk', favorite: true, notes: 'Ashlar, mouldings, restoration stone' },
-    { id: 7, name: 'Stoke Ground Stone', category: 'stone', phone: '01225 742488', email: 'info@stokegroundstone.co.uk', address: 'Box, Corsham', website: '', favorite: false, notes: 'Premium Bath stone, slow delivery' },
-    { id: 8, name: 'Stone Projects', category: 'stone', phone: '01225 315315', email: 'info@stoneprojects-bath.co.uk', address: 'Bath', website: '', favorite: false, notes: 'Stone cutting and bespoke work' },
+    { id: 5, name: 'Hartham Park Quarry', category: 'stone', phone: '01929 439255', email: 'j.hart@lovellstone.com', address: 'Park Lane, Corsham, Wiltshire', website: 'lovellstonegroup.com', favorite: true, notes: 'Best for new Bath stone. Contact James Hart' },
+    { id: 6, name: 'Bath & Portland Stone', category: 'stone', phone: '01225 811154', email: '', address: 'Corsham', website: 'heidelbergmaterials.co.uk', favorite: true, notes: 'Ashlar, mouldings, restoration stone. Part of Heidelberg Materials - call for orders' },
+    { id: 7, name: 'Stoke Ground Stone', category: 'stone', phone: '01225 742488', email: '', address: 'Box, Corsham', website: '', favorite: false, notes: 'Premium Bath stone, slow delivery. Phone orders only' },
+    { id: 8, name: 'Stone Projects', category: 'stone', phone: '01225 315315', email: '', address: 'Bath', website: '', favorite: false, notes: 'Stone cutting and bespoke work. Phone orders only' },
 
     // Heritage & Lime Specialists
     { id: 9, name: 'Mike Wye Associates', category: 'heritage', phone: '01409 281644', email: 'sales@mikewye.co.uk', address: 'Devon (delivers)', website: 'mikewye.co.uk', favorite: true, notes: 'Lime putty, NHL, traditional paints' },
-    { id: 10, name: 'Lime Technology', category: 'heritage', phone: '01952 728611', email: 'sales@limetechnology.co.uk', address: 'Shropshire (delivers)', website: 'limetechnology.co.uk', favorite: true, notes: 'Hemp lime, insulation, breathable systems' },
-    { id: 11, name: 'Ty-Mawr Lime', category: 'heritage', phone: '01874 658249', email: 'info@lime.org.uk', address: 'Wales (delivers)', website: 'lime.org.uk', favorite: false, notes: 'Natural hydraulic lime, plasters' },
-    { id: 12, name: 'The Bath Stone Company', category: 'heritage', phone: '01225 858444', email: 'info@bathstonecompany.co.uk', address: 'Corsham', website: '', favorite: false, notes: 'Conservation and restoration advice' },
+    { id: 10, name: 'Lime Green Products', category: 'heritage', phone: '01952 728611', email: 'enquire@lime-green.co.uk', address: 'Much Wenlock, Shropshire (delivers)', website: 'lime-green.co.uk', favorite: true, notes: 'Hemp lime, insulation, breathable systems' },
+    { id: 11, name: 'Ty-Mawr Lime', category: 'heritage', phone: '01874 611350', email: 'tymawr@lime.org.uk', address: 'Brecon, Wales (delivers)', website: 'lime.org.uk', favorite: false, notes: 'Natural hydraulic lime, plasters' },
+    { id: 12, name: 'The Bath Stone Company', category: 'heritage', phone: '01225 858444', email: '', address: 'Corsham', website: '', favorite: false, notes: 'Conservation and restoration advice. Phone for enquiries' },
 
     // Tool Hire & Plant
-    { id: 13, name: 'Speedy Hire Bath', category: 'hire', phone: '01225 555111', email: 'bath@speedyservices.com', address: 'Lower Bristol Road, Bath', website: 'speedyservices.com', favorite: true, notes: 'Scaffolding, heavy plant' },
-    { id: 14, name: 'HSS Hire Bath', category: 'hire', phone: '01225 463636', email: 'bath@hss.com', address: 'Lower Bristol Road, Bath', website: 'hss.com', favorite: false, notes: 'Tools, access equipment' },
-    { id: 15, name: 'Brandon Hire Station', category: 'hire', phone: '01225 789000', email: 'bath@brandon-hire.co.uk', address: 'Bath', website: 'brandon-hire.co.uk', favorite: false, notes: 'Specialist lifting and access' },
+    { id: 13, name: 'Speedy Hire Bath', category: 'hire', phone: '01225 442900', email: '', address: 'Locksbrook Road, Bath', website: 'speedyhire.com/contact-us', favorite: true, notes: 'Scaffolding, heavy plant. Use website contact form' },
+    { id: 14, name: 'HSS Hire Bath', category: 'hire', phone: '01225 421344', email: 'bath@thehireservicecompany.com', address: 'Lower Bristol Road, Bath', website: 'hss.com', favorite: false, notes: 'Tools, access equipment' },
+    { id: 15, name: 'Brandon Hire Station', category: 'hire', phone: '01225 445884', email: '', address: 'Westmoreland Station Road, Bath', website: 'brandonhirestation.com/contact-us', favorite: false, notes: 'Specialist lifting and access. Use website contact' },
 
     // Specialists
-    { id: 16, name: 'Bath Sash Windows', category: 'specialist', phone: '01225 789123', email: 'info@bathsashwindows.co.uk', address: 'Larkhall, Bath', website: '', favorite: true, notes: 'Sash window repairs and draught proofing' },
-    { id: 17, name: 'Georgian Joinery', category: 'specialist', phone: '01225 444789', email: 'info@georgianjoinery.co.uk', address: 'Bath', website: '', favorite: true, notes: 'Period doors, shutters, panelling' },
-    { id: 18, name: 'Bath Architectural Salvage', category: 'specialist', phone: '01225 311174', email: 'info@bathsalvage.com', address: 'Northgate Street, Bath', website: 'bathsalvage.com', favorite: false, notes: 'Period fixtures, fireplaces, doors' },
-    { id: 19, name: 'Traditional Ironmongery', category: 'specialist', phone: '01225 318181', email: 'info@traditionalironmongery.co.uk', address: 'Bath', website: '', favorite: false, notes: 'Georgian locks, handles, hinges' },
-    { id: 20, name: 'Heritage Decorative Finishes', category: 'specialist', phone: '01225 505050', email: 'info@heritagedecorativefinishes.co.uk', address: 'Bath', website: '', favorite: false, notes: 'Specialist plastering and decorative work' },
-    { id: 21, name: 'Bath Plastering', category: 'specialist', phone: '01225 767676', email: 'info@bathplastering.co.uk', address: 'Bath', website: '', favorite: false, notes: 'Lime plastering specialists' },
+    { id: 16, name: 'Bath Sash Windows', category: 'specialist', phone: '01225 789123', email: '', address: 'Larkhall, Bath', website: '', favorite: true, notes: 'Sash window repairs and draught proofing. Phone for quotes' },
+    { id: 17, name: 'Georgian Joinery', category: 'specialist', phone: '01225 444789', email: '', address: 'Bath', website: '', favorite: true, notes: 'Period doors, shutters, panelling. Phone for quotes' },
+    { id: 18, name: 'Bath Architectural Salvage', category: 'specialist', phone: '07983 556757', email: '', address: 'Newton St Loe, Bath', website: 'bathreclamation.co.uk/contact', favorite: false, notes: 'Period fixtures, fireplaces, doors. By appointment - use website contact' },
+    { id: 19, name: 'Traditional Ironmongery', category: 'specialist', phone: '01225 318181', email: '', address: 'Bath', website: '', favorite: false, notes: 'Georgian locks, handles, hinges. Phone for orders' },
+    { id: 20, name: 'Heritage Decorative Finishes', category: 'specialist', phone: '01225 505050', email: '', address: 'Bath', website: '', favorite: false, notes: 'Specialist plastering and decorative work. Phone for quotes' },
+    { id: 21, name: 'Bath Plastering', category: 'specialist', phone: '01225 767676', email: '', address: 'Bath', website: '', favorite: false, notes: 'Lime plastering specialists. Phone for quotes' },
     { id: 22, name: 'Farrow & Ball Bath', category: 'specialist', phone: '01225 469300', email: 'bath@farrow-ball.com', address: 'Walcot Street, Bath', website: 'farrow-ball.com', favorite: false, notes: 'Traditional paints and wallpapers' },
-    { id: 23, name: 'Bathroom City Bath', category: 'specialist', phone: '01225 421421', email: 'info@bathroomcitybath.co.uk', address: 'Lower Bristol Road, Bath', website: '', favorite: false, notes: 'Period-style bathrooms and fittings' },
+    { id: 23, name: 'Bathroom City Bath', category: 'specialist', phone: '01225 421421', email: '', address: 'Lower Bristol Road, Bath', website: '', favorite: false, notes: 'Period-style bathrooms and fittings. Phone for quotes' },
   ]);
 
   const [newSupplier, setNewSupplier] = useState({ name: '', category: 'merchants', phone: '', email: '', address: '', website: '', notes: '' });
@@ -2861,8 +2861,10 @@ export default function RichsToolkit() {
               )}
               {supplier.notes && <p className="text-xs text-teal-600 bg-teal-50 px-2 py-1 rounded-lg inline-block mb-2">{supplier.notes}</p>}
               <div className="flex gap-2">
-                <a href={`tel:${supplier.phone}`} className="flex-1 p-2 bg-teal-500 text-white rounded-lg font-medium flex items-center justify-center gap-2"><PhoneCall size={16} /> Call</a>
-                <a href={`mailto:${supplier.email}`} className="flex-1 p-2 bg-gray-100 text-gray-700 rounded-lg font-medium flex items-center justify-center gap-2"><Mail size={16} /> Email</a>
+                <a href={`tel:${supplier.phone}`} className={`p-2 bg-teal-500 text-white rounded-lg font-medium flex items-center justify-center gap-2 ${supplier.email ? 'flex-1' : 'flex-1'}`}><PhoneCall size={16} /> Call</a>
+                {supplier.email && (
+                  <a href={`mailto:${supplier.email}`} className="flex-1 p-2 bg-gray-100 text-gray-700 rounded-lg font-medium flex items-center justify-center gap-2"><Mail size={16} /> Email</a>
+                )}
               </div>
             </div>
           ))}
