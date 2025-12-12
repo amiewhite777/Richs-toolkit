@@ -46,7 +46,8 @@ export default function RichsToolkit() {
   const [showMaterialList, setShowMaterialList] = useState(false);
   const [selectedSupplier, setSelectedSupplier] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
-  const [materialListItems, setMaterialListItems] = useLocalStorage('richs-toolkit-material-list', [{ id: 1, item: '', qty: '', unit: 'bags' }]);
+  const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
+  const [materialListItems, setMaterialListItems] = useLocalStorage('richs-toolkit-material-list', [{ id: 1, item: '', qty: '', unit: 'bags', price: '', purchased: false }]);
   
   // Weather state
   const [weatherView, setWeatherView] = useState('today'); // today, week, alerts
@@ -56,16 +57,20 @@ export default function RichsToolkit() {
 
   // Invoicing & Budget state
   const [invoices, setInvoices] = useLocalStorage('richs-toolkit-invoices', []);
+  const [clients, setClients] = useLocalStorage('richs-toolkit-clients', []);
   const [showNewInvoice, setShowNewInvoice] = useState(false);
+  const [showAddClient, setShowAddClient] = useState(false);
   const [selectedInvoice, setSelectedInvoice] = useState(null);
   const [newInvoiceData, setNewInvoiceData] = useState({
     project: '',
+    client: '',
     hourlyRate: '25',
     markup: '15',
     includeTime: true,
     includeReceipts: true,
     includeMileage: true
   });
+  const [newClientData, setNewClientData] = useState({ name: '', email: '', phone: '', address: '' });
 
   const [budgets, setBudgets] = useLocalStorage('richs-toolkit-budgets', {
     projects: {},
@@ -158,6 +163,10 @@ export default function RichsToolkit() {
   const [showAnnotation, setShowAnnotation] = useState(false);
   const [pairingMode, setPairingMode] = useState(false);
   const [selectedForPairing, setSelectedForPairing] = useState(null);
+  const [bulkDeleteMode, setBulkDeleteMode] = useState(false);
+  const [selectedPhotos, setSelectedPhotos] = useState([]);
+  const [filterTag, setFilterTag] = useState('all');
+  const [filterMonth, setFilterMonth] = useState('all');
 
   // ==================== FISHING GAME DATA ====================
 
@@ -1486,20 +1495,32 @@ export default function RichsToolkit() {
 
   const getFilteredSuppliers = () => {
     let filtered = suppliers;
-    if (supplierCategory === 'favorites') filtered = suppliers.filter(s => s.favorite);
-    else if (supplierCategory !== 'all') filtered = suppliers.filter(s => s.category === supplierCategory);
+    if (showFavoritesOnly) filtered = filtered.filter(s => s.favorite);
+    if (supplierCategory === 'favorites') filtered = filtered.filter(s => s.favorite);
+    else if (supplierCategory !== 'all') filtered = filtered.filter(s => s.category === supplierCategory);
     if (searchQuery) filtered = filtered.filter(s => s.name.toLowerCase().includes(searchQuery.toLowerCase()));
     return filtered;
   };
 
   const addSupplier = () => {
     if (!newSupplier.name || !newSupplier.phone) return;
-    setSuppliers([...suppliers, { id: Date.now(), ...newSupplier, favorite: false }]);
+    setSuppliers([...suppliers, { id: Date.now(), ...newSupplier, favorite: false, lastOrder: '' }]);
     setNewSupplier({ name: '', category: 'merchants', phone: '', email: '', address: '', website: '', notes: '' });
     setShowAddSupplier(false);
   };
 
-  const addMaterialListItem = () => setMaterialListItems([...materialListItems, { id: Date.now(), item: '', qty: '', unit: 'bags' }]);
+  const updateSupplierLastOrder = (supplierId, notes) => {
+    setSuppliers(suppliers.map(s => s.id === supplierId ? { ...s, lastOrder: notes } : s));
+  };
+
+  const addClient = () => {
+    if (!newClientData.name) return;
+    setClients([...clients, { id: Date.now(), ...newClientData }]);
+    setNewClientData({ name: '', email: '', phone: '', address: '' });
+    setShowAddClient(false);
+  };
+
+  const addMaterialListItem = () => setMaterialListItems([...materialListItems, { id: Date.now(), item: '', qty: '', unit: 'bags', price: '', purchased: false }]);
   const updateMaterialListItem = (id, field, value) => setMaterialListItems(materialListItems.map(item => item.id === id ? { ...item, [field]: value } : item));
   const removeMaterialListItem = (id) => { if (materialListItems.length > 1) setMaterialListItems(materialListItems.filter(item => item.id !== id)); };
 
@@ -1850,6 +1871,7 @@ export default function RichsToolkit() {
       id: Date.now(),
       invoiceNumber: `INV-${Date.now().toString().slice(-6)}`,
       project: newInvoiceData.project,
+      client: newInvoiceData.client,
       date: getTodayDate(),
       dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
       status: 'unpaid',
@@ -2876,6 +2898,28 @@ export default function RichsToolkit() {
   const renderGallery = () => {
     const theme = getTheme();
 
+    // Get all unique tags
+    const allTags = [...new Set(photos.flatMap(p => p.tags || []))];
+
+    // Get unique months
+    const months = [...new Set(photos.map(p => {
+      const date = new Date(p.timestamp);
+      return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+    }))].sort().reverse();
+
+    // Filter photos
+    let filteredPhotos = photos;
+    if (filterTag !== 'all') {
+      filteredPhotos = filteredPhotos.filter(p => p.tags && p.tags.includes(filterTag));
+    }
+    if (filterMonth !== 'all') {
+      filteredPhotos = filteredPhotos.filter(p => {
+        const date = new Date(p.timestamp);
+        const photoMonth = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+        return photoMonth === filterMonth;
+      });
+    }
+
     return (
       <div className={`min-h-screen ${theme.bg} p-4 pb-24`}>
         <button onClick={() => setCurrentScreen('home')} className="flex items-center gap-2 text-blue-500 mb-4">
@@ -2887,21 +2931,47 @@ export default function RichsToolkit() {
           <p className={`${theme.textSecondary}`}>Capture and annotate site photos</p>
         </div>
 
+        {/* Filters */}
+        <div className="mb-4 space-y-2">
+          <select value={filterTag} onChange={(e) => setFilterTag(e.target.value)} className="w-full p-2 bg-white border border-gray-200 rounded-lg text-sm">
+            <option value="all">All Tags</option>
+            {allTags.map(tag => <option key={tag} value={tag}>{tag}</option>)}
+          </select>
+          <select value={filterMonth} onChange={(e) => setFilterMonth(e.target.value)} className="w-full p-2 bg-white border border-gray-200 rounded-lg text-sm">
+            <option value="all">All Months</option>
+            {months.map(month => {
+              const [year, monthNum] = month.split('-');
+              const monthName = new Date(year, parseInt(monthNum) - 1).toLocaleDateString('en-GB', { month: 'long', year: 'numeric' });
+              return <option key={month} value={month}>{monthName}</option>;
+            })}
+          </select>
+        </div>
+
         {/* Camera and Pairing buttons */}
-        <div className="grid grid-cols-2 gap-3 mb-6">
+        <div className="grid grid-cols-3 gap-3 mb-6">
           <button
             onClick={() => setShowCamera(true)}
             className="bg-blue-500 text-white py-4 px-6 rounded-xl font-semibold flex items-center justify-center gap-2 active:scale-95 transition"
           >
-            <Camera size={24} />
-            Take Photo
+            <Camera size={20} />
+            Photo
           </button>
           <button
             onClick={() => { setPairingMode(!pairingMode); setSelectedForPairing(null); }}
             className={`${pairingMode ? 'bg-purple-500' : 'bg-gray-200 text-gray-700'} text-white py-4 px-6 rounded-xl font-semibold flex items-center justify-center gap-2 active:scale-95 transition`}
           >
-            <ArrowLeftRight size={24} />
-            {pairingMode ? 'Cancel' : 'Pair B/A'}
+            <ArrowLeftRight size={20} />
+            {pairingMode ? 'Cancel' : 'Pair'}
+          </button>
+          <button
+            onClick={() => {
+              setBulkDeleteMode(!bulkDeleteMode);
+              setSelectedPhotos([]);
+            }}
+            className={`${bulkDeleteMode ? 'bg-red-500' : 'bg-gray-200 text-gray-700'} text-white py-4 px-6 rounded-xl font-semibold flex items-center justify-center gap-2 active:scale-95 transition`}
+          >
+            <Trash2 size={20} />
+            {bulkDeleteMode ? 'Cancel' : 'Delete'}
           </button>
         </div>
 
@@ -2913,18 +2983,56 @@ export default function RichsToolkit() {
           </div>
         )}
 
+        {bulkDeleteMode && (
+          <div className="bg-red-50 border border-red-200 rounded-xl p-4 mb-4 flex justify-between items-center">
+            <p className="text-sm text-red-900 font-semibold">
+              {selectedPhotos.length} photo(s) selected
+            </p>
+            {selectedPhotos.length > 0 && (
+              <button
+                onClick={() => {
+                  if (confirm(`Delete ${selectedPhotos.length} photo(s)?`)) {
+                    setPhotos(photos.filter(p => !selectedPhotos.includes(p.id)));
+                    setSelectedPhotos([]);
+                    setBulkDeleteMode(false);
+                  }
+                }}
+                className="px-3 py-1 bg-red-500 text-white rounded-lg text-sm font-semibold"
+              >
+                Delete Selected
+              </button>
+            )}
+          </div>
+        )}
+
         {/* Photos grid */}
-        {photos.length === 0 ? (
+        {filteredPhotos.length === 0 ? (
           <div className="text-center py-20">
             <Camera size={64} className="mx-auto text-gray-300 mb-4" />
-            <p className="text-gray-500">No photos yet</p>
-            <p className="text-sm text-gray-400 mt-1">Tap "Take Photo" to get started</p>
+            <p className="text-gray-500">{photos.length === 0 ? 'No photos yet' : 'No photos match filters'}</p>
+            <p className="text-sm text-gray-400 mt-1">{photos.length === 0 ? 'Tap "Take Photo" to get started' : 'Try adjusting your filters'}</p>
           </div>
         ) : (
           <div className="grid grid-cols-2 gap-3">
-            {photos.map((photo) => (
-              <div key={photo.id} className={`${theme.cardBg} rounded-xl overflow-hidden shadow-sm border ${theme.border}`}>
+            {filteredPhotos.map((photo) => (
+              <div key={photo.id} className={`${theme.cardBg} rounded-xl overflow-hidden shadow-sm border ${theme.border} ${bulkDeleteMode && selectedPhotos.includes(photo.id) ? 'ring-4 ring-red-500' : ''}`}>
                 <div className="relative aspect-square">
+                  {bulkDeleteMode && (
+                    <div className="absolute top-2 left-2 z-10">
+                      <input
+                        type="checkbox"
+                        checked={selectedPhotos.includes(photo.id)}
+                        onChange={() => {
+                          if (selectedPhotos.includes(photo.id)) {
+                            setSelectedPhotos(selectedPhotos.filter(id => id !== photo.id));
+                          } else {
+                            setSelectedPhotos([...selectedPhotos, photo.id]);
+                          }
+                        }}
+                        className="w-6 h-6"
+                      />
+                    </div>
+                  )}
                   <img
                     src={photo.dataUrl}
                     alt={photo.note || 'Site photo'}
@@ -2941,83 +3049,92 @@ export default function RichsToolkit() {
                     <p className={`text-xs ${theme.textSecondary}`}>{photo.note}</p>
                   </div>
                 )}
-                <div className="p-2 flex gap-2">
-                  {pairingMode ? (
-                    <button
-                      onClick={() => {
-                        if (!selectedForPairing) {
-                          setSelectedForPairing(photo.id);
-                        } else {
-                          // Pair the photos
-                          setPhotos(photos.map(p => {
-                            if (p.id === selectedForPairing) return { ...p, pairedWith: photo.id, pairType: 'before' };
-                            if (p.id === photo.id) return { ...p, pairedWith: selectedForPairing, pairType: 'after' };
-                            return p;
-                          }));
-                          setPairingMode(false);
-                          setSelectedForPairing(null);
-                        }
-                      }}
-                      className={`flex-1 text-xs py-2 rounded-lg ${selectedForPairing === photo.id ? 'bg-purple-600 text-white' : 'bg-purple-500 text-white'}`}
-                    >
-                      {selectedForPairing === photo.id ? '✓ Selected' : 'Select'}
-                    </button>
-                  ) : (
-                    <>
+                {photo.tags && photo.tags.length > 0 && (
+                  <div className="px-2 pb-2 flex gap-1 flex-wrap">
+                    {photo.tags.map((tag, i) => (
+                      <span key={i} className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">{tag}</span>
+                    ))}
+                  </div>
+                )}
+                {!bulkDeleteMode && (
+                  <div className="p-2 flex gap-2">
+                    {pairingMode ? (
                       <button
                         onClick={() => {
-                          setCapturedPhoto(photo.dataUrl);
-                          setShowAnnotation(true);
-                        }}
-                        className="flex-1 text-xs py-2 bg-blue-500 text-white rounded-lg"
-                      >
-                        Annotate
-                      </button>
-                      {photo.pairedWith && (
-                        <>
-                          {photo.pairType === 'before' && (
-                            <button
-                              onClick={() => {
-                                const afterPhoto = photos.find(p => p.id === photo.pairedWith);
-                                if (afterPhoto) {
-                                  generateBeforeAfterPDF(photo, afterPhoto);
-                                }
-                              }}
-                              className="flex-1 text-xs py-2 bg-green-500 text-white rounded-lg flex items-center justify-center gap-1"
-                            >
-                              <Download size={14} /> PDF
-                            </button>
-                          )}
-                          <button
-                            onClick={() => {
-                              // Unpair
-                              setPhotos(photos.map(p => {
-                                if (p.id === photo.id || p.id === photo.pairedWith) {
-                                  const { pairedWith, pairType, ...rest } = p;
-                                  return rest;
-                                }
-                                return p;
-                              }));
-                            }}
-                            className="flex-1 text-xs py-2 bg-purple-500 text-white rounded-lg"
-                          >
-                            Unpair
-                          </button>
-                        </>
-                      )}
-                      <button
-                        onClick={() => {
-                          if (confirm('Delete this photo?')) {
-                            setPhotos(photos.filter(p => p.id !== photo.id));
+                          if (!selectedForPairing) {
+                            setSelectedForPairing(photo.id);
+                          } else {
+                            // Pair the photos
+                            setPhotos(photos.map(p => {
+                              if (p.id === selectedForPairing) return { ...p, pairedWith: photo.id, pairType: 'before' };
+                              if (p.id === photo.id) return { ...p, pairedWith: selectedForPairing, pairType: 'after' };
+                              return p;
+                            }));
+                            setPairingMode(false);
+                            setSelectedForPairing(null);
                           }
                         }}
-                        className="flex-1 text-xs py-2 bg-red-500 text-white rounded-lg"
+                        className={`flex-1 text-xs py-2 rounded-lg ${selectedForPairing === photo.id ? 'bg-purple-600 text-white' : 'bg-purple-500 text-white'}`}
                       >
-                        Delete
+                        {selectedForPairing === photo.id ? '✓ Selected' : 'Select'}
                       </button>
-                    </>
-                  )}
-                </div>
+                    ) : (
+                      <>
+                        <button
+                          onClick={() => {
+                            setCapturedPhoto(photo.dataUrl);
+                            setShowAnnotation(true);
+                          }}
+                          className="flex-1 text-xs py-2 bg-blue-500 text-white rounded-lg"
+                        >
+                          Annotate
+                        </button>
+                        {photo.pairedWith && (
+                          <>
+                            {photo.pairType === 'before' && (
+                              <button
+                                onClick={() => {
+                                  const afterPhoto = photos.find(p => p.id === photo.pairedWith);
+                                  if (afterPhoto) {
+                                    generateBeforeAfterPDF(photo, afterPhoto);
+                                  }
+                                }}
+                                className="flex-1 text-xs py-2 bg-green-500 text-white rounded-lg flex items-center justify-center gap-1"
+                              >
+                                <Download size={14} /> PDF
+                              </button>
+                            )}
+                            <button
+                              onClick={() => {
+                                // Unpair
+                                setPhotos(photos.map(p => {
+                                  if (p.id === photo.id || p.id === photo.pairedWith) {
+                                    const { pairedWith, pairType, ...rest } = p;
+                                    return rest;
+                                  }
+                                  return p;
+                                }));
+                              }}
+                              className="flex-1 text-xs py-2 bg-purple-500 text-white rounded-lg"
+                            >
+                              Unpair
+                            </button>
+                          </>
+                        )}
+                        <button
+                          onClick={() => {
+                            if (confirm('Delete this photo?')) {
+                              setPhotos(photos.filter(p => p.id !== photo.id));
+                            }
+                          }}
+                          className="flex-1 text-xs py-2 bg-red-500 text-white rounded-lg"
+                        >
+                          Delete
+                        </button>
+                      </>
+                    )}
+                  </div>
+                )}
               </div>
             ))}
           </div>
@@ -3074,10 +3191,12 @@ export default function RichsToolkit() {
               <button
                 onClick={() => {
                   const note = prompt('Add a note for this photo (optional):');
+                  const tags = prompt('Add tags (comma-separated, optional):');
                   const newPhoto = {
                     id: Date.now().toString(),
                     dataUrl: capturedPhoto,
                     note: note || '',
+                    tags: tags ? tags.split(',').map(t => t.trim()).filter(t => t) : [],
                     timestamp: new Date().toISOString(),
                   };
                   setPhotos([newPhoto, ...photos]);
@@ -3114,6 +3233,10 @@ export default function RichsToolkit() {
           <input type="text" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder="Search suppliers..."
             className="w-full pl-10 pr-4 py-3 bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500" />
         </div>
+        <button onClick={() => setShowFavoritesOnly(!showFavoritesOnly)} className={`w-full mb-3 p-2 rounded-lg text-sm font-medium ${showFavoritesOnly ? 'bg-amber-100 text-amber-700' : 'bg-gray-100 text-gray-600'}`}>
+          <Star size={16} className="inline mr-1" />
+          {showFavoritesOnly ? 'Showing Favorites Only' : 'Show All Suppliers'}
+        </button>
         <div className="flex gap-2 mb-4 overflow-x-auto pb-2 -mx-4 px-4">
           {supplierCategories.map((cat) => {
             const CatIcon = cat.icon;
@@ -3141,6 +3264,8 @@ export default function RichsToolkit() {
                 </a>
               )}
               {supplier.notes && <p className="text-xs text-teal-600 bg-teal-50 px-2 py-1 rounded-lg inline-block mb-2">{supplier.notes}</p>}
+              {supplier.lastOrder && <p className="text-xs text-purple-600 bg-purple-50 px-2 py-1 rounded-lg mb-2">📝 Last order: {supplier.lastOrder}</p>}
+              <textarea value={supplier.lastOrder || ''} onChange={(e) => updateSupplierLastOrder(supplier.id, e.target.value)} placeholder="Add last order notes..." className="w-full p-2 text-xs bg-gray-50 border border-gray-200 rounded-lg mb-2" rows="2" />
               <div className="flex gap-2">
                 <a href={`tel:${supplier.phone}`} className={`p-2 bg-teal-500 text-white rounded-lg font-medium flex items-center justify-center gap-2 ${supplier.email ? 'flex-1' : 'flex-1'}`}><PhoneCall size={16} /> Call</a>
                 {supplier.email && (
@@ -3181,10 +3306,26 @@ export default function RichsToolkit() {
       return acc;
     }, {});
 
+    // Calculate total
+    const total = materialListItems.reduce((sum, item) => {
+      const price = parseFloat(item.price) || 0;
+      return sum + price;
+    }, 0);
+
     return (
       <div className="fixed inset-0 bg-black/50 z-50 flex items-end">
         <div className="bg-white rounded-t-3xl w-full p-6 max-h-[90vh] overflow-auto">
           <div className="flex items-center justify-between mb-4"><h2 className="text-xl font-bold">Material List</h2><button onClick={() => { setShowMaterialList(false); setSelectedSupplier(null); }} className="p-2"><X size={24} /></button></div>
+
+          {/* Total */}
+          {total > 0 && (
+            <div className="bg-teal-50 border border-teal-200 rounded-xl p-4 mb-4">
+              <div className="flex justify-between items-center">
+                <span className="text-sm font-semibold text-teal-900">Total Cost</span>
+                <span className="text-2xl font-bold text-teal-600">£{total.toFixed(2)}</span>
+              </div>
+            </div>
+          )}
 
           {/* Grouped by Supplier View */}
           {materialListItems.some(item => item.supplier) && (
@@ -3194,7 +3335,7 @@ export default function RichsToolkit() {
                 <div key={supplier} className="bg-gray-50 rounded-xl p-3">
                   <p className="font-semibold text-sm text-teal-600 mb-2">{supplier}</p>
                   {items.map(item => (
-                    <p key={item.id} className="text-xs text-gray-700 ml-2">• {item.qty} {item.unit} - {item.item}</p>
+                    <p key={item.id} className={`text-xs ml-2 ${item.purchased ? 'line-through text-gray-400' : 'text-gray-700'}`}>• {item.qty} {item.unit} - {item.item} {item.price && `(£${item.price})`}</p>
                   ))}
                 </div>
               ))}
@@ -3205,8 +3346,10 @@ export default function RichsToolkit() {
           <div className="space-y-3 mb-4">
             {materialListItems.map((item) => (
               <div key={item.id} className="space-y-2">
-                <div className="flex gap-2">
-                  <input type="text" value={item.item} onChange={(e) => updateMaterialListItem(item.id, 'item', e.target.value)} placeholder="Item" className="flex-1 p-3 bg-gray-100 rounded-xl text-sm" />
+                <div className="flex gap-2 items-center">
+                  <input type="checkbox" checked={item.purchased || false} onChange={(e) => updateMaterialListItem(item.id, 'purchased', e.target.checked)} className="w-5 h-5 text-teal-500" />
+                  <input type="text" value={item.item} onChange={(e) => updateMaterialListItem(item.id, 'item', e.target.value)} placeholder="Item" className={`flex-1 p-3 bg-gray-100 rounded-xl text-sm ${item.purchased ? 'line-through text-gray-400' : ''}`} />
+                  <input type="text" inputMode="decimal" value={item.price} onChange={(e) => updateMaterialListItem(item.id, 'price', e.target.value)} placeholder="£" className="w-20 p-3 bg-gray-100 rounded-xl text-sm" />
                   <input type="text" value={item.qty} onChange={(e) => updateMaterialListItem(item.id, 'qty', e.target.value)} placeholder="Qty" className="w-16 p-3 bg-gray-100 rounded-xl text-sm" />
                   {materialListItems.length > 1 && <button onClick={() => removeMaterialListItem(item.id)} className="p-3 text-gray-400"><Trash2 size={18} /></button>}
                 </div>
@@ -3448,10 +3591,26 @@ export default function RichsToolkit() {
       <div className="bg-white rounded-t-3xl w-full p-6 max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between mb-6"><h2 className="text-xl font-bold">Generate Invoice</h2><button onClick={() => setShowNewInvoice(false)} className="p-2"><X size={24} /></button></div>
         <div className="space-y-4">
+          <div><label className="text-sm font-medium text-gray-700 mb-1 block">Client (optional)</label><select value={newInvoiceData.client} onChange={(e) => setNewInvoiceData({...newInvoiceData, client: e.target.value})} className="w-full p-3 bg-gray-100 rounded-xl"><option value="">Select client...</option>{clients.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}</select></div>
           <div><label className="text-sm font-medium text-gray-700 mb-1 block">Project</label><select value={newInvoiceData.project} onChange={(e) => setNewInvoiceData({...newInvoiceData, project: e.target.value})} className="w-full p-3 bg-gray-100 rounded-xl">{projects.map(p => <option key={p.id} value={p.name}>{p.name}</option>)}</select></div>
           <div className="grid grid-cols-2 gap-3"><div><label className="text-sm font-medium text-gray-700 mb-1 block">Hourly Rate (£)</label><input type="text" inputMode="decimal" value={newInvoiceData.hourlyRate} onChange={(e) => setNewInvoiceData({...newInvoiceData, hourlyRate: e.target.value})} className="w-full p-3 bg-gray-100 rounded-xl" /></div><div><label className="text-sm font-medium text-gray-700 mb-1 block">Markup (%)</label><input type="text" inputMode="decimal" value={newInvoiceData.markup} onChange={(e) => setNewInvoiceData({...newInvoiceData, markup: e.target.value})} className="w-full p-3 bg-gray-100 rounded-xl" /></div></div>
           <div><label className="text-sm font-medium text-gray-700 mb-2 block">Include:</label><div className="space-y-2"><label className="flex items-center gap-2"><input type="checkbox" checked={newInvoiceData.includeTime} onChange={(e) => setNewInvoiceData({...newInvoiceData, includeTime: e.target.checked})} className="w-4 h-4" /><span>Time Entries</span></label><label className="flex items-center gap-2"><input type="checkbox" checked={newInvoiceData.includeReceipts} onChange={(e) => setNewInvoiceData({...newInvoiceData, includeReceipts: e.target.checked})} className="w-4 h-4" /><span>Receipts (with markup)</span></label><label className="flex items-center gap-2"><input type="checkbox" checked={newInvoiceData.includeMileage} onChange={(e) => setNewInvoiceData({...newInvoiceData, includeMileage: e.target.checked})} className="w-4 h-4" /><span>Mileage</span></label></div></div>
           <button onClick={generateInvoice} className="w-full p-4 bg-emerald-500 text-white rounded-xl font-semibold">Generate Invoice</button>
+        </div>
+      </div>
+    </div>
+  );
+
+  const renderAddClientModal = () => (
+    <div className="fixed inset-0 bg-black/50 z-50 flex items-end">
+      <div className="bg-white rounded-t-3xl w-full p-6">
+        <div className="flex items-center justify-between mb-6"><h2 className="text-xl font-bold">Add Client</h2><button onClick={() => setShowAddClient(false)} className="p-2"><X size={24} /></button></div>
+        <div className="space-y-4">
+          <input type="text" value={newClientData.name} onChange={(e) => setNewClientData({ ...newClientData, name: e.target.value })} placeholder="Client name" className="w-full p-3 bg-gray-100 rounded-xl" />
+          <input type="email" value={newClientData.email} onChange={(e) => setNewClientData({ ...newClientData, email: e.target.value })} placeholder="Email address" className="w-full p-3 bg-gray-100 rounded-xl" />
+          <input type="tel" value={newClientData.phone} onChange={(e) => setNewClientData({ ...newClientData, phone: e.target.value })} placeholder="Phone number" className="w-full p-3 bg-gray-100 rounded-xl" />
+          <input type="text" value={newClientData.address} onChange={(e) => setNewClientData({ ...newClientData, address: e.target.value })} placeholder="Address" className="w-full p-3 bg-gray-100 rounded-xl" />
+          <button onClick={addClient} className="w-full p-4 bg-emerald-500 text-white rounded-xl font-semibold">Save</button>
         </div>
       </div>
     </div>
@@ -3856,27 +4015,61 @@ export default function RichsToolkit() {
   };
 
   // Invoices Screen
-  const renderInvoices = () => (
-    <div className="p-4 pb-24">
-      <button onClick={() => setCurrentScreen('home')} className="flex items-center gap-2 text-blue-500 mb-4"><ChevronLeft size={20} />Home</button>
-      <div className="flex items-center gap-4 mb-6"><div className="bg-emerald-500 w-14 h-14 rounded-2xl flex items-center justify-center"><FileText size={28} className="text-white" /></div><div><h1 className="text-xl font-bold">Invoices</h1></div></div>
-      <button onClick={() => setShowNewInvoice(true)} className="w-full p-4 bg-emerald-500 text-white rounded-xl font-semibold mb-4"><Plus size={20} className="inline mr-2" />Generate Invoice</button>
-      {invoices.length > 0 ? (
-        <div className="space-y-3">{invoices.map(inv => (
-          <div key={inv.id} className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
-            <div className="flex justify-between items-start mb-2">
-              <div><p className="font-semibold">{inv.invoiceNumber}</p><p className="text-sm text-gray-500">{inv.project}</p></div>
-              <div className="flex gap-2">
-                <button onClick={() => generateInvoicePDF(inv)} className="px-3 py-1 rounded-lg text-xs font-semibold bg-blue-100 text-blue-700 flex items-center gap-1"><Download size={12} /> PDF</button>
-                <button onClick={() => toggleInvoiceStatus(inv.id)} className={`px-3 py-1 rounded-lg text-xs font-semibold ${inv.status === 'paid' ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'}`}>{inv.status === 'paid' ? 'Paid' : 'Unpaid'}</button>
+  const renderInvoices = () => {
+    // Calculate revenue summary
+    const totalRevenue = invoices.reduce((sum, inv) => sum + inv.total, 0);
+    const paidRevenue = invoices.filter(inv => inv.status === 'paid').reduce((sum, inv) => sum + inv.total, 0);
+    const unpaidRevenue = invoices.filter(inv => inv.status === 'unpaid').reduce((sum, inv) => sum + inv.total, 0);
+
+    return (
+      <div className="p-4 pb-24">
+        <button onClick={() => setCurrentScreen('home')} className="flex items-center gap-2 text-blue-500 mb-4"><ChevronLeft size={20} />Home</button>
+        <div className="flex items-center gap-4 mb-6"><div className="bg-emerald-500 w-14 h-14 rounded-2xl flex items-center justify-center"><FileText size={28} className="text-white" /></div><div><h1 className="text-xl font-bold">Invoices</h1></div></div>
+
+        {/* Revenue Summary */}
+        {invoices.length > 0 && (
+          <div className="bg-gradient-to-r from-emerald-500 to-teal-500 rounded-2xl p-4 mb-4 text-white">
+            <p className="text-sm opacity-90 mb-1">Revenue Summary</p>
+            <p className="text-3xl font-bold mb-3">£{totalRevenue.toFixed(2)}</p>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="bg-white/20 rounded-lg p-2">
+                <p className="text-xs opacity-90">Paid</p>
+                <p className="text-lg font-bold">£{paidRevenue.toFixed(2)}</p>
+              </div>
+              <div className="bg-white/20 rounded-lg p-2">
+                <p className="text-xs opacity-90">Unpaid</p>
+                <p className="text-lg font-bold">£{unpaidRevenue.toFixed(2)}</p>
               </div>
             </div>
-            <div className="flex justify-between text-sm"><span className="text-gray-600">{new Date(inv.date).toLocaleDateString()}</span><span className="font-bold text-emerald-600">£{inv.total.toFixed(2)}</span></div>
           </div>
-        ))}</div>
-      ) : (<div className="text-center py-12 text-gray-500"><FileText size={48} className="mx-auto mb-2 opacity-30" /><p>No invoices yet</p></div>)}
-    </div>
-  );
+        )}
+
+        <div className="grid grid-cols-2 gap-2 mb-4">
+          <button onClick={() => setShowNewInvoice(true)} className="p-3 bg-emerald-500 text-white rounded-xl font-semibold flex items-center justify-center gap-2"><Plus size={18} />Invoice</button>
+          <button onClick={() => setShowAddClient(true)} className="p-3 bg-emerald-100 text-emerald-700 rounded-xl font-semibold flex items-center justify-center gap-2"><Users size={18} />Add Client</button>
+        </div>
+
+        {invoices.length > 0 ? (
+          <div className="space-y-3">{invoices.map(inv => (
+            <div key={inv.id} className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+              <div className="flex justify-between items-start mb-2">
+                <div>
+                  <p className="font-semibold">{inv.invoiceNumber}</p>
+                  <p className="text-sm text-gray-500">{inv.project}</p>
+                  {inv.client && <p className="text-xs text-blue-600">Client: {inv.client}</p>}
+                </div>
+                <div className="flex gap-2">
+                  <button onClick={() => generateInvoicePDF(inv)} className="px-3 py-1 rounded-lg text-xs font-semibold bg-blue-100 text-blue-700 flex items-center gap-1"><Download size={12} /> PDF</button>
+                  <button onClick={() => toggleInvoiceStatus(inv.id)} className={`px-3 py-1 rounded-lg text-xs font-semibold ${inv.status === 'paid' ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'}`}>{inv.status === 'paid' ? 'Paid' : 'Unpaid'}</button>
+                </div>
+              </div>
+              <div className="flex justify-between text-sm"><span className="text-gray-600">{new Date(inv.date).toLocaleDateString()}</span><span className="font-bold text-emerald-600">£{inv.total.toFixed(2)}</span></div>
+            </div>
+          ))}</div>
+        ) : (<div className="text-center py-12 text-gray-500"><FileText size={48} className="mx-auto mb-2 opacity-30" /><p>No invoices yet</p></div>)}
+      </div>
+    );
+  };
 
   // Budget Screen
   const renderBudget = () => {
@@ -4291,6 +4484,7 @@ export default function RichsToolkit() {
         {showNewProject && renderNewProjectModal()}
         {showProjectPhotos && renderProjectPhotos()}
         {showNewInvoice && renderNewInvoiceModal()}
+        {showAddClient && renderAddClientModal()}
         {showAddSupplier && renderAddSupplierModal()}
         {showMaterialList && renderMaterialListModal()}
       </div>
