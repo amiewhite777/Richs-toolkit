@@ -3234,8 +3234,8 @@ export default function RichsToolkit() {
             {projects.map(p => <option key={p.id} value={p.name}>{p.name}</option>)}
           </select>
           <div className="grid grid-cols-2 gap-3">
-            <input type="number" value={newTimeEntry.hours} onChange={(e) => setNewTimeEntry({ ...newTimeEntry, hours: e.target.value })} placeholder="Hours" className="p-3 bg-gray-100 rounded-xl" />
-            <input type="number" value={newTimeEntry.minutes} onChange={(e) => setNewTimeEntry({ ...newTimeEntry, minutes: e.target.value })} placeholder="Minutes" className="p-3 bg-gray-100 rounded-xl" />
+            <input type="text" inputMode="numeric" value={newTimeEntry.hours} onChange={(e) => setNewTimeEntry({ ...newTimeEntry, hours: e.target.value })} placeholder="Hours" className="p-3 bg-gray-100 rounded-xl" />
+            <input type="text" inputMode="numeric" value={newTimeEntry.minutes} onChange={(e) => setNewTimeEntry({ ...newTimeEntry, minutes: e.target.value })} placeholder="Minutes" className="p-3 bg-gray-100 rounded-xl" />
           </div>
           <input type="text" value={newTimeEntry.notes} onChange={(e) => setNewTimeEntry({ ...newTimeEntry, notes: e.target.value })} placeholder="Notes" className="w-full p-3 bg-gray-100 rounded-xl" />
           <button onClick={addTimeEntry} className="w-full p-4 bg-rose-500 text-white rounded-xl font-semibold">Log Time</button>
@@ -3250,7 +3250,7 @@ export default function RichsToolkit() {
         <div className="flex items-center justify-between mb-6"><h2 className="text-xl font-bold">Add Receipt</h2><button onClick={() => setShowAddReceipt(false)} className="p-2"><X size={24} /></button></div>
         <div className="space-y-4">
           <input type="text" value={newReceipt.supplier} onChange={(e) => setNewReceipt({ ...newReceipt, supplier: e.target.value })} placeholder="Supplier" className="w-full p-3 bg-gray-100 rounded-xl" />
-          <input type="number" step="0.01" value={newReceipt.amount} onChange={(e) => setNewReceipt({ ...newReceipt, amount: e.target.value })} placeholder="Amount (£)" className="w-full p-3 bg-gray-100 rounded-xl" />
+          <input type="text" inputMode="decimal" value={newReceipt.amount} onChange={(e) => setNewReceipt({ ...newReceipt, amount: e.target.value })} placeholder="Amount (£)" className="w-full p-3 bg-gray-100 rounded-xl" />
           <input type="text" value={newReceipt.description} onChange={(e) => setNewReceipt({ ...newReceipt, description: e.target.value })} placeholder="Description" className="w-full p-3 bg-gray-100 rounded-xl" />
           <button onClick={addReceipt} className="w-full p-4 bg-rose-500 text-white rounded-xl font-semibold">Save Receipt</button>
         </div>
@@ -3267,7 +3267,7 @@ export default function RichsToolkit() {
             <input type="text" value={newMileage.from} onChange={(e) => setNewMileage({ ...newMileage, from: e.target.value })} placeholder="From" className="p-3 bg-gray-100 rounded-xl" />
             <input type="text" value={newMileage.to} onChange={(e) => setNewMileage({ ...newMileage, to: e.target.value })} placeholder="To" className="p-3 bg-gray-100 rounded-xl" />
           </div>
-          <input type="number" value={newMileage.miles} onChange={(e) => setNewMileage({ ...newMileage, miles: e.target.value })} placeholder="Miles" className="w-full p-3 bg-gray-100 rounded-xl" />
+          <input type="text" inputMode="decimal" value={newMileage.miles} onChange={(e) => setNewMileage({ ...newMileage, miles: e.target.value })} placeholder="Miles" className="w-full p-3 bg-gray-100 rounded-xl" />
           <button onClick={addMileage} className="w-full p-4 bg-rose-500 text-white rounded-xl font-semibold">Save</button>
         </div>
       </div>
@@ -3449,7 +3449,7 @@ export default function RichsToolkit() {
         <div className="flex items-center justify-between mb-6"><h2 className="text-xl font-bold">Generate Invoice</h2><button onClick={() => setShowNewInvoice(false)} className="p-2"><X size={24} /></button></div>
         <div className="space-y-4">
           <div><label className="text-sm font-medium text-gray-700 mb-1 block">Project</label><select value={newInvoiceData.project} onChange={(e) => setNewInvoiceData({...newInvoiceData, project: e.target.value})} className="w-full p-3 bg-gray-100 rounded-xl">{projects.map(p => <option key={p.id} value={p.name}>{p.name}</option>)}</select></div>
-          <div className="grid grid-cols-2 gap-3"><div><label className="text-sm font-medium text-gray-700 mb-1 block">Hourly Rate (£)</label><input type="number" value={newInvoiceData.hourlyRate} onChange={(e) => setNewInvoiceData({...newInvoiceData, hourlyRate: e.target.value})} className="w-full p-3 bg-gray-100 rounded-xl" /></div><div><label className="text-sm font-medium text-gray-700 mb-1 block">Markup (%)</label><input type="number" value={newInvoiceData.markup} onChange={(e) => setNewInvoiceData({...newInvoiceData, markup: e.target.value})} className="w-full p-3 bg-gray-100 rounded-xl" /></div></div>
+          <div className="grid grid-cols-2 gap-3"><div><label className="text-sm font-medium text-gray-700 mb-1 block">Hourly Rate (£)</label><input type="text" inputMode="decimal" value={newInvoiceData.hourlyRate} onChange={(e) => setNewInvoiceData({...newInvoiceData, hourlyRate: e.target.value})} className="w-full p-3 bg-gray-100 rounded-xl" /></div><div><label className="text-sm font-medium text-gray-700 mb-1 block">Markup (%)</label><input type="text" inputMode="decimal" value={newInvoiceData.markup} onChange={(e) => setNewInvoiceData({...newInvoiceData, markup: e.target.value})} className="w-full p-3 bg-gray-100 rounded-xl" /></div></div>
           <div><label className="text-sm font-medium text-gray-700 mb-2 block">Include:</label><div className="space-y-2"><label className="flex items-center gap-2"><input type="checkbox" checked={newInvoiceData.includeTime} onChange={(e) => setNewInvoiceData({...newInvoiceData, includeTime: e.target.checked})} className="w-4 h-4" /><span>Time Entries</span></label><label className="flex items-center gap-2"><input type="checkbox" checked={newInvoiceData.includeReceipts} onChange={(e) => setNewInvoiceData({...newInvoiceData, includeReceipts: e.target.checked})} className="w-4 h-4" /><span>Receipts (with markup)</span></label><label className="flex items-center gap-2"><input type="checkbox" checked={newInvoiceData.includeMileage} onChange={(e) => setNewInvoiceData({...newInvoiceData, includeMileage: e.target.checked})} className="w-4 h-4" /><span>Mileage</span></label></div></div>
           <button onClick={generateInvoice} className="w-full p-4 bg-emerald-500 text-white rounded-xl font-semibold">Generate Invoice</button>
         </div>
@@ -3558,8 +3558,8 @@ export default function RichsToolkit() {
         {conversionType === 'length' && (
           <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
             <div className="grid grid-cols-2 gap-3 mb-4">
-              <div><label className="text-sm text-gray-600">Feet</label><input type="number" value={feetInput} onChange={(e) => setFeetInput(e.target.value)} className="w-full p-3 bg-gray-100 rounded-xl" /></div>
-              <div><label className="text-sm text-gray-600">Inches</label><input type="number" value={inchesInput} onChange={(e) => setInchesInput(e.target.value)} className="w-full p-3 bg-gray-100 rounded-xl" /></div>
+              <div><label className="text-sm text-gray-600">Feet</label><input type="text" inputMode="decimal" value={feetInput} onChange={(e) => setFeetInput(e.target.value)} className="w-full p-3 bg-gray-100 rounded-xl" /></div>
+              <div><label className="text-sm text-gray-600">Inches</label><input type="text" inputMode="decimal" value={inchesInput} onChange={(e) => setInchesInput(e.target.value)} className="w-full p-3 bg-gray-100 rounded-xl" /></div>
             </div>
             <div className="bg-indigo-50 rounded-xl p-4 grid grid-cols-3 gap-2 text-center">
               <div><p className="text-sm text-indigo-600">mm</p><p className="text-xl font-bold text-indigo-900">{lengthResult.mm}</p></div>
