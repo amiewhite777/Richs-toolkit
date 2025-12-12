@@ -304,6 +304,101 @@ export default function RichsToolkit() {
   const fishingAnimationFrame = useRef(null);
   const lastFrameTime = useRef(Date.now());
 
+  // ==================== FISHING GAME HELPER FUNCTIONS ====================
+
+  // Get rarity badge styling
+  const getRarityStyle = (rarity) => {
+    const styles = {
+      common: 'bg-gray-400 text-white',
+      uncommon: 'bg-green-500 text-white',
+      rare: 'bg-blue-500 text-white',
+      epic: 'bg-purple-500 text-white',
+      legendary: 'bg-gradient-to-r from-yellow-400 to-amber-500 text-white'
+    };
+    return styles[rarity] || styles.common;
+  };
+
+  // Select random fish based on rarity probabilities
+  const selectRandomFish = () => {
+    const location = FISHING_LOCATIONS[fishingGame.currentLocation];
+    const availableFish = location.fish.map(id => FISH_DATA[id]);
+    const baitBonus = BAITS[fishingGame.equipment.bait].rareBonus;
+
+    const rand = Math.random() * 100;
+    let targetRarity = 'common';
+
+    if (rand < 1 + (baitBonus * 0.05)) targetRarity = 'legendary';
+    else if (rand < 5 + (baitBonus * 0.2)) targetRarity = 'epic';
+    else if (rand < 15 + (baitBonus * 0.5)) targetRarity = 'rare';
+    else if (rand < 40) targetRarity = 'uncommon';
+
+    const rarityFish = availableFish.filter(f => f.rarity === targetRarity);
+    if (rarityFish.length > 0) {
+      return rarityFish[Math.floor(Math.random() * rarityFish.length)];
+    }
+    return availableFish[Math.floor(Math.random() * availableFish.length)];
+  };
+
+  // Generate fish weight
+  const generateFishWeight = (fish) => {
+    const weight = fish.minWeight + Math.random() * (fish.maxWeight - fish.minWeight);
+    return Math.round(weight * 100) / 100;
+  };
+
+  // Calculate XP required for level
+  const getXPForLevel = (level) => {
+    if (level <= 5) return 100;
+    if (level <= 10) return 250;
+    if (level <= 15) return 500;
+    if (level <= 20) return 750;
+    if (level <= 30) return 1000;
+    return 1500;
+  };
+
+  // Add XP and handle level ups
+  const addXP = (amount) => {
+    setFishingGame(prev => {
+      const newXP = prev.xp + amount;
+      const xpNeeded = getXPForLevel(prev.level);
+
+      if (newXP >= xpNeeded) {
+        const newLevel = prev.level + 1;
+        showNotification(`🎉 Level ${newLevel}!`, 'success');
+
+        // Unlock locations
+        const newUnlocked = [...prev.unlockedLocations];
+        Object.values(FISHING_LOCATIONS).forEach(loc => {
+          if (loc.unlockLevel === newLevel && !newUnlocked.includes(loc.id)) {
+            newUnlocked.push(loc.id);
+            showNotification(`🗺️ ${loc.name} unlocked!`, 'success');
+          }
+        });
+
+        // Unlock rod slots
+        let newMaxRods = prev.maxRods;
+        if (newLevel === 5) newMaxRods = 2;
+        if (newLevel === 15) newMaxRods = 3;
+
+        return {
+          ...prev,
+          level: newLevel,
+          xp: newXP - xpNeeded,
+          unlockedLocations: newUnlocked,
+          maxRods: newMaxRods,
+          stats: { ...prev.stats, locationsUnlocked: newUnlocked.length, maxRodsUsed: Math.max(prev.stats.maxRodsUsed, newMaxRods) }
+        };
+      }
+
+      return { ...prev, xp: newXP };
+    });
+  };
+
+  // Show notification
+  const showNotification = (message, type = 'info') => {
+    setNotification({ message, type });
+    setTimeout(() => setNotification(null), 3000);
+  };
+
   // Work condition assessments
   const getWorkConditions = (temp, rain, wind, condition) => {
     const conditions = [];
@@ -1086,6 +1181,504 @@ export default function RichsToolkit() {
         )}
       </div>
     );
+  };
+
+  // ==================== FISHING GAME SCREENS ====================
+
+  // Fishing Title Screen
+  const renderFishingTitle = () => {
+    const location = FISHING_LOCATIONS[fishingGame.currentLocation];
+
+    return (
+      <div className={`min-h-screen bg-gradient-to-b ${location.skyGradient} relative overflow-hidden`}>
+        {/* Animated background particles */}
+        <div className="absolute inset-0 pointer-events-none">
+          {Array.from({ length: 15 }).map((_, i) => (
+            <div
+              key={i}
+              className="absolute text-4xl"
+              style={{
+                left: `${Math.random() * 100}%`,
+                top: `${Math.random() * 100}%`,
+                animation: `float ${3 + Math.random() * 3}s ease-in-out infinite`,
+                animationDelay: `${Math.random() * 3}s`,
+                opacity: 0.3
+              }}
+            >
+              {location.particles[Math.floor(Math.random() * location.particles.length)]}
+            </div>
+          ))}
+        </div>
+
+        <div className="relative z-10 p-6 flex flex-col items-center justify-center min-h-screen">
+          {/* Title */}
+          <div className="text-center mb-12">
+            <div className="text-8xl mb-4 animate-bounce">🎣</div>
+            <h1 className="text-5xl font-bold text-white mb-2 drop-shadow-lg">Rich's</h1>
+            <h2 className="text-6xl font-bold text-white drop-shadow-lg">Fishing Adventure</h2>
+          </div>
+
+          {/* Player Stats Summary */}
+          <div className="bg-white/90 backdrop-blur rounded-2xl p-6 mb-8 w-full max-w-md">
+            <div className="grid grid-cols-3 gap-4 text-center">
+              <div>
+                <div className="text-3xl font-bold text-blue-600">{fishingGame.level}</div>
+                <div className="text-sm text-gray-600">Level</div>
+              </div>
+              <div>
+                <div className="text-3xl font-bold text-amber-600">{fishingGame.coins}</div>
+                <div className="text-sm text-gray-600">Coins</div>
+              </div>
+              <div>
+                <div className="text-3xl font-bold text-green-600">{fishingGame.stats.totalCaught}</div>
+                <div className="text-sm text-gray-600">Fish Caught</div>
+              </div>
+            </div>
+            <div className="mt-4 bg-gray-200 rounded-full h-3 overflow-hidden">
+              <div
+                className="bg-green-500 h-full transition-all duration-300"
+                style={{ width: `${(fishingGame.xp / getXPForLevel(fishingGame.level)) * 100}%` }}
+              />
+            </div>
+            <div className="text-xs text-center text-gray-500 mt-1">
+              {fishingGame.xp} / {getXPForLevel(fishingGame.level)} XP
+            </div>
+          </div>
+
+          {/* Navigation Buttons */}
+          <div className="grid grid-cols-2 gap-3 w-full max-w-md mb-6">
+            <button
+              onClick={() => setFishingScreen('game')}
+              className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-4 px-6 rounded-xl shadow-lg active:scale-95 transition flex flex-col items-center gap-2"
+            >
+              <Fish size={32} />
+              <span>Start Fishing</span>
+            </button>
+            <button
+              onClick={() => setFishingScreen('worldmap')}
+              className="bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-4 px-6 rounded-xl shadow-lg active:scale-95 transition flex flex-col items-center gap-2"
+            >
+              <Map size={32} />
+              <span>World Map</span>
+            </button>
+            <button
+              onClick={() => setFishingScreen('collection')}
+              className="bg-purple-500 hover:bg-purple-600 text-white font-bold py-4 px-6 rounded-xl shadow-lg active:scale-95 transition flex flex-col items-center gap-2"
+            >
+              <BookOpen size={32} />
+              <span>Collection</span>
+            </button>
+            <button
+              onClick={() => setFishingScreen('shop')}
+              className="bg-amber-500 hover:bg-amber-600 text-white font-bold py-4 px-6 rounded-xl shadow-lg active:scale-95 transition flex flex-col items-center gap-2"
+            >
+              <ShoppingCart size={32} />
+              <span>Shop</span>
+            </button>
+          </div>
+
+          <button
+            onClick={() => setFishingScreen('stats')}
+            className="bg-white/80 hover:bg-white text-gray-800 font-semibold py-3 px-6 rounded-xl shadow-lg active:scale-95 transition flex items-center gap-2"
+          >
+            <Trophy size={24} />
+            <span>Statistics</span>
+          </button>
+
+          {/* Back Button */}
+          <button
+            onClick={() => setCurrentScreen('home')}
+            className="mt-8 text-white font-semibold flex items-center gap-2 hover:opacity-80"
+          >
+            <ChevronLeft size={20} />
+            <span>Back to Toolkit</span>
+          </button>
+        </div>
+      </div>
+    );
+  };
+
+  // Fishing Game Screen (with multi-rod mechanics) - SIMPLIFIED FOR NOW
+  const renderFishingGame = () => {
+    const location = FISHING_LOCATIONS[fishingGame.currentLocation];
+
+    return (
+      <div className={`min-h-screen bg-gradient-to-b ${location.skyGradient} relative overflow-hidden pb-24`}>
+        {/* Background */}
+        <div className="absolute inset-0 pointer-events-none">
+          {Array.from({ length: 8 }).map((_, i) => (
+            <div
+              key={i}
+              className="absolute text-2xl opacity-20"
+              style={{
+                left: `${Math.random() * 100}%`,
+                top: `${Math.random() * 100}%`,
+                animation: `float ${4 + Math.random() * 3}s ease-in-out infinite`,
+                animationDelay: `${Math.random() * 3}s`
+              }}
+            >
+              {location.particles[i % location.particles.length]}
+            </div>
+          ))}
+        </div>
+
+        {/* Header */}
+        <div className="relative z-10 p-4">
+          <div className="flex items-center justify-between mb-4">
+            <button onClick={() => setFishingScreen('title')} className="text-white flex items-center gap-2">
+              <ChevronLeft size={20} />
+              Menu
+            </button>
+            <div className="text-white text-center">
+              <div className="font-bold">{location.name} {location.country}</div>
+              <div className="text-sm opacity-80">Level {fishingGame.level} • {fishingGame.coins} coins</div>
+            </div>
+            <div className="w-16" />
+          </div>
+        </div>
+
+        {/* Water Area */}
+        <div className={`relative mx-4 h-64 bg-gradient-to-b ${location.waterGradient} rounded-2xl shadow-2xl mb-6`}>
+          {/* Simple bobber placeholder - full mechanics coming */}
+          <div className="absolute inset-0 flex items-center justify-center">
+            <div className="text-6xl animate-bounce">⚓</div>
+          </div>
+        </div>
+
+        {/* Control Panel */}
+        <div className="relative z-10 px-4">
+          <div className="bg-gradient-to-br from-amber-700 to-amber-900 rounded-2xl p-6 shadow-2xl">
+            {/* Rod Tabs */}
+            <div className="flex gap-2 mb-4">
+              {Array.from({ length: fishingGame.maxRods }).map((_, i) => (
+                <button
+                  key={i}
+                  onClick={() => setActiveRodIndex(i)}
+                  className={`flex-1 py-2 px-4 rounded-lg font-semibold transition ${
+                    activeRodIndex === i
+                      ? 'bg-blue-500 text-white'
+                      : 'bg-amber-800/50 text-amber-200'
+                  }`}
+                >
+                  🎣 Rod {i + 1}
+                </button>
+              ))}
+            </div>
+
+            {/* Simple Cast Button - Full mechanics coming */}
+            <button className="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-4 rounded-xl shadow-lg active:scale-95 transition">
+              🎣 HOLD TO CAST
+            </button>
+
+            <div className="mt-4 text-center text-amber-100 text-sm">
+              <p>Full multi-rod fishing mechanics</p>
+              <p>coming in next update!</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Quick Nav */}
+        <div className="fixed bottom-0 left-0 right-0 bg-gradient-to-t from-black/50 to-transparent p-4 flex justify-around">
+          <button onClick={() => setFishingScreen('worldmap')} className="text-white flex flex-col items-center gap-1">
+            <Map size={24} />
+            <span className="text-xs">Map</span>
+          </button>
+          <button onClick={() => setFishingScreen('collection')} className="text-white flex flex-col items-center gap-1">
+            <BookOpen size={24} />
+            <span className="text-xs">Collection</span>
+          </button>
+          <button onClick={() => setFishingScreen('shop')} className="text-white flex flex-col items-center gap-1">
+            <ShoppingCart size={24} />
+            <span className="text-xs">Shop</span>
+          </button>
+        </div>
+      </div>
+    );
+  };
+
+  // World Map Screen
+  const renderFishingWorldMap = () => {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-sky-400 to-blue-600 p-4 pb-24">
+        <button onClick={() => setFishingScreen('title')} className="text-white flex items-center gap-2 mb-4">
+          <ChevronLeft size={20} />
+          Back
+        </button>
+
+        <h1 className="text-3xl font-bold text-white mb-6 text-center">🗺️ World Map</h1>
+
+        <div className="space-y-3">
+          {Object.values(FISHING_LOCATIONS).map(loc => {
+            const isUnlocked = fishingGame.unlockedLocations.includes(loc.id);
+            const isCurrent = fishingGame.currentLocation === loc.id;
+            const fishCaught = loc.fish.filter(fid => fishingGame.fishCollection[fid]).length;
+
+            return (
+              <div
+                key={loc.id}
+                className={`rounded-2xl p-5 ${
+                  isUnlocked ? 'bg-white' : 'bg-gray-800 opacity-60'
+                }`}
+              >
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-3">
+                    <div className="text-3xl">{isUnlocked ? <Unlock /> : <Lock />}</div>
+                    <div>
+                      <div className="font-bold text-lg flex items-center gap-2">
+                        {loc.name} {loc.country}
+                        {isCurrent && <span className="text-xs bg-blue-500 text-white px-2 py-1 rounded">Current</span>}
+                      </div>
+                      <div className="text-sm text-gray-600">
+                        {isUnlocked ? `${fishCaught}/${loc.fish.length} species` : `Unlock at Level ${loc.unlockLevel}`}
+                      </div>
+                    </div>
+                  </div>
+                  {isUnlocked && !isCurrent && (
+                    <button
+                      onClick={() => {
+                        setFishingGame(prev => ({ ...prev, currentLocation: loc.id }));
+                        setFishingScreen('game');
+                      }}
+                      className="bg-blue-500 text-white px-4 py-2 rounded-lg font-semibold"
+                    >
+                      Travel
+                    </button>
+                  )}
+                </div>
+                <p className="text-sm text-gray-700 italic">{loc.description}</p>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    );
+  };
+
+  // Collection Screen
+  const renderFishingCollection = () => {
+    const allFish = Object.values(FISH_DATA);
+    const filteredFish = collectionFilter === 'all'
+      ? allFish
+      : allFish.filter(f => f.location === collectionFilter);
+
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-blue-400 to-blue-600 p-4 pb-24">
+        <button onClick={() => setFishingScreen('title')} className="text-white flex items-center gap-2 mb-4">
+          <ChevronLeft size={20} />
+          Back
+        </button>
+
+        <h1 className="text-3xl font-bold text-white mb-4 text-center">📖 Fish Collection</h1>
+
+        {/* Filter */}
+        <div className="flex gap-2 mb-4 overflow-x-auto pb-2">
+          <button
+            onClick={() => setCollectionFilter('all')}
+            className={`px-4 py-2 rounded-lg font-semibold whitespace-nowrap ${
+              collectionFilter === 'all' ? 'bg-white text-blue-600' : 'bg-blue-500 text-white'
+            }`}
+          >
+            All ({allFish.length})
+          </button>
+          {Object.values(FISHING_LOCATIONS).map(loc => (
+            <button
+              key={loc.id}
+              onClick={() => setCollectionFilter(loc.id)}
+              className={`px-4 py-2 rounded-lg font-semibold whitespace-nowrap ${
+                collectionFilter === loc.id ? 'bg-white text-blue-600' : 'bg-blue-500 text-white'
+              }`}
+            >
+              {loc.country} ({loc.fish.length})
+            </button>
+          ))}
+        </div>
+
+        {/* Fish Grid */}
+        <div className="grid grid-cols-2 gap-3">
+          {filteredFish.map(fish => {
+            const caught = fishingGame.fishCollection[fish.id];
+            const pb = fishingGame.personalBests[fish.id];
+
+            return (
+              <div key={fish.id} className="bg-white rounded-xl p-4 shadow-lg">
+                <div className="text-5xl mb-2 text-center">{caught ? fish.emoji : '❓'}</div>
+                <div className={`text-center font-bold mb-1 ${caught ? '' : 'blur-sm'}`}>
+                  {caught ? fish.name : '???'}
+                </div>
+                <div className={`text-center text-xs px-2 py-1 rounded ${getRarityStyle(fish.rarity)} mb-2`}>
+                  {caught ? fish.rarity.toUpperCase() : '???'}
+                </div>
+                {caught && (
+                  <>
+                    <div className="text-xs text-gray-600 text-center">
+                      Caught: {caught.count}x
+                    </div>
+                    {pb && (
+                      <div className="text-xs text-center font-semibold text-amber-600 mt-1">
+                        PB: {pb}kg
+                      </div>
+                    )}
+                  </>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    );
+  };
+
+  // Shop Screen
+  const renderFishingShop = () => {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-amber-400 to-orange-600 p-4 pb-24">
+        <button onClick={() => setFishingScreen('title')} className="text-white flex items-center gap-2 mb-4">
+          <ChevronLeft size={20} />
+          Back
+        </button>
+
+        <div className="flex items-center justify-between mb-6">
+          <h1 className="text-3xl font-bold text-white">🛒 Shop</h1>
+          <div className="bg-white rounded-lg px-4 py-2 font-bold text-amber-600">
+            {fishingGame.coins} coins
+          </div>
+        </div>
+
+        {/* Category Tabs */}
+        <div className="flex gap-2 mb-4 overflow-x-auto pb-2">
+          {['rods', 'reels', 'lines', 'baits'].map(cat => (
+            <button
+              key={cat}
+              onClick={() => setShopCategory(cat)}
+              className={`px-4 py-2 rounded-lg font-semibold whitespace-nowrap ${
+                shopCategory === cat ? 'bg-white text-amber-600' : 'bg-amber-500 text-white'
+              }`}
+            >
+              {cat.charAt(0).toUpperCase() + cat.slice(1)}
+            </button>
+          ))}
+        </div>
+
+        {/* Items */}
+        <div className="space-y-3">
+          {shopCategory === 'rods' && Object.values(RODS).map(rod => {
+            const owned = fishingGame.inventory.rods.includes(rod.id);
+            const equipped = fishingGame.equipment.rod === rod.id;
+            const canBuy = fishingGame.level >= rod.unlockLevel && fishingGame.coins >= rod.price;
+
+            return (
+              <div key={rod.id} className="bg-white rounded-xl p-4">
+                <div className="flex justify-between items-start mb-2">
+                  <div>
+                    <div className="font-bold text-lg">{rod.name}</div>
+                    <div className="text-sm text-gray-600">Cast: {rod.castPower} • Max: {rod.maxLine}</div>
+                  </div>
+                  <div className="text-right">
+                    {equipped && <div className="text-xs bg-green-500 text-white px-2 py-1 rounded mb-1">Equipped</div>}
+                    {owned && !equipped && <div className="text-xs bg-blue-500 text-white px-2 py-1 rounded mb-1">Owned</div>}
+                    {!owned && <div className="font-bold text-amber-600">{rod.price} coins</div>}
+                  </div>
+                </div>
+                {!owned && fishingGame.level < rod.unlockLevel && (
+                  <div className="text-sm text-gray-500">🔒 Unlock at Level {rod.unlockLevel}</div>
+                )}
+                {!owned && canBuy && (
+                  <button className="w-full mt-2 bg-amber-500 text-white py-2 rounded-lg font-semibold">
+                    Buy
+                  </button>
+                )}
+                {owned && !equipped && (
+                  <button className="w-full mt-2 bg-blue-500 text-white py-2 rounded-lg font-semibold">
+                    Equip
+                  </button>
+                )}
+              </div>
+            );
+          })}
+          {/* Similar for other categories - keeping simple for now */}
+        </div>
+      </div>
+    );
+  };
+
+  // Stats Screen
+  const renderFishingStats = () => {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-purple-400 to-purple-700 p-4 pb-24">
+        <button onClick={() => setFishingScreen('title')} className="text-white flex items-center gap-2 mb-4">
+          <ChevronLeft size={20} />
+          Back
+        </button>
+
+        <h1 className="text-3xl font-bold text-white mb-6 text-center">📊 Statistics</h1>
+
+        <div className="space-y-4">
+          {/* Career Stats */}
+          <div className="bg-white rounded-xl p-5">
+            <h3 className="font-bold text-lg mb-3 flex items-center gap-2">
+              <Trophy className="text-amber-500" />
+              Career Stats
+            </h3>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="text-center">
+                <div className="text-3xl font-bold text-blue-600">{fishingGame.stats.totalCaught}</div>
+                <div className="text-sm text-gray-600">Total Fish</div>
+              </div>
+              <div className="text-center">
+                <div className="text-3xl font-bold text-purple-600">{fishingGame.stats.speciesDiscovered}</div>
+                <div className="text-sm text-gray-600">Species</div>
+              </div>
+              <div className="text-center">
+                <div className="text-3xl font-bold text-green-600">{fishingGame.stats.totalWeight.toFixed(1)}kg</div>
+                <div className="text-sm text-gray-600">Total Weight</div>
+              </div>
+              <div className="text-center">
+                <div className="text-3xl font-bold text-amber-600">{fishingGame.stats.biggestCatch}kg</div>
+                <div className="text-sm text-gray-600">Biggest Catch</div>
+              </div>
+            </div>
+          </div>
+
+          {/* Rarity Breakdown */}
+          <div className="bg-white rounded-xl p-5">
+            <h3 className="font-bold text-lg mb-3">By Rarity</h3>
+            <div className="space-y-2">
+              <div className="flex justify-between items-center">
+                <span className="text-gray-700">Common</span>
+                <span className="font-bold">{fishingGame.stats.commonCaught}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-green-600">Uncommon</span>
+                <span className="font-bold">{fishingGame.stats.uncommonCaught}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-blue-600">Rare</span>
+                <span className="font-bold">{fishingGame.stats.rareCaught}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-purple-600">Epic</span>
+                <span className="font-bold">{fishingGame.stats.epicCaught}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-amber-600">Legendary</span>
+                <span className="font-bold">{fishingGame.stats.legendaryCaught}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  // Main Fishing Render
+  const renderFishing = () => {
+    if (fishingScreen === 'title') return renderFishingTitle();
+    if (fishingScreen === 'game') return renderFishingGame();
+    if (fishingScreen === 'worldmap') return renderFishingWorldMap();
+    if (fishingScreen === 'collection') return renderFishingCollection();
+    if (fishingScreen === 'shop') return renderFishingShop();
+    if (fishingScreen === 'stats') return renderFishingStats();
+    return renderFishingTitle();
   };
 
   // Gallery Screen
@@ -1934,6 +2527,7 @@ export default function RichsToolkit() {
             { id: 'weather', title: 'Weather', icon: Cloud, color: 'bg-sky-500', desc: '7-day forecast' },
             { id: 'gallery', title: 'Gallery', icon: Camera, color: 'bg-purple-500', desc: 'Photos & notes' },
             { id: 'conversions', title: 'Conversions', icon: ArrowLeftRight, color: 'bg-indigo-500', desc: 'Imperial ↔ Metric' },
+            { id: 'fishing', title: 'Fishing', icon: Fish, color: 'bg-blue-600', desc: 'Fishing adventure' },
           ].map((feature) => {
             const IconComponent = feature.icon;
             return <button key={feature.id} onClick={() => setCurrentScreen(feature.id)} className={`${theme.cardBg} rounded-2xl p-4 text-left shadow-sm border ${theme.border} active:scale-95 transition-all duration-500`}><div className={`${feature.color} w-12 h-12 rounded-xl flex items-center justify-center mb-3`}><IconComponent size={24} className="text-white" /></div><h3 className={`font-semibold ${theme.text}`}>{feature.title}</h3><p className={`text-sm ${theme.textSecondary}`}>{feature.desc}</p></button>;
@@ -2156,6 +2750,7 @@ export default function RichsToolkit() {
     if (currentScreen === 'suppliers') return renderSuppliers();
     if (currentScreen === 'weather') return renderWeather();
     if (currentScreen === 'gallery') return renderGallery();
+    if (currentScreen === 'fishing') return renderFishing();
     if (currentScreen === 'snagging') {
       if (selectedRoom) return renderRoomDetail();
       if (selectedSnaggingProject) return renderProjectSnagging();
