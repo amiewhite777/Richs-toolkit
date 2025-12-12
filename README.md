@@ -5,7 +5,7 @@ A mobile-first app for heritage building work in Bath, designed for builders wor
 ## Features
 
 - **Calculators** — Plaster, paint, timber, tiles, concrete, stud walls
-- **Snagging Lists** — Room-by-room punch lists with priorities
+- **Snagging Lists** — Room-by-room snag lists with priorities
 - **Time & Expenses** — Log hours, receipts, mileage (45p/mile HMRC rate)
 - **Suppliers** — Quick-dial contacts with material list builder
 - **Weather** — 7-day forecast with work condition assessments
