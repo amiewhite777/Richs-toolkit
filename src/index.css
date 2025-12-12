@@ -109,6 +109,21 @@ input[type="number"]::-webkit-outer-spin-button {
   }
 }
 
+@keyframes float-balloon {
+  0% {
+    transform: translateY(0px) translateX(0px);
+    opacity: 0.8;
+  }
+  50% {
+    transform: translateY(-400px) translateX(20px);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(-800px) translateX(-20px);
+    opacity: 0;
+  }
+}
+
 .weather-sunray {
   position: absolute;
   width: 100px;

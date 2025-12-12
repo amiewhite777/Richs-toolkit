@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Calculator, ChevronRight, ChevronLeft, Home, Camera, ClipboardList, PaintBucket, Ruler, Grid3X3, Package, Layers, Plus, Building2, Sun, Landmark, Image, FileText, X, Clock, MapPin, Calendar, Phone, Square, AlertTriangle, CheckCircle, Check, Flag, Send, ArrowLeftRight, Receipt, Car, Trash2, Star, MessageSquare, Copy, PhoneCall, Search, Users, Cloud, CloudRain, CloudSnow, CloudDrizzle, CloudLightning, Wind, Droplets, Thermometer, Umbrella, AlertCircle, CloudSun, Moon, Sunrise, Sunset, Eye, Loader2, DollarSign, TrendingUp, PiggyBank, CreditCard, Download } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Calculator, ChevronRight, ChevronLeft, Home, Camera, ClipboardList, PaintBucket, Ruler, Grid3X3, Package, Layers, Plus, Building2, Sun, Landmark, Image, FileText, X, Clock, MapPin, Calendar, Phone, Square, AlertTriangle, CheckCircle, Check, Flag, Send, ArrowLeftRight, Receipt, Car, Trash2, Star, MessageSquare, Copy, PhoneCall, Search, Users, Cloud, CloudRain, CloudSnow, CloudDrizzle, CloudLightning, Wind, Droplets, Thermometer, Umbrella, AlertCircle, CloudSun, Moon, Sunrise, Sunset, Eye, Loader2, DollarSign, TrendingUp, PiggyBank, CreditCard, Download, Settings } from 'lucide-react';
 import { useWeather } from './useWeather';
 import { useLocalStorage } from './useLocalStorage';
 
@@ -80,6 +80,21 @@ export default function RichsToolkit() {
     }
   });
   const [budgetTab, setBudgetTab] = useState('personal');
+  const [editingCategory, setEditingCategory] = useState(null);
+  const [showAddCategory, setShowAddCategory] = useState(false);
+  const [newCategoryData, setNewCategoryData] = useState({ name: '', budget: '', spent: '', color: 'bg-blue-500' });
+
+  // Current time state
+  const [currentTime, setCurrentTime] = useState(new Date());
+
+  // Update time every minute
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 60000); // Update every minute
+
+    return () => clearInterval(timer);
+  }, []);
 
   // Work condition assessments
   const getWorkConditions = (temp, rain, wind, condition) => {
@@ -162,65 +177,50 @@ export default function RichsToolkit() {
 
   const [suppliers, setSuppliers] = useLocalStorage('richs-toolkit-suppliers', [
     // Merchants - Builders Merchants
-    { id: 1, name: 'Travis Perkins Bath', category: 'merchants', phone: '01225 444555', address: 'Lower Bristol Road, Bath', favorite: true, notes: 'Ask for trade discount - account #TP4421' },
-    { id: 2, name: 'Jewson Bath', category: 'merchants', phone: '01225 333666', address: 'Locksbrook Road, Bath', favorite: true, notes: 'Good for timber, delivers before 7am' },
-    { id: 3, name: 'Selco Builders Warehouse', category: 'merchants', phone: '01225 789456', address: 'Brassmill Lane, Bath', favorite: false, notes: 'Cash & carry, competitive prices' },
-    { id: 4, name: 'Buildbase Bath', category: 'merchants', phone: '01225 424242', address: 'Midland Road, Bath', favorite: false, notes: 'Plumbing and heavy materials' },
+    { id: 1, name: 'Travis Perkins Bath', category: 'merchants', phone: '01225 444555', address: 'Lower Bristol Road, Bath', website: 'travisperkins.co.uk', favorite: true, notes: 'Ask for trade discount - account #TP4421' },
+    { id: 2, name: 'Jewson Bath', category: 'merchants', phone: '01225 333666', address: 'Locksbrook Road, Bath', website: 'jewson.co.uk', favorite: true, notes: 'Good for timber, delivers before 7am' },
+    { id: 3, name: 'Selco Builders Warehouse', category: 'merchants', phone: '01225 789456', address: 'Brassmill Lane, Bath', website: 'selcobw.com', favorite: false, notes: 'Cash & carry, competitive prices' },
+    { id: 4, name: 'Buildbase Bath', category: 'merchants', phone: '01225 424242', address: 'Midland Road, Bath', website: 'buildbase.co.uk', favorite: false, notes: 'Plumbing and heavy materials' },
 
     // Bath Stone & Masonry
-    { id: 5, name: 'Hartham Park Quarry', category: 'stone', phone: '01225 811083', address: 'Corsham, Wiltshire', favorite: true, notes: 'Best for new Bath stone' },
-    { id: 6, name: 'Bath & Portland Stone', category: 'stone', phone: '01225 858555', address: 'Corsham', favorite: true, notes: 'Ashlar, mouldings, restoration stone' },
-    { id: 7, name: 'Stoke Ground Stone', category: 'stone', phone: '01225 742488', address: 'Box, Corsham', favorite: false, notes: 'Premium Bath stone, slow delivery' },
-    { id: 8, name: 'Stone Projects', category: 'stone', phone: '01225 315315', address: 'Bath', favorite: false, notes: 'Stone cutting and bespoke work' },
+    { id: 5, name: 'Hartham Park Quarry', category: 'stone', phone: '01225 811083', address: 'Corsham, Wiltshire', website: '', favorite: true, notes: 'Best for new Bath stone' },
+    { id: 6, name: 'Bath & Portland Stone', category: 'stone', phone: '01225 858555', address: 'Corsham', website: 'bathandportlandstone.co.uk', favorite: true, notes: 'Ashlar, mouldings, restoration stone' },
+    { id: 7, name: 'Stoke Ground Stone', category: 'stone', phone: '01225 742488', address: 'Box, Corsham', website: '', favorite: false, notes: 'Premium Bath stone, slow delivery' },
+    { id: 8, name: 'Stone Projects', category: 'stone', phone: '01225 315315', address: 'Bath', website: '', favorite: false, notes: 'Stone cutting and bespoke work' },
 
     // Heritage & Lime Specialists
-    { id: 9, name: 'Mike Wye Associates', category: 'heritage', phone: '01409 281644', address: 'Devon (delivers)', favorite: true, notes: 'Lime putty, NHL, traditional paints' },
-    { id: 10, name: 'Lime Technology', category: 'heritage', phone: '01952 728611', address: 'Shropshire (delivers)', favorite: true, notes: 'Hemp lime, insulation, breathable systems' },
-    { id: 11, name: 'Ty-Mawr Lime', category: 'heritage', phone: '01874 658249', address: 'Wales (delivers)', favorite: false, notes: 'Natural hydraulic lime, plasters' },
-    { id: 12, name: 'The Bath Stone Company', category: 'heritage', phone: '01225 858444', address: 'Corsham', favorite: false, notes: 'Conservation and restoration advice' },
+    { id: 9, name: 'Mike Wye Associates', category: 'heritage', phone: '01409 281644', address: 'Devon (delivers)', website: 'mikewye.co.uk', favorite: true, notes: 'Lime putty, NHL, traditional paints' },
+    { id: 10, name: 'Lime Technology', category: 'heritage', phone: '01952 728611', address: 'Shropshire (delivers)', website: 'limetechnology.co.uk', favorite: true, notes: 'Hemp lime, insulation, breathable systems' },
+    { id: 11, name: 'Ty-Mawr Lime', category: 'heritage', phone: '01874 658249', address: 'Wales (delivers)', website: 'lime.org.uk', favorite: false, notes: 'Natural hydraulic lime, plasters' },
+    { id: 12, name: 'The Bath Stone Company', category: 'heritage', phone: '01225 858444', address: 'Corsham', website: '', favorite: false, notes: 'Conservation and restoration advice' },
 
     // Tool Hire & Plant
-    { id: 13, name: 'Speedy Hire Bath', category: 'hire', phone: '01225 555111', address: 'Lower Bristol Road, Bath', favorite: true, notes: 'Scaffolding, heavy plant' },
-    { id: 14, name: 'HSS Hire Bath', category: 'hire', phone: '01225 463636', address: 'Lower Bristol Road, Bath', favorite: false, notes: 'Tools, access equipment' },
-    { id: 15, name: 'Brandon Hire Station', category: 'hire', phone: '01225 789000', address: 'Bath', favorite: false, notes: 'Specialist lifting and access' },
+    { id: 13, name: 'Speedy Hire Bath', category: 'hire', phone: '01225 555111', address: 'Lower Bristol Road, Bath', website: 'speedyservices.com', favorite: true, notes: 'Scaffolding, heavy plant' },
+    { id: 14, name: 'HSS Hire Bath', category: 'hire', phone: '01225 463636', address: 'Lower Bristol Road, Bath', website: 'hss.com', favorite: false, notes: 'Tools, access equipment' },
+    { id: 15, name: 'Brandon Hire Station', category: 'hire', phone: '01225 789000', address: 'Bath', website: 'brandon-hire.co.uk', favorite: false, notes: 'Specialist lifting and access' },
 
     // Specialists
-    { id: 16, name: 'Bath Sash Windows', category: 'specialist', phone: '01225 789123', address: 'Larkhall, Bath', favorite: true, notes: 'Sash window repairs and draught proofing' },
-    { id: 17, name: 'Georgian Joinery', category: 'specialist', phone: '01225 444789', address: 'Bath', favorite: true, notes: 'Period doors, shutters, panelling' },
-    { id: 18, name: 'Bath Architectural Salvage', category: 'specialist', phone: '01225 311174', address: 'Northgate Street, Bath', favorite: false, notes: 'Period fixtures, fireplaces, doors' },
-    { id: 19, name: 'Traditional Ironmongery', category: 'specialist', phone: '01225 318181', address: 'Bath', favorite: false, notes: 'Georgian locks, handles, hinges' },
-    { id: 20, name: 'Heritage Decorative Finishes', category: 'specialist', phone: '01225 505050', address: 'Bath', favorite: false, notes: 'Specialist plastering and decorative work' },
-    { id: 21, name: 'Bath Plastering', category: 'specialist', phone: '01225 767676', address: 'Bath', favorite: false, notes: 'Lime plastering specialists' },
-    { id: 22, name: 'Farrow & Ball Bath', category: 'specialist', phone: '01225 469300', address: 'Walcot Street, Bath', favorite: false, notes: 'Traditional paints and wallpapers' },
-    { id: 23, name: 'Bathroom City Bath', category: 'specialist', phone: '01225 421421', address: 'Lower Bristol Road, Bath', favorite: false, notes: 'Period-style bathrooms and fittings' },
+    { id: 16, name: 'Bath Sash Windows', category: 'specialist', phone: '01225 789123', address: 'Larkhall, Bath', website: '', favorite: true, notes: 'Sash window repairs and draught proofing' },
+    { id: 17, name: 'Georgian Joinery', category: 'specialist', phone: '01225 444789', address: 'Bath', website: '', favorite: true, notes: 'Period doors, shutters, panelling' },
+    { id: 18, name: 'Bath Architectural Salvage', category: 'specialist', phone: '01225 311174', address: 'Northgate Street, Bath', website: 'bathsalvage.com', favorite: false, notes: 'Period fixtures, fireplaces, doors' },
+    { id: 19, name: 'Traditional Ironmongery', category: 'specialist', phone: '01225 318181', address: 'Bath', website: '', favorite: false, notes: 'Georgian locks, handles, hinges' },
+    { id: 20, name: 'Heritage Decorative Finishes', category: 'specialist', phone: '01225 505050', address: 'Bath', website: '', favorite: false, notes: 'Specialist plastering and decorative work' },
+    { id: 21, name: 'Bath Plastering', category: 'specialist', phone: '01225 767676', address: 'Bath', website: '', favorite: false, notes: 'Lime plastering specialists' },
+    { id: 22, name: 'Farrow & Ball Bath', category: 'specialist', phone: '01225 469300', address: 'Walcot Street, Bath', website: 'farrow-ball.com', favorite: false, notes: 'Traditional paints and wallpapers' },
+    { id: 23, name: 'Bathroom City Bath', category: 'specialist', phone: '01225 421421', address: 'Lower Bristol Road, Bath', website: '', favorite: false, notes: 'Period-style bathrooms and fittings' },
   ]);
 
-  const [newSupplier, setNewSupplier] = useState({ name: '', category: 'merchants', phone: '', address: '', notes: '' });
-  
-  const [timeEntries, setTimeEntries] = useLocalStorage('richs-toolkit-time-entries', [
-    { id: 1, project: 'The Circus - No. 14', date: '2024-03-15', hours: 8, minutes: 30, notes: 'Plastering drawing room', break: 30 },
-  ]);
+  const [newSupplier, setNewSupplier] = useState({ name: '', category: 'merchants', phone: '', address: '', website: '', notes: '' });
 
-  const [receipts, setReceipts] = useLocalStorage('richs-toolkit-receipts', [
-    { id: 1, date: '2024-03-15', supplier: 'Travis Perkins', amount: 147.50, category: 'Materials', project: 'The Circus - No. 14', description: 'Plaster, PVA', photo: true },
-  ]);
-
-  const [mileageEntries, setMileageEntries] = useLocalStorage('richs-toolkit-mileage', [
-    { id: 1, date: '2024-03-15', from: 'Home', to: 'The Circus', miles: 12, project: 'The Circus - No. 14', return: true },
-  ]);
+  const [timeEntries, setTimeEntries] = useLocalStorage('richs-toolkit-time-entries', []);
+  const [receipts, setReceipts] = useLocalStorage('richs-toolkit-receipts', []);
+  const [mileageEntries, setMileageEntries] = useLocalStorage('richs-toolkit-mileage', []);
 
   const [newTimeEntry, setNewTimeEntry] = useState({ project: '', hours: '', minutes: '', notes: '', break: '30' });
   const [newReceipt, setNewReceipt] = useState({ supplier: '', amount: '', category: 'Materials', project: '', description: '' });
   const [newMileage, setNewMileage] = useState({ from: 'Home', to: '', miles: '', project: '', return: true });
-  
-  const [projects, setProjects] = useLocalStorage('richs-toolkit-projects', [
-    { id: 1, name: 'The Circus - No. 14', grade: 'Grade II*', address: '14 The Circus, Bath BA1 2ET', startDate: '2024-01-15', photos: [], snagging: [
-      { id: 'room1', name: 'Drawing Room', items: [
-        { id: 1, description: 'Touch up cornice paint', priority: 'low', complete: true, notes: '', date: '2024-03-01', photo: false },
-        { id: 2, description: 'Fill crack above doorway', priority: 'medium', complete: false, notes: '', date: '2024-03-01', photo: false },
-      ]},
-    ]},
-  ]);
+
+  const [projects, setProjects] = useLocalStorage('richs-toolkit-projects', []);
 
   const [plasterInputs, setPlasterInputs] = useState({ length: '', width: '', height: '', type: 'multifinish' });
   const [paintInputs, setPaintInputs] = useState({ length: '', width: '', height: '', coats: '2' });
@@ -263,6 +263,49 @@ export default function RichsToolkit() {
   const formatTime = (hours, minutes) => `${hours}h ${minutes}m`;
   const formatCurrency = (amount) => `£${amount.toFixed(2)}`;
   const getTodayDate = () => new Date().toISOString().split('T')[0];
+
+  // Budget management functions
+  const updateCategoryBudget = (categoryId, field, value) => {
+    setBudgets(prev => ({
+      ...prev,
+      personal: {
+        ...prev.personal,
+        categories: prev.personal.categories.map(cat =>
+          cat.id === categoryId ? { ...cat, [field]: field === 'name' || field === 'color' ? value : parseFloat(value) || 0 } : cat
+        )
+      }
+    }));
+  };
+
+  const addBudgetCategory = () => {
+    if (!newCategoryData.name || !newCategoryData.budget) return;
+    const newCategory = {
+      id: Date.now().toString(),
+      name: newCategoryData.name,
+      budget: parseFloat(newCategoryData.budget) || 0,
+      spent: parseFloat(newCategoryData.spent) || 0,
+      color: newCategoryData.color
+    };
+    setBudgets(prev => ({
+      ...prev,
+      personal: {
+        ...prev.personal,
+        categories: [...prev.personal.categories, newCategory]
+      }
+    }));
+    setNewCategoryData({ name: '', budget: '', spent: '', color: 'bg-blue-500' });
+    setShowAddCategory(false);
+  };
+
+  const deleteBudgetCategory = (categoryId) => {
+    setBudgets(prev => ({
+      ...prev,
+      personal: {
+        ...prev.personal,
+        categories: prev.personal.categories.filter(cat => cat.id !== categoryId)
+      }
+    }));
+  };
 
   // Day/Night detection based on sunrise/sunset
   const isDaytime = () => {
@@ -335,7 +378,7 @@ export default function RichsToolkit() {
   const addSupplier = () => {
     if (!newSupplier.name || !newSupplier.phone) return;
     setSuppliers([...suppliers, { id: Date.now(), ...newSupplier, favorite: false }]);
-    setNewSupplier({ name: '', category: 'merchants', phone: '', address: '', notes: '' });
+    setNewSupplier({ name: '', category: 'merchants', phone: '', address: '', website: '', notes: '' });
     setShowAddSupplier(false);
   };
 
@@ -873,6 +916,11 @@ export default function RichsToolkit() {
                 <button onClick={() => toggleFavorite(supplier.id)}><Star size={16} className={supplier.favorite ? 'fill-amber-400 text-amber-400' : 'text-gray-300'} /></button>
               </div>
               <p className="text-sm text-gray-500 mb-2">{supplier.address}</p>
+              {supplier.website && (
+                <a href={`https://${supplier.website}`} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-600 underline block mb-2">
+                  {supplier.website}
+                </a>
+              )}
               {supplier.notes && <p className="text-xs text-teal-600 bg-teal-50 px-2 py-1 rounded-lg inline-block mb-2">{supplier.notes}</p>}
               <div className="flex gap-2">
                 <a href={`tel:${supplier.phone}`} className="flex-1 p-2 bg-teal-500 text-white rounded-lg font-medium flex items-center justify-center gap-2"><PhoneCall size={16} /> Call</a>
@@ -894,6 +942,8 @@ export default function RichsToolkit() {
           <input type="text" value={newSupplier.name} onChange={(e) => setNewSupplier({ ...newSupplier, name: e.target.value })} placeholder="Supplier name" className="w-full p-3 bg-gray-100 rounded-xl" />
           <input type="tel" value={newSupplier.phone} onChange={(e) => setNewSupplier({ ...newSupplier, phone: e.target.value })} placeholder="Phone number" className="w-full p-3 bg-gray-100 rounded-xl" />
           <input type="text" value={newSupplier.address} onChange={(e) => setNewSupplier({ ...newSupplier, address: e.target.value })} placeholder="Address" className="w-full p-3 bg-gray-100 rounded-xl" />
+          <input type="text" value={newSupplier.website} onChange={(e) => setNewSupplier({ ...newSupplier, website: e.target.value })} placeholder="Website (e.g., example.co.uk)" className="w-full p-3 bg-gray-100 rounded-xl" />
+          <textarea value={newSupplier.notes} onChange={(e) => setNewSupplier({ ...newSupplier, notes: e.target.value })} placeholder="Notes (optional)" className="w-full p-3 bg-gray-100 rounded-xl" rows="2" />
           <button onClick={addSupplier} className="w-full p-4 bg-teal-500 text-white rounded-xl font-semibold">Save</button>
         </div>
       </div>
@@ -1568,24 +1618,167 @@ export default function RichsToolkit() {
   const renderBudget = () => {
     const totalBudget = budgets.personal.categories.reduce((sum, cat) => sum + cat.budget, 0);
     const totalSpent = budgets.personal.categories.reduce((sum, cat) => sum + cat.spent, 0);
+
+    const colorOptions = [
+      { value: 'bg-blue-500', label: 'Blue', class: 'bg-blue-500' },
+      { value: 'bg-green-500', label: 'Green', class: 'bg-green-500' },
+      { value: 'bg-purple-500', label: 'Purple', class: 'bg-purple-500' },
+      { value: 'bg-orange-500', label: 'Orange', class: 'bg-orange-500' },
+      { value: 'bg-red-500', label: 'Red', class: 'bg-red-500' },
+      { value: 'bg-pink-500', label: 'Pink', class: 'bg-pink-500' },
+      { value: 'bg-yellow-500', label: 'Yellow', class: 'bg-yellow-500' },
+      { value: 'bg-teal-500', label: 'Teal', class: 'bg-teal-500' },
+      { value: 'bg-indigo-500', label: 'Indigo', class: 'bg-indigo-500' },
+      { value: 'bg-gray-500', label: 'Gray', class: 'bg-gray-500' },
+    ];
+
     return (
       <div className="p-4 pb-24">
         <button onClick={() => setCurrentScreen('home')} className="flex items-center gap-2 text-blue-500 mb-4"><ChevronLeft size={20} />Home</button>
-        <div className="flex items-center gap-4 mb-6"><div className="bg-pink-500 w-14 h-14 rounded-2xl flex items-center justify-center"><PiggyBank size={28} className="text-white" /></div><div><h1 className="text-xl font-bold">Budget Tracker</h1></div></div>
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-4">
+            <div className="bg-pink-500 w-14 h-14 rounded-2xl flex items-center justify-center"><PiggyBank size={28} className="text-white" /></div>
+            <h1 className="text-xl font-bold">Budget Tracker</h1>
+          </div>
+          <button onClick={() => setShowAddCategory(true)} className="bg-pink-500 text-white p-2 rounded-lg"><Plus size={20} /></button>
+        </div>
+
         <div className="bg-gradient-to-r from-pink-500 to-rose-500 rounded-2xl p-4 mb-4 text-white">
           <p className="text-sm opacity-90 mb-1">Monthly Budget</p>
           <p className="text-3xl font-bold">£{totalSpent.toFixed(0)} / £{totalBudget.toFixed(0)}</p>
           <div className="mt-2 bg-white/20 rounded-full h-2"><div className="bg-white rounded-full h-2" style={{width: `${Math.min((totalSpent/totalBudget)*100, 100)}%`}}></div></div>
         </div>
-        <div className="space-y-3">{budgets.personal.categories.map(cat => {
-          const percent = (cat.spent / cat.budget) * 100;
-          return (
-            <div key={cat.id} className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
-              <div className="flex justify-between items-center mb-2"><span className="font-semibold">{cat.name}</span><span className="text-sm text-gray-600">£{cat.spent} / £{cat.budget}</span></div>
-              <div className="bg-gray-100 rounded-full h-2"><div className={`${cat.color} rounded-full h-2`} style={{width: `${Math.min(percent, 100)}%`}}></div></div>
+
+        <div className="space-y-3">
+          {budgets.personal.categories.map(cat => {
+            const percent = (cat.spent / cat.budget) * 100;
+            const isEditing = editingCategory === cat.id;
+
+            return (
+              <div key={cat.id} className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+                {isEditing ? (
+                  <div className="space-y-3">
+                    <input
+                      type="text"
+                      value={cat.name}
+                      onChange={(e) => updateCategoryBudget(cat.id, 'name', e.target.value)}
+                      className="w-full p-2 border rounded-lg font-semibold"
+                      placeholder="Category name"
+                    />
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <label className="text-xs text-gray-500">Budget</label>
+                        <input
+                          type="number"
+                          value={cat.budget}
+                          onChange={(e) => updateCategoryBudget(cat.id, 'budget', e.target.value)}
+                          className="w-full p-2 border rounded-lg"
+                          placeholder="Budget"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-xs text-gray-500">Spent</label>
+                        <input
+                          type="number"
+                          value={cat.spent}
+                          onChange={(e) => updateCategoryBudget(cat.id, 'spent', e.target.value)}
+                          className="w-full p-2 border rounded-lg"
+                          placeholder="Spent"
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <label className="text-xs text-gray-500 block mb-1">Color</label>
+                      <div className="flex gap-2 flex-wrap">
+                        {colorOptions.map(color => (
+                          <button
+                            key={color.value}
+                            onClick={() => updateCategoryBudget(cat.id, 'color', color.value)}
+                            className={`w-8 h-8 rounded-full ${color.class} ${cat.color === color.value ? 'ring-2 ring-offset-2 ring-gray-400' : ''}`}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                    <div className="flex gap-2">
+                      <button onClick={() => setEditingCategory(null)} className="flex-1 bg-blue-500 text-white py-2 rounded-lg font-semibold">Done</button>
+                      <button onClick={() => deleteBudgetCategory(cat.id)} className="bg-red-500 text-white px-4 py-2 rounded-lg"><Trash2 size={18} /></button>
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    <div className="flex justify-between items-center mb-2">
+                      <span className="font-semibold">{cat.name}</span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm text-gray-600">£{cat.spent} / £{cat.budget}</span>
+                        <button onClick={() => setEditingCategory(cat.id)} className="text-blue-500 p-1"><Settings size={16} /></button>
+                      </div>
+                    </div>
+                    <div className="bg-gray-100 rounded-full h-2"><div className={`${cat.color} rounded-full h-2`} style={{width: `${Math.min(percent, 100)}%`}}></div></div>
+                  </>
+                )}
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Add Category Modal */}
+        {showAddCategory && (
+          <div className="fixed inset-0 bg-black/50 flex items-end sm:items-center justify-center z-50 p-4" onClick={() => setShowAddCategory(false)}>
+            <div className="bg-white rounded-t-3xl sm:rounded-3xl w-full max-w-lg p-6" onClick={(e) => e.stopPropagation()}>
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-xl font-bold">Add Budget Category</h2>
+                <button onClick={() => setShowAddCategory(false)} className="text-gray-400"><X size={24} /></button>
+              </div>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-semibold mb-1">Category Name</label>
+                  <input
+                    type="text"
+                    value={newCategoryData.name}
+                    onChange={(e) => setNewCategoryData(prev => ({ ...prev, name: e.target.value }))}
+                    className="w-full p-3 border rounded-lg"
+                    placeholder="e.g., Groceries, Transport"
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-sm font-semibold mb-1">Budget Amount</label>
+                    <input
+                      type="number"
+                      value={newCategoryData.budget}
+                      onChange={(e) => setNewCategoryData(prev => ({ ...prev, budget: e.target.value }))}
+                      className="w-full p-3 border rounded-lg"
+                      placeholder="500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold mb-1">Already Spent</label>
+                    <input
+                      type="number"
+                      value={newCategoryData.spent}
+                      onChange={(e) => setNewCategoryData(prev => ({ ...prev, spent: e.target.value }))}
+                      className="w-full p-3 border rounded-lg"
+                      placeholder="0"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold mb-2">Color</label>
+                  <div className="flex gap-2 flex-wrap">
+                    {colorOptions.map(color => (
+                      <button
+                        key={color.value}
+                        onClick={() => setNewCategoryData(prev => ({ ...prev, color: color.value }))}
+                        className={`w-10 h-10 rounded-full ${color.class} ${newCategoryData.color === color.value ? 'ring-2 ring-offset-2 ring-gray-400' : ''}`}
+                      />
+                    ))}
+                  </div>
+                </div>
+                <button onClick={addBudgetCategory} className="w-full bg-pink-500 text-white py-3 rounded-lg font-semibold">Add Category</button>
+              </div>
             </div>
-          );
-        })}</div>
+          </div>
+        )}
       </div>
     );
   };
@@ -1611,12 +1804,128 @@ export default function RichsToolkit() {
 
   const theme = getTheme();
 
+  // Format current time as HH:MM
+  const formatCurrentTime = () => {
+    const hours = currentTime.getHours().toString().padStart(2, '0');
+    const minutes = currentTime.getMinutes().toString().padStart(2, '0');
+    return `${hours}:${minutes}`;
+  };
+
+  // Format current date
+  const formatCurrentDate = () => {
+    const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const dayName = days[currentTime.getDay()];
+    const day = currentTime.getDate();
+    const month = months[currentTime.getMonth()];
+    return `${dayName} ${day} ${month}`;
+  };
+
+  // Check for special events
+  const getSpecialEvent = () => {
+    const month = currentTime.getMonth(); // 0-11
+    const date = currentTime.getDate();
+
+    // New Year's Day (Jan 1)
+    if (month === 0 && date === 1) return 'newyear';
+
+    // Birthday month (August)
+    if (month === 7) return 'birthday';
+
+    // Christmas season (December)
+    if (month === 11) return 'christmas';
+
+    return null;
+  };
+
+  const specialEvent = getSpecialEvent();
+
   return (
     <div className={`min-h-screen ${theme.bg} transition-colors duration-500`}>
       <div className={`max-w-sm mx-auto ${theme.bg} min-h-screen relative transition-colors duration-500`}>
+        {/* Time and date display - top right corner */}
+        <div className={`fixed top-4 right-4 ${theme.cardBg} px-3 py-2 rounded-lg shadow-sm border ${theme.border} transition-all duration-500 z-50 text-right`}>
+          <div className={`text-sm font-semibold ${theme.text} transition-colors duration-500`}>{formatCurrentTime()}</div>
+          <div className={`text-xs ${theme.textSecondary} transition-colors duration-500`}>{formatCurrentDate()}</div>
+        </div>
+
+        {/* Special event animations */}
+        {specialEvent && (
+          <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
+            {specialEvent === 'christmas' && (
+              <>
+                {/* Falling snowflakes for Christmas */}
+                {Array.from({ length: 20 }).map((_, i) => (
+                  <div
+                    key={`snow-${i}`}
+                    className="absolute animate-pulse"
+                    style={{
+                      left: `${Math.random() * 100}%`,
+                      top: `-${Math.random() * 20}%`,
+                      animation: `fall-snow ${4 + Math.random() * 3}s linear infinite`,
+                      animationDelay: `${Math.random() * 4}s`,
+                      fontSize: `${12 + Math.random() * 8}px`,
+                    }}
+                  >
+                    ❄️
+                  </div>
+                ))}
+              </>
+            )}
+
+            {specialEvent === 'newyear' && (
+              <>
+                {/* Confetti for New Year */}
+                {Array.from({ length: 30 }).map((_, i) => {
+                  const colors = ['🎉', '🎊', '✨', '🎆', '🎇'];
+                  return (
+                    <div
+                      key={`confetti-${i}`}
+                      className="absolute"
+                      style={{
+                        left: `${Math.random() * 100}%`,
+                        top: `-${Math.random() * 20}%`,
+                        animation: `fall-snow ${3 + Math.random() * 2}s linear infinite`,
+                        animationDelay: `${Math.random() * 3}s`,
+                        fontSize: '16px',
+                      }}
+                    >
+                      {colors[Math.floor(Math.random() * colors.length)]}
+                    </div>
+                  );
+                })}
+              </>
+            )}
+
+            {specialEvent === 'birthday' && (
+              <>
+                {/* Birthday balloons and confetti */}
+                {Array.from({ length: 15 }).map((_, i) => {
+                  const balloons = ['🎈', '🎂', '🎁', '🎉', '🎊'];
+                  return (
+                    <div
+                      key={`birthday-${i}`}
+                      className="absolute"
+                      style={{
+                        left: `${Math.random() * 100}%`,
+                        bottom: `-${Math.random() * 20}%`,
+                        animation: `float-balloon ${5 + Math.random() * 3}s ease-in-out infinite`,
+                        animationDelay: `${Math.random() * 5}s`,
+                        fontSize: '20px',
+                      }}
+                    >
+                      {balloons[Math.floor(Math.random() * balloons.length)]}
+                    </div>
+                  );
+                })}
+              </>
+            )}
+          </div>
+        )}
+
         {renderCurrentScreen()}
 
-        <div className={`fixed bottom-0 left-0 right-0 ${theme.cardBg} border-t ${theme.border} px-6 py-3 max-w-sm mx-auto transition-all duration-500`}>
+        <div className={`fixed bottom-0 left-0 right-0 ${theme.cardBg} border-t ${theme.border} px-6 py-3 max-w-sm mx-auto transition-all duration-500 z-50`}>
           <div className="flex justify-around">
             {[
               { icon: Home, label: 'Home', screen: 'home' },
