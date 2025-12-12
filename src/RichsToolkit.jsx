@@ -96,6 +96,21 @@ export default function RichsToolkit() {
     return () => clearInterval(timer);
   }, []);
 
+  // Register service worker for offline functionality (PWA)
+  useEffect(() => {
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js')
+          .then((registration) => {
+            console.log('ServiceWorker registered:', registration);
+          })
+          .catch((error) => {
+            console.log('ServiceWorker registration failed:', error);
+          });
+      });
+    }
+  }, []);
+
   // Work condition assessments
   const getWorkConditions = (temp, rain, wind, condition) => {
     const conditions = [];

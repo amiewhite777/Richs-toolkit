@@ -1,0 +1,41 @@
+{
+  "name": "Rich's Toolkit - Bath Heritage Renovations",
+  "short_name": "Rich's Toolkit",
+  "description": "Mobile toolkit for heritage building professionals in Bath",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#0ea5e9",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "192x192 512x512",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ],
+  "categories": ["productivity", "business"],
+  "shortcuts": [
+    {
+      "name": "Add Time Entry",
+      "short_name": "Time",
+      "description": "Quick log work hours",
+      "url": "/?screen=time",
+      "icons": [{ "src": "/icon.svg", "sizes": "192x192" }]
+    },
+    {
+      "name": "Check Weather",
+      "short_name": "Weather",
+      "description": "View Bath weather forecast",
+      "url": "/?screen=weather",
+      "icons": [{ "src": "/icon.svg", "sizes": "192x192" }]
+    }
+  ]
+}
