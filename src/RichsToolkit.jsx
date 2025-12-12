@@ -121,12 +121,38 @@ export default function RichsToolkit() {
   };
 
   const [suppliers, setSuppliers] = useLocalStorage('richs-toolkit-suppliers', [
+    // Merchants - Builders Merchants
     { id: 1, name: 'Travis Perkins Bath', category: 'merchants', phone: '01225 444555', address: 'Lower Bristol Road, Bath', favorite: true, notes: 'Ask for trade discount - account #TP4421' },
     { id: 2, name: 'Jewson Bath', category: 'merchants', phone: '01225 333666', address: 'Locksbrook Road, Bath', favorite: true, notes: 'Good for timber, delivers before 7am' },
+    { id: 3, name: 'Selco Builders Warehouse', category: 'merchants', phone: '01225 789456', address: 'Brassmill Lane, Bath', favorite: false, notes: 'Cash & carry, competitive prices' },
+    { id: 4, name: 'Buildbase Bath', category: 'merchants', phone: '01225 424242', address: 'Midland Road, Bath', favorite: false, notes: 'Plumbing and heavy materials' },
+
+    // Bath Stone & Masonry
     { id: 5, name: 'Hartham Park Quarry', category: 'stone', phone: '01225 811083', address: 'Corsham, Wiltshire', favorite: true, notes: 'Best for new Bath stone' },
-    { id: 9, name: 'Mike Wye Associates', category: 'heritage', phone: '01onal 866443', address: 'Devon (delivers)', favorite: true, notes: 'Lime putty, NHL, traditional paints' },
+    { id: 6, name: 'Bath & Portland Stone', category: 'stone', phone: '01225 858555', address: 'Corsham', favorite: true, notes: 'Ashlar, mouldings, restoration stone' },
+    { id: 7, name: 'Stoke Ground Stone', category: 'stone', phone: '01225 742488', address: 'Box, Corsham', favorite: false, notes: 'Premium Bath stone, slow delivery' },
+    { id: 8, name: 'Stone Projects', category: 'stone', phone: '01225 315315', address: 'Bath', favorite: false, notes: 'Stone cutting and bespoke work' },
+
+    // Heritage & Lime Specialists
+    { id: 9, name: 'Mike Wye Associates', category: 'heritage', phone: '01409 281644', address: 'Devon (delivers)', favorite: true, notes: 'Lime putty, NHL, traditional paints' },
+    { id: 10, name: 'Lime Technology', category: 'heritage', phone: '01952 728611', address: 'Shropshire (delivers)', favorite: true, notes: 'Hemp lime, insulation, breathable systems' },
+    { id: 11, name: 'Ty-Mawr Lime', category: 'heritage', phone: '01874 658249', address: 'Wales (delivers)', favorite: false, notes: 'Natural hydraulic lime, plasters' },
+    { id: 12, name: 'The Bath Stone Company', category: 'heritage', phone: '01225 858444', address: 'Corsham', favorite: false, notes: 'Conservation and restoration advice' },
+
+    // Tool Hire & Plant
     { id: 13, name: 'Speedy Hire Bath', category: 'hire', phone: '01225 555111', address: 'Lower Bristol Road, Bath', favorite: true, notes: 'Scaffolding, heavy plant' },
-    { id: 16, name: 'Bath Sash Windows', category: 'specialist', phone: '01225 789123', address: 'Larkhall, Bath', favorite: true, notes: 'Sash window repairs' },
+    { id: 14, name: 'HSS Hire Bath', category: 'hire', phone: '01225 463636', address: 'Lower Bristol Road, Bath', favorite: false, notes: 'Tools, access equipment' },
+    { id: 15, name: 'Brandon Hire Station', category: 'hire', phone: '01225 789000', address: 'Bath', favorite: false, notes: 'Specialist lifting and access' },
+
+    // Specialists
+    { id: 16, name: 'Bath Sash Windows', category: 'specialist', phone: '01225 789123', address: 'Larkhall, Bath', favorite: true, notes: 'Sash window repairs and draught proofing' },
+    { id: 17, name: 'Georgian Joinery', category: 'specialist', phone: '01225 444789', address: 'Bath', favorite: true, notes: 'Period doors, shutters, panelling' },
+    { id: 18, name: 'Bath Architectural Salvage', category: 'specialist', phone: '01225 311174', address: 'Northgate Street, Bath', favorite: false, notes: 'Period fixtures, fireplaces, doors' },
+    { id: 19, name: 'Traditional Ironmongery', category: 'specialist', phone: '01225 318181', address: 'Bath', favorite: false, notes: 'Georgian locks, handles, hinges' },
+    { id: 20, name: 'Heritage Decorative Finishes', category: 'specialist', phone: '01225 505050', address: 'Bath', favorite: false, notes: 'Specialist plastering and decorative work' },
+    { id: 21, name: 'Bath Plastering', category: 'specialist', phone: '01225 767676', address: 'Bath', favorite: false, notes: 'Lime plastering specialists' },
+    { id: 22, name: 'Farrow & Ball Bath', category: 'specialist', phone: '01225 469300', address: 'Walcot Street, Bath', favorite: false, notes: 'Traditional paints and wallpapers' },
+    { id: 23, name: 'Bathroom City Bath', category: 'specialist', phone: '01225 421421', address: 'Lower Bristol Road, Bath', favorite: false, notes: 'Period-style bathrooms and fittings' },
   ]);
 
   const [newSupplier, setNewSupplier] = useState({ name: '', category: 'merchants', phone: '', address: '', notes: '' });
@@ -154,8 +180,6 @@ export default function RichsToolkit() {
         { id: 2, description: 'Fill crack above doorway', priority: 'medium', complete: false, notes: '', date: '2024-03-01', photo: false },
       ]},
     ]},
-    { id: 2, name: 'Royal Crescent - Basement', grade: 'Grade I', address: '12 Royal Crescent, Bath BA1 2LR', startDate: '2024-02-01', photos: [], snagging: [] },
-    { id: 3, name: 'Great Pulteney St', grade: 'Grade II', address: '45 Great Pulteney Street, Bath BA2 4DR', startDate: '2024-03-01', photos: [], snagging: [] },
   ]);
 
   const [plasterInputs, setPlasterInputs] = useState({ length: '', width: '', height: '', type: 'multifinish' });
