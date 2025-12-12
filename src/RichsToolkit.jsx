@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Calculator, ChevronRight, ChevronLeft, Home, Camera, ClipboardList, PaintBucket, Ruler, Grid3X3, Package, Layers, Plus, Building2, Sun, Landmark, Image, FileText, X, Clock, MapPin, Calendar, Phone, Square, AlertTriangle, CheckCircle, Check, Flag, Send, ArrowLeftRight, Receipt, Car, Trash2, Star, MessageSquare, Copy, PhoneCall, Search, Users, Cloud, CloudRain, CloudSnow, CloudDrizzle, CloudLightning, Wind, Droplets, Thermometer, Umbrella, AlertCircle, CloudSun, Moon, Sunrise, Sunset, Eye, Loader2, DollarSign, TrendingUp, PiggyBank, CreditCard, Download } from 'lucide-react';
+import { Calculator, ChevronRight, ChevronLeft, Home, Camera, ClipboardList, PaintBucket, Ruler, Grid3X3, Package, Layers, Plus, Building2, Sun, Landmark, Image, FileText, X, Clock, MapPin, Calendar, Phone, Square, AlertTriangle, CheckCircle, Check, Flag, Send, ArrowLeftRight, Receipt, Car, Trash2, Star, MessageSquare, Copy, PhoneCall, Search, Users, Cloud, CloudRain, CloudSnow, CloudDrizzle, CloudLightning, Wind, Droplets, Thermometer, Umbrella, AlertCircle, CloudSun, Moon, Sunrise, Sunset, Eye, Loader2, DollarSign, TrendingUp, PiggyBank, CreditCard, Download, Settings } from 'lucide-react';
 import { useWeather } from './useWeather';
 import { useLocalStorage } from './useLocalStorage';
 
@@ -80,6 +80,9 @@ export default function RichsToolkit() {
     }
   });
   const [budgetTab, setBudgetTab] = useState('personal');
+  const [editingCategory, setEditingCategory] = useState(null);
+  const [showAddCategory, setShowAddCategory] = useState(false);
+  const [newCategoryData, setNewCategoryData] = useState({ name: '', budget: '', spent: '', color: 'bg-blue-500' });
 
   // Current time state
   const [currentTime, setCurrentTime] = useState(new Date());
@@ -275,6 +278,49 @@ export default function RichsToolkit() {
   const formatTime = (hours, minutes) => `${hours}h ${minutes}m`;
   const formatCurrency = (amount) => `£${amount.toFixed(2)}`;
   const getTodayDate = () => new Date().toISOString().split('T')[0];
+
+  // Budget management functions
+  const updateCategoryBudget = (categoryId, field, value) => {
+    setBudgets(prev => ({
+      ...prev,
+      personal: {
+        ...prev.personal,
+        categories: prev.personal.categories.map(cat =>
+          cat.id === categoryId ? { ...cat, [field]: field === 'name' || field === 'color' ? value : parseFloat(value) || 0 } : cat
+        )
+      }
+    }));
+  };
+
+  const addBudgetCategory = () => {
+    if (!newCategoryData.name || !newCategoryData.budget) return;
+    const newCategory = {
+      id: Date.now().toString(),
+      name: newCategoryData.name,
+      budget: parseFloat(newCategoryData.budget) || 0,
+      spent: parseFloat(newCategoryData.spent) || 0,
+      color: newCategoryData.color
+    };
+    setBudgets(prev => ({
+      ...prev,
+      personal: {
+        ...prev.personal,
+        categories: [...prev.personal.categories, newCategory]
+      }
+    }));
+    setNewCategoryData({ name: '', budget: '', spent: '', color: 'bg-blue-500' });
+    setShowAddCategory(false);
+  };
+
+  const deleteBudgetCategory = (categoryId) => {
+    setBudgets(prev => ({
+      ...prev,
+      personal: {
+        ...prev.personal,
+        categories: prev.personal.categories.filter(cat => cat.id !== categoryId)
+      }
+    }));
+  };
 
   // Day/Night detection based on sunrise/sunset
   const isDaytime = () => {
@@ -1580,24 +1626,167 @@ export default function RichsToolkit() {
   const renderBudget = () => {
     const totalBudget = budgets.personal.categories.reduce((sum, cat) => sum + cat.budget, 0);
     const totalSpent = budgets.personal.categories.reduce((sum, cat) => sum + cat.spent, 0);
+
+    const colorOptions = [
+      { value: 'bg-blue-500', label: 'Blue', class: 'bg-blue-500' },
+      { value: 'bg-green-500', label: 'Green', class: 'bg-green-500' },
+      { value: 'bg-purple-500', label: 'Purple', class: 'bg-purple-500' },
+      { value: 'bg-orange-500', label: 'Orange', class: 'bg-orange-500' },
+      { value: 'bg-red-500', label: 'Red', class: 'bg-red-500' },
+      { value: 'bg-pink-500', label: 'Pink', class: 'bg-pink-500' },
+      { value: 'bg-yellow-500', label: 'Yellow', class: 'bg-yellow-500' },
+      { value: 'bg-teal-500', label: 'Teal', class: 'bg-teal-500' },
+      { value: 'bg-indigo-500', label: 'Indigo', class: 'bg-indigo-500' },
+      { value: 'bg-gray-500', label: 'Gray', class: 'bg-gray-500' },
+    ];
+
     return (
       <div className="p-4 pb-24">
         <button onClick={() => setCurrentScreen('home')} className="flex items-center gap-2 text-blue-500 mb-4"><ChevronLeft size={20} />Home</button>
-        <div className="flex items-center gap-4 mb-6"><div className="bg-pink-500 w-14 h-14 rounded-2xl flex items-center justify-center"><PiggyBank size={28} className="text-white" /></div><div><h1 className="text-xl font-bold">Budget Tracker</h1></div></div>
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-4">
+            <div className="bg-pink-500 w-14 h-14 rounded-2xl flex items-center justify-center"><PiggyBank size={28} className="text-white" /></div>
+            <h1 className="text-xl font-bold">Budget Tracker</h1>
+          </div>
+          <button onClick={() => setShowAddCategory(true)} className="bg-pink-500 text-white p-2 rounded-lg"><Plus size={20} /></button>
+        </div>
+
         <div className="bg-gradient-to-r from-pink-500 to-rose-500 rounded-2xl p-4 mb-4 text-white">
           <p className="text-sm opacity-90 mb-1">Monthly Budget</p>
           <p className="text-3xl font-bold">£{totalSpent.toFixed(0)} / £{totalBudget.toFixed(0)}</p>
           <div className="mt-2 bg-white/20 rounded-full h-2"><div className="bg-white rounded-full h-2" style={{width: `${Math.min((totalSpent/totalBudget)*100, 100)}%`}}></div></div>
         </div>
-        <div className="space-y-3">{budgets.personal.categories.map(cat => {
-          const percent = (cat.spent / cat.budget) * 100;
-          return (
-            <div key={cat.id} className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
-              <div className="flex justify-between items-center mb-2"><span className="font-semibold">{cat.name}</span><span className="text-sm text-gray-600">£{cat.spent} / £{cat.budget}</span></div>
-              <div className="bg-gray-100 rounded-full h-2"><div className={`${cat.color} rounded-full h-2`} style={{width: `${Math.min(percent, 100)}%`}}></div></div>
+
+        <div className="space-y-3">
+          {budgets.personal.categories.map(cat => {
+            const percent = (cat.spent / cat.budget) * 100;
+            const isEditing = editingCategory === cat.id;
+
+            return (
+              <div key={cat.id} className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+                {isEditing ? (
+                  <div className="space-y-3">
+                    <input
+                      type="text"
+                      value={cat.name}
+                      onChange={(e) => updateCategoryBudget(cat.id, 'name', e.target.value)}
+                      className="w-full p-2 border rounded-lg font-semibold"
+                      placeholder="Category name"
+                    />
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <label className="text-xs text-gray-500">Budget</label>
+                        <input
+                          type="number"
+                          value={cat.budget}
+                          onChange={(e) => updateCategoryBudget(cat.id, 'budget', e.target.value)}
+                          className="w-full p-2 border rounded-lg"
+                          placeholder="Budget"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-xs text-gray-500">Spent</label>
+                        <input
+                          type="number"
+                          value={cat.spent}
+                          onChange={(e) => updateCategoryBudget(cat.id, 'spent', e.target.value)}
+                          className="w-full p-2 border rounded-lg"
+                          placeholder="Spent"
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <label className="text-xs text-gray-500 block mb-1">Color</label>
+                      <div className="flex gap-2 flex-wrap">
+                        {colorOptions.map(color => (
+                          <button
+                            key={color.value}
+                            onClick={() => updateCategoryBudget(cat.id, 'color', color.value)}
+                            className={`w-8 h-8 rounded-full ${color.class} ${cat.color === color.value ? 'ring-2 ring-offset-2 ring-gray-400' : ''}`}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                    <div className="flex gap-2">
+                      <button onClick={() => setEditingCategory(null)} className="flex-1 bg-blue-500 text-white py-2 rounded-lg font-semibold">Done</button>
+                      <button onClick={() => deleteBudgetCategory(cat.id)} className="bg-red-500 text-white px-4 py-2 rounded-lg"><Trash2 size={18} /></button>
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    <div className="flex justify-between items-center mb-2">
+                      <span className="font-semibold">{cat.name}</span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm text-gray-600">£{cat.spent} / £{cat.budget}</span>
+                        <button onClick={() => setEditingCategory(cat.id)} className="text-blue-500 p-1"><Settings size={16} /></button>
+                      </div>
+                    </div>
+                    <div className="bg-gray-100 rounded-full h-2"><div className={`${cat.color} rounded-full h-2`} style={{width: `${Math.min(percent, 100)}%`}}></div></div>
+                  </>
+                )}
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Add Category Modal */}
+        {showAddCategory && (
+          <div className="fixed inset-0 bg-black/50 flex items-end sm:items-center justify-center z-50 p-4" onClick={() => setShowAddCategory(false)}>
+            <div className="bg-white rounded-t-3xl sm:rounded-3xl w-full max-w-lg p-6" onClick={(e) => e.stopPropagation()}>
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-xl font-bold">Add Budget Category</h2>
+                <button onClick={() => setShowAddCategory(false)} className="text-gray-400"><X size={24} /></button>
+              </div>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-semibold mb-1">Category Name</label>
+                  <input
+                    type="text"
+                    value={newCategoryData.name}
+                    onChange={(e) => setNewCategoryData(prev => ({ ...prev, name: e.target.value }))}
+                    className="w-full p-3 border rounded-lg"
+                    placeholder="e.g., Groceries, Transport"
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-sm font-semibold mb-1">Budget Amount</label>
+                    <input
+                      type="number"
+                      value={newCategoryData.budget}
+                      onChange={(e) => setNewCategoryData(prev => ({ ...prev, budget: e.target.value }))}
+                      className="w-full p-3 border rounded-lg"
+                      placeholder="500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold mb-1">Already Spent</label>
+                    <input
+                      type="number"
+                      value={newCategoryData.spent}
+                      onChange={(e) => setNewCategoryData(prev => ({ ...prev, spent: e.target.value }))}
+                      className="w-full p-3 border rounded-lg"
+                      placeholder="0"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold mb-2">Color</label>
+                  <div className="flex gap-2 flex-wrap">
+                    {colorOptions.map(color => (
+                      <button
+                        key={color.value}
+                        onClick={() => setNewCategoryData(prev => ({ ...prev, color: color.value }))}
+                        className={`w-10 h-10 rounded-full ${color.class} ${newCategoryData.color === color.value ? 'ring-2 ring-offset-2 ring-gray-400' : ''}`}
+                      />
+                    ))}
+                  </div>
+                </div>
+                <button onClick={addBudgetCategory} className="w-full bg-pink-500 text-white py-3 rounded-lg font-semibold">Add Category</button>
+              </div>
             </div>
-          );
-        })}</div>
+          </div>
+        )}
       </div>
     );
   };
