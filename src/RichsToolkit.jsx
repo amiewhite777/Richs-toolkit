@@ -13,8 +13,20 @@ export default function RichsToolkit() {
   const [selectedRoom, setSelectedRoom] = useState(null);
   const [showNewSnag, setShowNewSnag] = useState(false);
   const [showNewRoom, setShowNewRoom] = useState(false);
+  const [showNewProject, setShowNewProject] = useState(false);
+  const [showProjectPhotos, setShowProjectPhotos] = useState(false);
   const [newSnagData, setNewSnagData] = useState({ description: '', priority: 'medium', notes: '' });
   const [newRoomName, setNewRoomName] = useState('');
+  const [newProjectData, setNewProjectData] = useState({
+    name: '',
+    grade: 'Grade II',
+    address: '',
+    clientName: '',
+    clientPhone: '',
+    clientEmail: '',
+    startDate: '',
+    notes: ''
+  });
   
   // Conversions state
   const [conversionType, setConversionType] = useState('length');
@@ -321,6 +333,73 @@ export default function RichsToolkit() {
 
   const toggleSnagComplete = (projectId, roomId, itemId) => {
     setProjects(projects.map(p => p.id === projectId ? { ...p, snagging: p.snagging.map(room => room.id === roomId ? { ...room, items: room.items.map(item => item.id === itemId ? { ...item, complete: !item.complete } : item) } : room) } : p));
+  };
+
+  const addNewProject = () => {
+    if (!newProjectData.name) return;
+    const newProject = {
+      id: Date.now(),
+      name: newProjectData.name,
+      grade: newProjectData.grade,
+      address: newProjectData.address,
+      clientName: newProjectData.clientName,
+      clientPhone: newProjectData.clientPhone,
+      clientEmail: newProjectData.clientEmail,
+      startDate: newProjectData.startDate || getTodayDate(),
+      notes: newProjectData.notes,
+      photos: [],
+      snagging: []
+    };
+    setProjects([...projects, newProject]);
+    setNewProjectData({
+      name: '',
+      grade: 'Grade II',
+      address: '',
+      clientName: '',
+      clientPhone: '',
+      clientEmail: '',
+      startDate: '',
+      notes: ''
+    });
+    setShowNewProject(false);
+  };
+
+  const handlePhotoUpload = (projectId, event) => {
+    const files = event.target.files;
+    if (!files || files.length === 0) return;
+
+    Array.from(files).forEach(file => {
+      if (file.size > 5 * 1024 * 1024) { // 5MB limit
+        alert('Photo too large. Please use photos under 5MB.');
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const photoData = {
+          id: Date.now() + Math.random(),
+          url: reader.result,
+          name: file.name,
+          date: new Date().toISOString(),
+          caption: ''
+        };
+
+        setProjects(projects.map(p =>
+          p.id === projectId
+            ? { ...p, photos: [...(p.photos || []), photoData] }
+            : p
+        ));
+      };
+      reader.readAsDataURL(file);
+    });
+  };
+
+  const deletePhoto = (projectId, photoId) => {
+    setProjects(projects.map(p =>
+      p.id === projectId
+        ? { ...p, photos: (p.photos || []).filter(photo => photo.id !== photoId) }
+        : p
+    ));
   };
 
   const addTimeEntry = () => {
@@ -749,6 +828,155 @@ export default function RichsToolkit() {
     </div>
   );
 
+  const renderNewProjectModal = () => (
+    <div className="fixed inset-0 bg-black/50 z-50 flex items-end overflow-y-auto">
+      <div className="bg-white rounded-t-3xl w-full p-6 max-h-[90vh] overflow-y-auto">
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-xl font-bold">New Project</h2>
+          <button onClick={() => setShowNewProject(false)} className="p-2"><X size={24} /></button>
+        </div>
+        <div className="space-y-4">
+          <div>
+            <label className="text-sm font-medium text-gray-700 mb-1 block">Project Name *</label>
+            <input
+              type="text"
+              value={newProjectData.name}
+              onChange={(e) => setNewProjectData({ ...newProjectData, name: e.target.value })}
+              placeholder="e.g. Royal Crescent - No. 12"
+              className="w-full p-3 bg-gray-100 rounded-xl"
+            />
+          </div>
+          <div>
+            <label className="text-sm font-medium text-gray-700 mb-1 block">Grade</label>
+            <select
+              value={newProjectData.grade}
+              onChange={(e) => setNewProjectData({ ...newProjectData, grade: e.target.value })}
+              className="w-full p-3 bg-gray-100 rounded-xl"
+            >
+              <option value="Grade I">Grade I</option>
+              <option value="Grade II*">Grade II*</option>
+              <option value="Grade II">Grade II</option>
+              <option value="Unlisted">Unlisted</option>
+            </select>
+          </div>
+          <div>
+            <label className="text-sm font-medium text-gray-700 mb-1 block">Address</label>
+            <input
+              type="text"
+              value={newProjectData.address}
+              onChange={(e) => setNewProjectData({ ...newProjectData, address: e.target.value })}
+              placeholder="Full address"
+              className="w-full p-3 bg-gray-100 rounded-xl"
+            />
+          </div>
+          <div>
+            <label className="text-sm font-medium text-gray-700 mb-1 block">Client Name</label>
+            <input
+              type="text"
+              value={newProjectData.clientName}
+              onChange={(e) => setNewProjectData({ ...newProjectData, clientName: e.target.value })}
+              placeholder="Client name"
+              className="w-full p-3 bg-gray-100 rounded-xl"
+            />
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="text-sm font-medium text-gray-700 mb-1 block">Client Phone</label>
+              <input
+                type="tel"
+                value={newProjectData.clientPhone}
+                onChange={(e) => setNewProjectData({ ...newProjectData, clientPhone: e.target.value })}
+                placeholder="Phone"
+                className="w-full p-3 bg-gray-100 rounded-xl"
+              />
+            </div>
+            <div>
+              <label className="text-sm font-medium text-gray-700 mb-1 block">Start Date</label>
+              <input
+                type="date"
+                value={newProjectData.startDate}
+                onChange={(e) => setNewProjectData({ ...newProjectData, startDate: e.target.value })}
+                className="w-full p-3 bg-gray-100 rounded-xl"
+              />
+            </div>
+          </div>
+          <div>
+            <label className="text-sm font-medium text-gray-700 mb-1 block">Client Email</label>
+            <input
+              type="email"
+              value={newProjectData.clientEmail}
+              onChange={(e) => setNewProjectData({ ...newProjectData, clientEmail: e.target.value })}
+              placeholder="email@example.com"
+              className="w-full p-3 bg-gray-100 rounded-xl"
+            />
+          </div>
+          <div>
+            <label className="text-sm font-medium text-gray-700 mb-1 block">Notes</label>
+            <textarea
+              value={newProjectData.notes}
+              onChange={(e) => setNewProjectData({ ...newProjectData, notes: e.target.value })}
+              placeholder="Project notes..."
+              rows="3"
+              className="w-full p-3 bg-gray-100 rounded-xl"
+            />
+          </div>
+          <button onClick={addNewProject} className="w-full p-4 bg-amber-500 text-white rounded-xl font-semibold">
+            Create Project
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+
+  const renderProjectPhotos = () => selectedSnaggingProject && (
+    <div className="fixed inset-0 bg-black/50 z-50 flex items-end">
+      <div className="bg-white rounded-t-3xl w-full p-6 max-h-[90vh] overflow-y-auto">
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-xl font-bold">{selectedSnaggingProject.name} - Photos</h2>
+          <button onClick={() => setShowProjectPhotos(false)} className="p-2"><X size={24} /></button>
+        </div>
+
+        <label className="w-full p-4 bg-blue-500 text-white rounded-xl font-semibold mb-4 flex items-center justify-center cursor-pointer">
+          <Camera size={20} className="mr-2" />
+          Take / Upload Photo
+          <input
+            type="file"
+            accept="image/*"
+            capture="environment"
+            multiple
+            onChange={(e) => handlePhotoUpload(selectedSnaggingProject.id, e)}
+            className="hidden"
+          />
+        </label>
+
+        {selectedSnaggingProject.photos?.length > 0 ? (
+          <div className="grid grid-cols-2 gap-3">
+            {selectedSnaggingProject.photos.map((photo) => (
+              <div key={photo.id} className="relative bg-gray-100 rounded-xl overflow-hidden">
+                <img src={photo.url} alt={photo.name} className="w-full h-40 object-cover" />
+                <button
+                  onClick={() => deletePhoto(selectedSnaggingProject.id, photo.id)}
+                  className="absolute top-2 right-2 bg-red-500 text-white p-1.5 rounded-full"
+                >
+                  <Trash2 size={16} />
+                </button>
+                <div className="p-2 bg-white/90">
+                  <p className="text-xs text-gray-600">{new Date(photo.date).toLocaleDateString()}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-12 text-gray-500">
+            <Camera size={48} className="mx-auto mb-2 opacity-30" />
+            <p>No photos yet</p>
+            <p className="text-sm">Add photos to document your work</p>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+
   // Time & Expenses
   const renderTimeExpenses = () => {
     const weeklyHours = getWeekTotal(timeEntries, 'hours');
@@ -806,8 +1034,28 @@ export default function RichsToolkit() {
   const renderSnagging = () => (
     <div className="p-4 pb-24">
       <button onClick={() => setCurrentScreen('home')} className="flex items-center gap-2 text-blue-500 mb-4"><ChevronLeft size={20} />Home</button>
-      <div className="flex items-center gap-4 mb-6"><div className="bg-amber-500 w-14 h-14 rounded-2xl flex items-center justify-center"><ClipboardList size={28} className="text-white" /></div><div><h1 className="text-xl font-bold text-gray-900">Snagging Lists</h1></div></div>
-      <div className="space-y-3">{projects.map((p) => <button key={p.id} onClick={() => setSelectedSnaggingProject(p)} className="w-full bg-white rounded-xl p-4 shadow-sm border border-gray-100 text-left"><p className="font-semibold">{p.name}</p><p className="text-sm text-gray-500">{p.snagging?.length || 0} rooms</p></button>)}</div>
+      <div className="flex items-center gap-4 mb-6"><div className="bg-amber-500 w-14 h-14 rounded-2xl flex items-center justify-center"><ClipboardList size={28} className="text-white" /></div><div><h1 className="text-xl font-bold text-gray-900">Projects</h1></div></div>
+      <button onClick={() => setShowNewProject(true)} className="w-full p-4 bg-amber-500 text-white rounded-xl font-semibold mb-4"><Plus size={20} className="inline mr-2" />New Project</button>
+      <div className="space-y-3">{projects.map((p) => (
+        <div key={p.id} className="w-full bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+          <div className="flex items-center justify-between mb-2">
+            <button onClick={() => setSelectedSnaggingProject(p)} className="flex-1 text-left">
+              <p className="font-semibold text-gray-900">{p.name}</p>
+              <p className="text-sm text-gray-500">{p.grade} • {p.snagging?.length || 0} rooms</p>
+            </button>
+            <button
+              onClick={() => {
+                setSelectedSnaggingProject(p);
+                setShowProjectPhotos(true);
+              }}
+              className="ml-2 p-2 bg-blue-50 text-blue-600 rounded-lg flex items-center gap-1"
+            >
+              <Camera size={18} />
+              <span className="text-xs font-medium">{p.photos?.length || 0}</span>
+            </button>
+          </div>
+        </div>
+      ))}</div>
     </div>
   );
 
@@ -1020,6 +1268,8 @@ export default function RichsToolkit() {
         {showAddMileage && renderAddMileageModal()}
         {showNewSnag && renderNewSnagModal()}
         {showNewRoom && renderNewRoomModal()}
+        {showNewProject && renderNewProjectModal()}
+        {showProjectPhotos && renderProjectPhotos()}
         {showAddSupplier && renderAddSupplierModal()}
         {showMaterialList && renderMaterialListModal()}
       </div>
