@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Calculator, ChevronRight, ChevronLeft, Home, Camera, ClipboardList, PaintBucket, Ruler, Grid3X3, Package, Layers, Plus, Building2, Sun, Landmark, Image, FileText, X, Clock, MapPin, Calendar, Phone, Square, AlertTriangle, CheckCircle, Check, Flag, Send, ArrowLeftRight, Receipt, Car, Trash2, Star, MessageSquare, Copy, PhoneCall, Search, Users, Cloud, CloudRain, CloudSnow, CloudDrizzle, CloudLightning, Wind, Droplets, Thermometer, Umbrella, AlertCircle, CloudSun, Moon, Sunrise, Sunset, Eye, Loader2, DollarSign, TrendingUp, PiggyBank, CreditCard, Download } from 'lucide-react';
 import { useWeather } from './useWeather';
 import { useLocalStorage } from './useLocalStorage';
@@ -80,6 +80,18 @@ export default function RichsToolkit() {
     }
   });
   const [budgetTab, setBudgetTab] = useState('personal');
+
+  // Current time state
+  const [currentTime, setCurrentTime] = useState(new Date());
+
+  // Update time every minute
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 60000); // Update every minute
+
+    return () => clearInterval(timer);
+  }, []);
 
   // Work condition assessments
   const getWorkConditions = (temp, rain, wind, condition) => {
@@ -1611,12 +1623,24 @@ export default function RichsToolkit() {
 
   const theme = getTheme();
 
+  // Format current time as HH:MM
+  const formatCurrentTime = () => {
+    const hours = currentTime.getHours().toString().padStart(2, '0');
+    const minutes = currentTime.getMinutes().toString().padStart(2, '0');
+    return `${hours}:${minutes}`;
+  };
+
   return (
     <div className={`min-h-screen ${theme.bg} transition-colors duration-500`}>
       <div className={`max-w-sm mx-auto ${theme.bg} min-h-screen relative transition-colors duration-500`}>
+        {/* Time display - top right corner */}
+        <div className={`fixed top-4 right-4 ${theme.cardBg} px-3 py-1.5 rounded-lg shadow-sm border ${theme.border} transition-all duration-500 z-50`}>
+          <span className={`text-sm font-semibold ${theme.text} transition-colors duration-500`}>{formatCurrentTime()}</span>
+        </div>
+
         {renderCurrentScreen()}
 
-        <div className={`fixed bottom-0 left-0 right-0 ${theme.cardBg} border-t ${theme.border} px-6 py-3 max-w-sm mx-auto transition-all duration-500`}>
+        <div className={`fixed bottom-0 left-0 right-0 ${theme.cardBg} border-t ${theme.border} px-6 py-3 max-w-sm mx-auto transition-all duration-500 z-50`}>
           <div className="flex justify-around">
             {[
               { icon: Home, label: 'Home', screen: 'home' },
