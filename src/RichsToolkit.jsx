@@ -81,6 +81,9 @@ export default function RichsToolkit() {
   });
   const [budgetTab, setBudgetTab] = useState('personal');
 
+  // Historical map state
+  const [selectedHistoricalSite, setSelectedHistoricalSite] = useState(null);
+
   // Work condition assessments
   const getWorkConditions = (temp, rain, wind, condition) => {
     const conditions = [];
@@ -159,6 +162,118 @@ export default function RichsToolkit() {
     if (score >= 50) return 'Fair';
     return 'Poor';
   };
+
+  // Historical sites data for Bath
+  const historicalSites = [
+    {
+      id: 'roman-baths',
+      name: 'Roman Baths',
+      x: 50,
+      y: 45,
+      era: 'Roman (60-70 AD)',
+      grade: 'Scheduled Monument',
+      description: 'One of the finest historic sites in Northern Europe. Built around natural hot springs, the Romans constructed an elaborate bathing complex and temple to Sulis Minerva.',
+      heritage: 'The baths were built on the only naturally occurring hot springs in the UK. The water rises at 46°C from a depth of 2,700m. The Great Bath, King\'s Bath, and the Roman Temple remain remarkably preserved.',
+      construction: 'Bath stone, lead-lined pools, hypocaust heating system, intricate mosaic floors.',
+      relevance: 'Key example of Roman engineering and the foundation of Bath\'s heritage tourism.'
+    },
+    {
+      id: 'bath-abbey',
+      name: 'Bath Abbey',
+      x: 55,
+      y: 50,
+      era: 'Medieval/Gothic (1499-1616)',
+      grade: 'Grade I Listed',
+      description: 'The last great medieval church built in England. Known as the "Lantern of the West" for its large windows and light-filled interior.',
+      heritage: 'Founded in the 7th century, rebuilt as a Norman cathedral, then reconstructed in Perpendicular Gothic style. Features fan vaulting, the largest collection of Victorian stained glass in the west of England.',
+      construction: 'Bath stone, fan vaulted ceiling, flying buttresses, 52 windows depicting Christ\'s life in 617 scenes.',
+      relevance: 'Excellent example of late medieval Gothic architecture and continuous heritage conservation.'
+    },
+    {
+      id: 'royal-crescent',
+      name: 'Royal Crescent',
+      x: 20,
+      y: 30,
+      era: 'Georgian (1767-1775)',
+      grade: 'Grade I Listed',
+      description: 'Iconic sweeping crescent of 30 terraced houses designed by John Wood the Younger. One of the greatest examples of Georgian architecture in Britain.',
+      heritage: 'Built for the wealthy to enjoy Bath\'s spa waters and social season. The uniform Palladian facades hide varied interiors. No. 1 Royal Crescent is now a museum showing Georgian life.',
+      construction: 'Bath stone ashlar facing, 114 Ionic columns, uniform facade masking individual houses, lime mortar joints.',
+      relevance: 'Epitome of Georgian town planning and a masterclass in symmetrical urban design. Regular conservation work required on stone and lime mortar.'
+    },
+    {
+      id: 'the-circus',
+      name: 'The Circus',
+      x: 30,
+      y: 35,
+      era: 'Georgian (1754-1768)',
+      grade: 'Grade I Listed',
+      description: 'A circular space divided into three curved segments of townhouses, designed by John Wood the Elder. Inspired by Roman architecture, particularly the Colosseum.',
+      heritage: 'Revolutionary circular design with three tiers of columns (Doric, Ionic, Corinthian) rising up the facades. 528 different decorative emblems carved on the frieze.',
+      construction: 'Bath stone, Classical orders in superimposed tiers, hidden gardens within the circle.',
+      relevance: 'Pioneering example of Georgian urban design. Demonstrates Bath stone weathering and conservation challenges.'
+    },
+    {
+      id: 'pulteney-bridge',
+      name: 'Pulteney Bridge',
+      x: 70,
+      y: 55,
+      era: 'Georgian (1774)',
+      grade: 'Grade I Listed',
+      description: 'One of only four bridges in the world lined with shops on both sides. Designed by Robert Adam in Palladian style.',
+      heritage: 'Built to connect the city with the Pulteney Estate. Spans the River Avon with three arches. The shop facades were added to generate income and create a unified street scene.',
+      construction: 'Bath stone, three segmental arches, Venetian-inspired design with shops integrated into structure.',
+      relevance: 'Unique engineering and architectural challenge. Regular monitoring needed due to water damage and settlement.'
+    },
+    {
+      id: 'assembly-rooms',
+      name: 'Assembly Rooms',
+      x: 35,
+      y: 32,
+      era: 'Georgian (1769-1771)',
+      grade: 'Grade I Listed',
+      description: 'The heart of fashionable Georgian society. Rooms designed for balls, concerts, card playing, and tea drinking.',
+      heritage: 'Built for Bath\'s social season. Contains the spectacular 100-foot-long Ballroom with five cut-glass chandeliers. Bombed in WWII and carefully restored.',
+      construction: 'Bath stone, grand proportions, ornate plasterwork, original Georgian chandeliers (replicated after war damage).',
+      relevance: 'Major post-war restoration project. Now houses Museum of Costume. Important case study in heritage reconstruction.'
+    },
+    {
+      id: 'prior-park',
+      name: 'Prior Park',
+      x: 85,
+      y: 75,
+      era: 'Georgian (1735-1750)',
+      grade: 'Grade I Listed (house), Grade I Landscape',
+      description: 'Palladian mansion with one of the finest 18th-century landscapes in England. Designed by John Wood the Elder and Capability Brown.',
+      heritage: 'Built for Ralph Allen, who owned the Bath stone quarries. The landscape garden features a Palladian bridge (one of only four in the world), wilderness areas, and sweeping views of Bath.',
+      construction: 'Bath stone mansion, landscaped grounds with grottos, serpentine lakes, and Classical temples.',
+      relevance: 'Demonstrates the quarrying and use of Bath stone. Example of Georgian landscape design and ongoing heritage conservation.'
+    },
+    {
+      id: 'queen-square',
+      name: 'Queen Square',
+      x: 38,
+      y: 42,
+      era: 'Georgian (1729-1736)',
+      grade: 'Grade I Listed',
+      description: 'Bath\'s first major architectural statement by John Wood the Elder. Pioneered the unified Palladian facade treatment.',
+      heritage: 'The north side is designed as a single palace front, masking the individual houses behind. Set the template for later developments like The Circus and Royal Crescent.',
+      construction: 'Bath stone, Palladian proportions, rusticated ground floor, piano nobile (main floor) with Corinthian pilasters.',
+      relevance: 'First example of Wood\'s vision for Bath as a new Rome. Regular lime repointing and stone repair work essential.'
+    },
+    {
+      id: 'thermae-spa',
+      name: 'Thermae Bath Spa',
+      x: 48,
+      y: 50,
+      era: 'Modern (2006), using ancient springs',
+      grade: 'Grade II* (Hot Bath)',
+      description: 'Britain\'s only natural thermal spa, combining historic Georgian buildings with contemporary architecture. Uses the same thermal waters as the Romans.',
+      heritage: 'Built incorporating the restored 18th-century Hot Bath and Cross Bath. The new building uses local Bath stone to blend with surroundings while being distinctly contemporary.',
+      construction: 'Combination of restored Georgian Bath stone buildings and modern glass and stone architecture. Rooftop pool offers views across the city.',
+      relevance: 'Example of contemporary architecture respecting heritage context. Demonstrates sustainable use of natural thermal waters and integration of old and new.'
+    }
+  ];
 
   const [suppliers, setSuppliers] = useLocalStorage('richs-toolkit-suppliers', [
     // Merchants - Builders Merchants
@@ -1450,6 +1565,64 @@ export default function RichsToolkit() {
     );
   };
 
+  // Historical Site Modal
+  const renderHistoricalSiteModal = () => {
+    if (!selectedHistoricalSite) return null;
+    const theme = getTheme();
+    const site = historicalSites.find(s => s.id === selectedHistoricalSite);
+    if (!site) return null;
+
+    return (
+      <div className="fixed inset-0 bg-black/50 flex items-end sm:items-center justify-center z-50 p-4" onClick={() => setSelectedHistoricalSite(null)}>
+        <div className={`${theme.cardBg} rounded-t-3xl sm:rounded-3xl w-full max-w-lg max-h-[85vh] overflow-y-auto transition-colors duration-500`} onClick={(e) => e.stopPropagation()}>
+          <div className="sticky top-0 bg-gradient-to-r from-amber-600 to-orange-600 p-4 rounded-t-3xl sm:rounded-t-2xl flex justify-between items-start">
+            <div className="flex-1">
+              <h2 className="text-xl font-bold text-white mb-1">{site.name}</h2>
+              <p className="text-amber-100 text-sm">{site.era}</p>
+            </div>
+            <button onClick={() => setSelectedHistoricalSite(null)} className="text-white/80 hover:text-white ml-4">
+              <X size={24} />
+            </button>
+          </div>
+
+          <div className="p-4 space-y-4">
+            <div>
+              <div className="flex items-center gap-2 mb-2">
+                <Landmark size={18} className={theme.textSecondary} />
+                <span className={`text-sm font-semibold ${theme.text} transition-colors duration-500`}>{site.grade}</span>
+              </div>
+              <p className={`${theme.text} transition-colors duration-500`}>{site.description}</p>
+            </div>
+
+            <div className={`${theme.isDay ? 'bg-amber-50' : 'bg-amber-900/20'} rounded-xl p-3 transition-colors duration-500`}>
+              <h3 className={`font-semibold ${theme.text} mb-2 flex items-center gap-2 transition-colors duration-500`}>
+                <Building2 size={16} />
+                Heritage Significance
+              </h3>
+              <p className={`text-sm ${theme.text} transition-colors duration-500`}>{site.heritage}</p>
+            </div>
+
+            <div className={`${theme.isDay ? 'bg-stone-50' : 'bg-stone-900/20'} rounded-xl p-3 transition-colors duration-500`}>
+              <h3 className={`font-semibold ${theme.text} mb-2 flex items-center gap-2 transition-colors duration-500`}>
+                <Layers size={16} />
+                Construction Details
+              </h3>
+              <p className={`text-sm ${theme.text} transition-colors duration-500`}>{site.construction}</p>
+            </div>
+
+            <div className={`${theme.isDay ? 'bg-blue-50' : 'bg-blue-900/20'} rounded-xl p-3 transition-colors duration-500`}>
+              <h3 className={`font-semibold ${theme.text} mb-2 flex items-center gap-2 transition-colors duration-500`}>
+                <PaintBucket size={16} />
+                Relevance to Conservation Work
+              </h3>
+              <p className={`text-sm ${theme.text} transition-colors duration-500`}>{site.relevance}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   // Home
   const renderHome = () => {
     const theme = getTheme();
@@ -1538,6 +1711,119 @@ export default function RichsToolkit() {
                 <ChevronRight size={20} className={`${theme.textSecondary} transition-colors duration-500`} />
               </div>
             ))}
+          </div>
+        </div>
+
+        {/* Interactive Historical Map of Bath */}
+        <div className="mt-8 relative z-10">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h2 className={`text-lg font-semibold ${theme.text} transition-colors duration-500`}>Historical Bath</h2>
+              <p className={`text-sm ${theme.textSecondary} transition-colors duration-500`}>Tap a marker to explore</p>
+            </div>
+            <Landmark size={24} className={`${theme.textSecondary} transition-colors duration-500`} />
+          </div>
+
+          <div className={`${theme.cardBg} rounded-2xl p-4 shadow-sm border ${theme.border} transition-all duration-500 overflow-hidden`}>
+            <div className="relative w-full" style={{ paddingBottom: '85%' }}>
+              {/* SVG Map */}
+              <svg viewBox="0 0 100 100" className="absolute inset-0 w-full h-full">
+                {/* River Avon */}
+                <path
+                  d="M 0 60 Q 25 58, 40 55 Q 55 52, 70 56 Q 85 60, 100 58"
+                  fill="none"
+                  stroke={theme.isDay ? '#93C5FD' : '#3B82F6'}
+                  strokeWidth="3"
+                  opacity="0.6"
+                  className="transition-all duration-500"
+                />
+                <path
+                  d="M 0 63 Q 25 61, 40 58 Q 55 55, 70 59 Q 85 63, 100 61"
+                  fill="none"
+                  stroke={theme.isDay ? '#93C5FD' : '#3B82F6'}
+                  strokeWidth="2"
+                  opacity="0.4"
+                  className="transition-all duration-500"
+                />
+
+                {/* Main streets - simplified layout */}
+                <line x1="15" y1="20" x2="60" y2="45" stroke={theme.isDay ? '#D1D5DB' : '#4B5563'} strokeWidth="0.5" opacity="0.4" className="transition-all duration-500" />
+                <line x1="30" y1="30" x2="70" y2="50" stroke={theme.isDay ? '#D1D5DB' : '#4B5563'} strokeWidth="0.5" opacity="0.4" className="transition-all duration-500" />
+                <line x1="20" y1="35" x2="55" y2="50" stroke={theme.isDay ? '#D1D5DB' : '#4B5563'} strokeWidth="0.5" opacity="0.4" className="transition-all duration-500" />
+
+                {/* Green spaces */}
+                <circle cx="18" cy="28" r="4" fill={theme.isDay ? '#86EFAC' : '#166534'} opacity="0.3" className="transition-all duration-500" />
+                <circle cx="36" cy="40" r="3.5" fill={theme.isDay ? '#86EFAC' : '#166534'} opacity="0.3" className="transition-all duration-500" />
+                <ellipse cx="83" cy="73" rx="6" ry="8" fill={theme.isDay ? '#86EFAC' : '#166534'} opacity="0.3" className="transition-all duration-500" />
+
+                {/* Historical site markers */}
+                {historicalSites.map((site) => (
+                  <g key={site.id} onClick={() => setSelectedHistoricalSite(site.id)} className="cursor-pointer">
+                    {/* Marker glow effect */}
+                    <circle
+                      cx={site.x}
+                      cy={site.y}
+                      r="3"
+                      fill="#F59E0B"
+                      opacity="0.3"
+                      className="animate-ping"
+                      style={{ animationDuration: '2s' }}
+                    />
+                    {/* Main marker */}
+                    <circle
+                      cx={site.x}
+                      cy={site.y}
+                      r="2.5"
+                      fill="#F59E0B"
+                      stroke="#FFFFFF"
+                      strokeWidth="0.5"
+                      className="hover:r-3 transition-all"
+                    />
+                    {/* Marker center */}
+                    <circle
+                      cx={site.x}
+                      cy={site.y}
+                      r="1"
+                      fill="#FFFFFF"
+                    />
+                  </g>
+                ))}
+              </svg>
+
+              {/* Legend overlay */}
+              <div className={`absolute bottom-2 left-2 ${theme.isDay ? 'bg-white/90' : 'bg-slate-800/90'} rounded-lg p-2 text-xs transition-colors duration-500`}>
+                <div className="flex items-center gap-1.5 mb-1">
+                  <div className="w-2 h-2 rounded-full bg-amber-500"></div>
+                  <span className={`${theme.text} transition-colors duration-500`}>{historicalSites.length} Heritage Sites</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <div className={`w-3 h-0.5 ${theme.isDay ? 'bg-blue-300' : 'bg-blue-500'} transition-colors duration-500`}></div>
+                  <span className={`${theme.text} transition-colors duration-500`}>River Avon</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Site quick list */}
+            <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+              <div className="grid grid-cols-2 gap-2 text-xs">
+                {historicalSites.slice(0, 6).map((site) => (
+                  <button
+                    key={site.id}
+                    onClick={() => setSelectedHistoricalSite(site.id)}
+                    className={`text-left p-2 rounded-lg ${theme.isDay ? 'hover:bg-amber-50' : 'hover:bg-amber-900/20'} transition-colors duration-300`}
+                  >
+                    <span className={`font-medium ${theme.text} transition-colors duration-500`}>{site.name}</span>
+                    <br />
+                    <span className={`${theme.textSecondary} transition-colors duration-500`}>{site.era.split('(')[0].trim()}</span>
+                  </button>
+                ))}
+              </div>
+              {historicalSites.length > 6 && (
+                <p className={`text-center mt-2 ${theme.textSecondary} text-xs transition-colors duration-500`}>
+                  +{historicalSites.length - 6} more sites on map
+                </p>
+              )}
+            </div>
           </div>
         </div>
       </div>
@@ -1641,6 +1927,7 @@ export default function RichsToolkit() {
         {showNewInvoice && renderNewInvoiceModal()}
         {showAddSupplier && renderAddSupplierModal()}
         {showMaterialList && renderMaterialListModal()}
+        {renderHistoricalSiteModal()}
       </div>
     </div>
   );
