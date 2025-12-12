@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Calculator, ChevronRight, ChevronLeft, Home, Camera, ClipboardList, PaintBucket, Ruler, Grid3X3, Package, Layers, Plus, Building2, Sun, Landmark, Image, FileText, X, Clock, MapPin, Calendar, Phone, Square, AlertTriangle, CheckCircle, Check, Flag, Send, ArrowLeftRight, Receipt, Car, Trash2, Star, MessageSquare, Copy, PhoneCall, Search, Users, Cloud, CloudRain, CloudSnow, CloudDrizzle, CloudLightning, Wind, Droplets, Thermometer, Umbrella, AlertCircle, CloudSun, Moon, Sunrise, Sunset, Eye, Loader2, DollarSign, TrendingUp, PiggyBank, CreditCard, Download, Settings } from 'lucide-react';
+import { Calculator, ChevronRight, ChevronLeft, Home, Camera, ClipboardList, PaintBucket, Ruler, Grid3X3, Package, Layers, Plus, Building2, Sun, Landmark, Image, FileText, X, Clock, MapPin, Calendar, Phone, Square, AlertTriangle, CheckCircle, Check, Flag, Send, ArrowLeftRight, Receipt, Car, Trash2, Star, MessageSquare, Copy, PhoneCall, Search, Users, Cloud, CloudRain, CloudSnow, CloudDrizzle, CloudLightning, Wind, Droplets, Thermometer, Umbrella, AlertCircle, CloudSun, Moon, Sunrise, Sunset, Eye, Loader2, DollarSign, TrendingUp, PiggyBank, CreditCard, Download, Settings, Move } from 'lucide-react';
 import { useWeather } from './useWeather';
 import { useLocalStorage } from './useLocalStorage';
 
@@ -109,6 +109,46 @@ export default function RichsToolkit() {
           });
       });
     }
+  }, []);
+
+  // Level tool state
+  const [levelOrientation, setLevelOrientation] = useState({ beta: 0, gamma: 0 });
+  const [levelMode, setLevelMode] = useState('horizontal'); // 'horizontal' or 'vertical'
+  const [levelPermission, setLevelPermission] = useState('pending');
+
+  // Request device orientation permission (required for iOS 13+)
+  const requestOrientationPermission = async () => {
+    if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
+      try {
+        const permission = await DeviceOrientationEvent.requestPermission();
+        setLevelPermission(permission);
+        if (permission === 'granted') {
+          window.addEventListener('deviceorientation', handleOrientation);
+        }
+      } catch (error) {
+        console.error('Error requesting orientation permission:', error);
+        setLevelPermission('denied');
+      }
+    } else {
+      // For non-iOS devices, permission is granted by default
+      setLevelPermission('granted');
+      window.addEventListener('deviceorientation', handleOrientation);
+    }
+  };
+
+  // Handle device orientation
+  const handleOrientation = (event) => {
+    setLevelOrientation({
+      beta: event.beta || 0,  // Front-to-back tilt (-180 to 180)
+      gamma: event.gamma || 0  // Left-to-right tilt (-90 to 90)
+    });
+  };
+
+  // Cleanup orientation listener
+  useEffect(() => {
+    return () => {
+      window.removeEventListener('deviceorientation', handleOrientation);
+    };
   }, []);
 
   // Work condition assessments
@@ -895,6 +935,191 @@ export default function RichsToolkit() {
     );
   };
 
+  // Level Tool Screen
+  const renderLevel = () => {
+    const theme = getTheme();
+
+    // Calculate if device is level (tolerance of 2 degrees)
+    const tolerance = 2;
+    const isLevelHorizontal = Math.abs(levelOrientation.beta) < tolerance && Math.abs(levelOrientation.gamma) < tolerance;
+    const isLevelVertical = Math.abs(Math.abs(levelOrientation.beta) - 90) < tolerance && Math.abs(levelOrientation.gamma) < tolerance;
+
+    // Calculate bubble position for horizontal level
+    // Gamma controls left-right tilt (-90 to 90)
+    const bubblePositionX = Math.max(-40, Math.min(40, levelOrientation.gamma * 2));
+
+    // Beta controls front-back tilt for vertical mode
+    const bubblePositionY = Math.max(-40, Math.min(40, (levelOrientation.beta - 90) * 2));
+
+    return (
+      <div className={`min-h-screen ${theme.bg} p-4 pb-24`}>
+        <button onClick={() => setCurrentScreen('home')} className="flex items-center gap-2 text-blue-500 mb-4">
+          <ChevronLeft size={20} /><span>Home</span>
+        </button>
+
+        <div className="mb-6">
+          <h2 className={`text-2xl font-bold ${theme.text} mb-2`}>Digital Level</h2>
+          <p className={`${theme.textSecondary}`}>Use your phone as a spirit level</p>
+        </div>
+
+        {/* Permission request */}
+        {levelPermission === 'pending' && (
+          <div className="bg-white rounded-xl p-6 shadow-lg text-center mb-6">
+            <Move size={48} className="text-blue-500 mx-auto mb-4" />
+            <h3 className="font-bold text-gray-900 mb-2">Enable Motion Sensors</h3>
+            <p className="text-gray-600 text-sm mb-4">
+              This tool needs access to your device's motion sensors to work as a level.
+            </p>
+            <button
+              onClick={requestOrientationPermission}
+              className="w-full bg-blue-500 text-white py-3 px-6 rounded-lg font-semibold hover:bg-blue-600 transition"
+            >
+              Enable Level
+            </button>
+          </div>
+        )}
+
+        {levelPermission === 'denied' && (
+          <div className="bg-red-50 border border-red-200 rounded-xl p-6 text-center">
+            <AlertCircle size={48} className="text-red-500 mx-auto mb-4" />
+            <h3 className="font-bold text-red-800 mb-2">Permission Denied</h3>
+            <p className="text-red-600 text-sm">
+              Please enable motion sensors in your browser settings to use the level tool.
+            </p>
+          </div>
+        )}
+
+        {levelPermission === 'granted' && (
+          <>
+            {/* Mode toggle */}
+            <div className="flex gap-2 mb-6">
+              <button
+                onClick={() => setLevelMode('horizontal')}
+                className={`flex-1 py-3 px-4 rounded-lg font-semibold transition ${
+                  levelMode === 'horizontal'
+                    ? 'bg-blue-500 text-white'
+                    : 'bg-gray-100 text-gray-600'
+                }`}
+              >
+                Horizontal
+              </button>
+              <button
+                onClick={() => setLevelMode('vertical')}
+                className={`flex-1 py-3 px-4 rounded-lg font-semibold transition ${
+                  levelMode === 'vertical'
+                    ? 'bg-blue-500 text-white'
+                    : 'bg-gray-100 text-gray-600'
+                }`}
+              >
+                Vertical
+              </button>
+            </div>
+
+            {/* Status indicator */}
+            <div className={`text-center mb-6 py-4 rounded-xl ${
+              (levelMode === 'horizontal' && isLevelHorizontal) || (levelMode === 'vertical' && isLevelVertical)
+                ? 'bg-green-50 border-2 border-green-500'
+                : 'bg-gray-50 border-2 border-gray-300'
+            }`}>
+              <p className={`text-3xl font-bold ${
+                (levelMode === 'horizontal' && isLevelHorizontal) || (levelMode === 'vertical' && isLevelVertical)
+                  ? 'text-green-600'
+                  : 'text-gray-600'
+              }`}>
+                {(levelMode === 'horizontal' && isLevelHorizontal) || (levelMode === 'vertical' && isLevelVertical)
+                  ? '✓ LEVEL'
+                  : 'NOT LEVEL'
+                }
+              </p>
+            </div>
+
+            {/* Bubble level display */}
+            {levelMode === 'horizontal' && (
+              <div className="relative">
+                {/* Level housing */}
+                <div className="bg-gradient-to-b from-amber-500 to-amber-600 rounded-3xl p-6 shadow-2xl">
+                  {/* Bubble vial */}
+                  <div className="relative bg-gradient-to-b from-green-200 to-green-300 rounded-full h-24 overflow-hidden shadow-inner">
+                    {/* Level marks */}
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <div className="absolute h-full w-1 bg-black/20 left-1/2 -translate-x-1/2" />
+                      <div className="absolute h-full w-1 bg-black/10 left-1/3 -translate-x-1/2" />
+                      <div className="absolute h-full w-1 bg-black/10 right-1/3 translate-x-1/2" />
+                    </div>
+                    {/* Center zone */}
+                    <div className="absolute top-0 bottom-0 left-1/2 -translate-x-1/2 w-12 bg-green-400/30" />
+                    {/* Bubble */}
+                    <div
+                      className="absolute top-1/2 left-1/2 -translate-y-1/2 w-16 h-16 rounded-full bg-gradient-to-br from-yellow-200 to-yellow-400 shadow-lg transition-transform duration-100"
+                      style={{
+                        transform: `translate(-50%, -50%) translateX(${bubblePositionX}px)`,
+                        boxShadow: '0 4px 6px rgba(0,0,0,0.3), inset 0 2px 4px rgba(255,255,255,0.5)'
+                      }}
+                    >
+                      <div className="absolute inset-2 rounded-full bg-gradient-to-br from-yellow-100 to-yellow-300 opacity-60" />
+                    </div>
+                  </div>
+                  {/* Measurements */}
+                  <div className="mt-4 text-center">
+                    <p className="text-amber-900 font-mono text-sm">
+                      Tilt: {Math.abs(levelOrientation.gamma).toFixed(1)}°
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {levelMode === 'vertical' && (
+              <div className="relative flex justify-center">
+                {/* Vertical level housing */}
+                <div className="bg-gradient-to-r from-amber-500 to-amber-600 rounded-3xl p-6 shadow-2xl inline-block">
+                  {/* Bubble vial */}
+                  <div className="relative bg-gradient-to-r from-green-200 to-green-300 rounded-full w-24 h-64 overflow-hidden shadow-inner">
+                    {/* Level marks */}
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <div className="absolute w-full h-1 bg-black/20 top-1/2 -translate-y-1/2" />
+                      <div className="absolute w-full h-1 bg-black/10 top-1/3 -translate-y-1/2" />
+                      <div className="absolute w-full h-1 bg-black/10 bottom-1/3 translate-y-1/2" />
+                    </div>
+                    {/* Center zone */}
+                    <div className="absolute left-0 right-0 top-1/2 -translate-y-1/2 h-12 bg-green-400/30" />
+                    {/* Bubble */}
+                    <div
+                      className="absolute left-1/2 top-1/2 -translate-x-1/2 w-16 h-16 rounded-full bg-gradient-to-br from-yellow-200 to-yellow-400 shadow-lg transition-transform duration-100"
+                      style={{
+                        transform: `translate(-50%, -50%) translateY(${bubblePositionY}px)`,
+                        boxShadow: '0 4px 6px rgba(0,0,0,0.3), inset 0 2px 4px rgba(255,255,255,0.5)'
+                      }}
+                    >
+                      <div className="absolute inset-2 rounded-full bg-gradient-to-br from-yellow-100 to-yellow-300 opacity-60" />
+                    </div>
+                  </div>
+                  {/* Measurements */}
+                  <div className="mt-4 text-center">
+                    <p className="text-amber-900 font-mono text-sm">
+                      Tilt: {Math.abs(levelOrientation.beta - 90).toFixed(1)}°
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Instructions */}
+            <div className="mt-6 bg-blue-50 border border-blue-200 rounded-xl p-4">
+              <h4 className="font-semibold text-blue-900 mb-2">How to use:</h4>
+              <ul className="text-sm text-blue-800 space-y-1">
+                <li>• <strong>Horizontal:</strong> Place phone flat on surface</li>
+                <li>• <strong>Vertical:</strong> Hold phone against wall/surface</li>
+                <li>• Bubble should center when level (±{tolerance}°)</li>
+                <li>• Green "LEVEL" text confirms accurate leveling</li>
+              </ul>
+            </div>
+          </>
+        )}
+      </div>
+    );
+  };
+
   // Suppliers Screen
   const renderSuppliers = () => {
     const filteredSuppliers = getFilteredSuppliers();
@@ -1585,6 +1810,7 @@ export default function RichsToolkit() {
           {[
             { id: 'calculators', title: 'Calculators', icon: Calculator, color: 'bg-green-500', desc: 'Materials & quantities' },
             { id: 'snagging', title: 'Snagging', icon: ClipboardList, color: 'bg-amber-500', desc: 'Snag lists' },
+            { id: 'level', title: 'Level', icon: Move, color: 'bg-amber-600', desc: 'Spirit level tool' },
             { id: 'time', title: 'Time & Expenses', icon: Clock, color: 'bg-rose-500', desc: 'Hours & receipts' },
             { id: 'invoices', title: 'Invoices', icon: FileText, color: 'bg-emerald-500', desc: 'Generate & track' },
             { id: 'budget', title: 'Budget', icon: PiggyBank, color: 'bg-pink-500', desc: 'Track spending' },
@@ -1812,6 +2038,7 @@ export default function RichsToolkit() {
     if (currentScreen === 'budget') return renderBudget();
     if (currentScreen === 'suppliers') return renderSuppliers();
     if (currentScreen === 'weather') return renderWeather();
+    if (currentScreen === 'level') return renderLevel();
     if (currentScreen === 'snagging') {
       if (selectedRoom) return renderRoomDetail();
       if (selectedSnaggingProject) return renderProjectSnagging();
