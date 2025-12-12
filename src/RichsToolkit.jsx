@@ -1850,8 +1850,8 @@ export default function RichsToolkit() {
     // Birthday month (August)
     if (month === 7) return 'birthday';
 
-    // Christmas season (December)
-    if (month === 11) return 'christmas';
+    // Christmas Day (December 25)
+    if (month === 11 && date === 25) return 'christmas';
 
     return null;
   };
@@ -1937,22 +1937,25 @@ export default function RichsToolkit() {
           <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
             {specialEvent === 'christmas' && (
               <>
-                {/* Falling snowflakes for Christmas */}
-                {Array.from({ length: 20 }).map((_, i) => (
-                  <div
-                    key={`snow-${i}`}
-                    className="absolute animate-pulse"
-                    style={{
-                      left: `${Math.random() * 100}%`,
-                      top: `-${Math.random() * 20}%`,
-                      animation: `fall-snow ${4 + Math.random() * 3}s linear infinite`,
-                      animationDelay: `${Math.random() * 4}s`,
-                      fontSize: `${12 + Math.random() * 8}px`,
-                    }}
-                  >
-                    ❄️
-                  </div>
-                ))}
+                {/* Falling presents and Christmas trees */}
+                {Array.from({ length: 20 }).map((_, i) => {
+                  const christmasItems = ['🎁', '🎄', '🎁', '🎄', '⭐'];
+                  return (
+                    <div
+                      key={`christmas-${i}`}
+                      className="absolute"
+                      style={{
+                        left: `${Math.random() * 100}%`,
+                        top: `-${Math.random() * 20}%`,
+                        animation: `fall-snow ${4 + Math.random() * 3}s linear infinite`,
+                        animationDelay: `${Math.random() * 4}s`,
+                        fontSize: `${14 + Math.random() * 8}px`,
+                      }}
+                    >
+                      {christmasItems[Math.floor(Math.random() * christmasItems.length)]}
+                    </div>
+                  );
+                })}
               </>
             )}
 
