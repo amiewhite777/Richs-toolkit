@@ -98,6 +98,7 @@ export default function RichsToolkit() {
   const [timerSeconds, setTimerSeconds] = useState(0);
   const [timerProject, setTimerProject] = useState('');
   const [showTimerModal, setShowTimerModal] = useState(false);
+  const [showTimerView, setShowTimerView] = useState(false);
 
   // Update time every minute
   useEffect(() => {
@@ -2036,8 +2037,15 @@ export default function RichsToolkit() {
     <div className="mb-4">
       <label className="block text-sm font-medium text-gray-600 mb-1">{label}</label>
       <div className="flex items-center gap-2">
-        <input type="text" inputMode={type === 'number' ? 'decimal' : 'text'} value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder || '0'}
-          className="flex-1 p-3 bg-gray-100 rounded-xl text-lg font-medium focus:outline-none focus:ring-2 focus:ring-blue-500" />
+        <input
+          type="text"
+          inputMode={type === 'number' ? 'decimal' : 'text'}
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          placeholder={placeholder || '0'}
+          autoComplete="off"
+          className="flex-1 p-3 bg-gray-100 rounded-xl text-lg font-medium focus:outline-none focus:ring-2 focus:ring-blue-500"
+        />
         {unit && <span className="text-gray-500 font-medium w-12">{unit}</span>}
       </div>
     </div>
@@ -4089,7 +4097,7 @@ export default function RichsToolkit() {
     let results, content;
     if (selectedCalc === 'plaster') { results = calculatePlaster(); content = (<><div className="grid grid-cols-2 gap-3"><InputField label="Length" value={plasterInputs.length} onChange={(v) => setPlasterInputs({...plasterInputs, length: v})} unit="m" /><InputField label="Width" value={plasterInputs.width} onChange={(v) => setPlasterInputs({...plasterInputs, width: v})} unit="m" /></div><InputField label="Height" value={plasterInputs.height} onChange={(v) => setPlasterInputs({...plasterInputs, height: v})} unit="m" /><div className="pt-4 border-t grid grid-cols-2 gap-3"><ResultCard label="Area" value={results.totalArea} unit="m²" /><ResultCard label="Bags" value={results.bags} unit="bags" highlight /></div></>); }
     else if (selectedCalc === 'paint') { results = calculatePaint(); content = (<><div className="grid grid-cols-2 gap-3"><InputField label="Length" value={paintInputs.length} onChange={(v) => setPaintInputs({...paintInputs, length: v})} unit="m" /><InputField label="Width" value={paintInputs.width} onChange={(v) => setPaintInputs({...paintInputs, width: v})} unit="m" /></div><InputField label="Height" value={paintInputs.height} onChange={(v) => setPaintInputs({...paintInputs, height: v})} unit="m" /><div className="pt-4 border-t grid grid-cols-2 gap-3"><ResultCard label="Litres" value={results.litres} unit="L" /><ResultCard label="Tins" value={results.tins25} unit="2.5L" highlight /></div></>); }
-    else if (selectedCalc === 'timber') { results = calculateTimber(); content = (<><InputField label="Perimeter" value={timberInputs.perimeter} onChange={(v) => setTimberInputs({...timberInputs, perimeter: v})} unit="m" /><InputField label="Doors" value={timberInputs.doors} onChange={(e) => setTimberInputs({...timberInputs, doors: e})} /><div className="pt-4 border-t grid grid-cols-2 gap-3"><ResultCard label="Length" value={results.withWastage} unit="m" /><ResultCard label="3m pcs" value={results.lengths3m} unit="pcs" highlight /></div></>); }
+    else if (selectedCalc === 'timber') { results = calculateTimber(); content = (<><InputField label="Perimeter" value={timberInputs.perimeter} onChange={(v) => setTimberInputs({...timberInputs, perimeter: v})} unit="m" /><InputField label="Doors" value={timberInputs.doors} onChange={(v) => setTimberInputs({...timberInputs, doors: v})} /><div className="pt-4 border-t grid grid-cols-2 gap-3"><ResultCard label="Length" value={results.withWastage} unit="m" /><ResultCard label="3m pcs" value={results.lengths3m} unit="pcs" highlight /></div></>); }
     else if (selectedCalc === 'tiles') { results = calculateTiles(); content = (<><div className="grid grid-cols-2 gap-3"><InputField label="Length" value={tileInputs.length} onChange={(v) => setTileInputs({...tileInputs, length: v})} unit="cm" /><InputField label="Width" value={tileInputs.width} onChange={(v) => setTileInputs({...tileInputs, width: v})} unit="cm" /></div><div className="pt-4 border-t grid grid-cols-2 gap-3"><ResultCard label="Area" value={results.area} unit="m²" /><ResultCard label="Tiles" value={results.tilesWithWastage} unit="pcs" highlight /></div></>); }
     else if (selectedCalc === 'concrete') { results = calculateConcrete(); content = (<><div className="grid grid-cols-2 gap-3"><InputField label="Length" value={concreteInputs.length} onChange={(v) => setConcreteInputs({...concreteInputs, length: v})} unit="mm" /><InputField label="Width" value={concreteInputs.width} onChange={(v) => setConcreteInputs({...concreteInputs, width: v})} unit="mm" /></div><InputField label="Depth" value={concreteInputs.depth} onChange={(v) => setConcreteInputs({...concreteInputs, depth: v})} unit="mm" /><div className="pt-4 border-t grid grid-cols-2 gap-3"><ResultCard label="Volume" value={results.volume} unit="m³" /><ResultCard label="Bags" value={results.bags25kg} unit="25kg" highlight /></div></>); }
     else if (selectedCalc === 'vat') { results = calculateVAT(); content = (<><InputField label="Amount" value={vatInputs.amount} onChange={(v) => setVatInputs({...vatInputs, amount: v})} unit="£" placeholder="Enter price" /><InputField label="Margin %" value={vatInputs.margin} onChange={(v) => setVatInputs({...vatInputs, margin: v})} unit="%" placeholder="15" /><div className="pt-4 border-t space-y-2"><p className="text-sm font-semibold text-gray-600 mb-2">VAT Calculations (20%)</p><div className="grid grid-cols-2 gap-3"><ResultCard label="+ VAT" value={`£${results.withVAT}`} /><ResultCard label="- VAT" value={`£${results.withoutVAT}`} /></div><div className="grid grid-cols-2 gap-3 mt-2"><ResultCard label="VAT Amount" value={`£${results.vatAmount}`} /></div><p className="text-sm font-semibold text-gray-600 mt-4 mb-2">Margin Calculations</p><div className="grid grid-cols-2 gap-3"><ResultCard label={`Sell (+${results.margin}%)`} value={`£${results.sellPrice}`} highlight /><ResultCard label="Cost Price" value={`£${results.costFromSell}`} /></div></div></>); }
@@ -4114,7 +4122,7 @@ export default function RichsToolkit() {
           </div>
           <button onClick={() => setShowCalcHistory(true)} className="p-2 bg-gray-100 rounded-lg"><Clock size={20} /></button>
         </div>
-        <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 mb-4">{content}</div>
+        <div key={selectedCalc} className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 mb-4">{content}</div>
         <div className="grid grid-cols-2 gap-2">
           <button onClick={() => {
             saveCalculation(selectedCalc, currentInputs, results);
@@ -4740,30 +4748,45 @@ export default function RichsToolkit() {
   return (
     <div className={`min-h-screen ${theme.bg} transition-colors duration-500`}>
       <div className={`max-w-sm mx-auto ${theme.bg} min-h-screen relative transition-colors duration-500`}>
-        {/* Time and date display - top right corner with timer */}
+        {/* Timer icon - top left corner */}
+        <div className={`fixed top-4 left-4 z-50`}>
+          <button
+            onClick={() => setShowTimerView(!showTimerView)}
+            className={`${isTimerRunning ? 'bg-green-500' : 'bg-blue-500'} w-10 h-10 rounded-full shadow-lg flex items-center justify-center transition-all duration-300 hover:scale-110`}
+          >
+            <Clock size={20} className="text-white" />
+          </button>
+        </div>
+
+        {/* Time and date display OR Timer - top right corner */}
         <div className={`fixed top-4 right-4 ${theme.cardBg} rounded-lg shadow-sm border ${theme.border} transition-all duration-500 z-50`}>
-          <div className="px-3 py-2 text-right">
-            <div className={`text-sm font-semibold ${theme.text} transition-colors duration-500`}>{formatCurrentTime()}</div>
-            <div className={`text-xs ${theme.textSecondary} transition-colors duration-500`}>{formatCurrentDate()}</div>
-          </div>
-          {/* Timer display */}
-          {isTimerRunning && (
-            <div className="px-3 py-2 border-t border-gray-200 bg-green-50">
-              <div className="text-xs text-green-700 font-semibold mb-1">⏱️ Timer Running</div>
-              <div className="text-lg font-bold text-green-600">{formatTimerDisplay(timerSeconds)}</div>
-              {timerProject && <div className="text-xs text-green-600 truncate max-w-[120px]">{timerProject}</div>}
-              <div className="flex gap-1 mt-2">
-                <button onClick={stopTimer} className="flex-1 text-xs py-1 bg-green-600 text-white rounded">Stop & Save</button>
-                <button onClick={resetTimer} className="px-2 text-xs py-1 bg-gray-300 text-gray-700 rounded">Reset</button>
-              </div>
+          {!showTimerView ? (
+            // Date and Time view
+            <div className="px-3 py-2 text-right">
+              <div className={`text-sm font-semibold ${theme.text} transition-colors duration-500`}>{formatCurrentTime()}</div>
+              <div className={`text-xs ${theme.textSecondary} transition-colors duration-500`}>{formatCurrentDate()}</div>
             </div>
-          )}
-          {/* Start timer button when not running */}
-          {!isTimerRunning && (
-            <div className="px-3 py-2 border-t border-gray-200">
-              <button onClick={() => setShowTimerModal(true)} className="w-full text-xs py-1.5 bg-blue-500 text-white rounded-lg flex items-center justify-center gap-1">
-                <Clock size={12} /> Start Timer
-              </button>
+          ) : (
+            // Timer view
+            <div className="px-3 py-2">
+              {isTimerRunning ? (
+                <div>
+                  <div className="text-xs text-green-700 font-semibold mb-1">⏱️ Timer Running</div>
+                  <div className="text-lg font-bold text-green-600">{formatTimerDisplay(timerSeconds)}</div>
+                  {timerProject && <div className="text-xs text-green-600 truncate max-w-[120px]">{timerProject}</div>}
+                  <div className="flex gap-1 mt-2">
+                    <button onClick={stopTimer} className="flex-1 text-xs py-1 bg-green-600 text-white rounded">Stop & Save</button>
+                    <button onClick={resetTimer} className="px-2 text-xs py-1 bg-gray-300 text-gray-700 rounded">Reset</button>
+                  </div>
+                </div>
+              ) : (
+                <div>
+                  <div className="text-xs text-gray-600 mb-2">Start Timer</div>
+                  <button onClick={() => setShowTimerModal(true)} className="w-full text-xs py-2 bg-blue-500 text-white rounded-lg flex items-center justify-center gap-1">
+                    <Clock size={12} /> Start
+                  </button>
+                </div>
+              )}
             </div>
           )}
         </div>
