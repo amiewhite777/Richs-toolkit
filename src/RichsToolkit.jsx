@@ -491,6 +491,12 @@ export default function RichsToolkit() {
   const lastWeatherChange = useRef(Date.now());
   const lastTimeChange = useRef(Date.now());
 
+  // Audio State
+  const [sfxEnabled, setSfxEnabled] = useState(true);
+  const [musicEnabled, setMusicEnabled] = useState(true);
+  const audioContext = useRef(null);
+  const ambientLoop = useRef(null);
+
   // Fishing animation frame
   const fishingAnimationFrame = useRef(null);
   const lastFrameTime = useRef(Date.now());
@@ -511,6 +517,274 @@ export default function RichsToolkit() {
     dusk: { emoji: '🌇', name: 'Dusk', hours: '5-8pm', fishBonus: 1.4, description: 'Predators hunt at dusk' },
     night: { emoji: '🌙', name: 'Night', hours: '8pm-5am', fishBonus: 0.9, description: 'Catfish and eels more common' }
   };
+
+  // ==================== AUDIO SYSTEM ====================
+
+  // Initialize audio context
+  const initAudio = () => {
+    if (!audioContext.current) {
+      audioContext.current = new (window.AudioContext || window.webkitAudioContext)();
+    }
+    return audioContext.current;
+  };
+
+  // Procedural Sound Generator using Web Audio API
+  const playSound = (type) => {
+    if (!sfxEnabled) return;
+
+    const ctx = initAudio();
+    const now = ctx.currentTime;
+
+    switch (type) {
+      case 'cast': {
+        // Whoosh + splash
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+
+        osc.frequency.setValueAtTime(800, now);
+        osc.frequency.exponentialRampToValueAtTime(200, now + 0.3);
+        gain.gain.setValueAtTime(0.3, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+
+        osc.start(now);
+        osc.stop(now + 0.3);
+        break;
+      }
+
+      case 'bite': {
+        // Sharp alert tone
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+
+        osc.frequency.setValueAtTime(880, now);
+        gain.gain.setValueAtTime(0.4, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.15);
+
+        osc.start(now);
+        osc.stop(now + 0.15);
+        break;
+      }
+
+      case 'reel': {
+        // Mechanical click
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+
+        osc.type = 'square';
+        osc.frequency.setValueAtTime(150, now);
+        gain.gain.setValueAtTime(0.15, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.05);
+
+        osc.start(now);
+        osc.stop(now + 0.05);
+        break;
+      }
+
+      case 'tension': {
+        // Creaking warning
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(100, now);
+        osc.frequency.linearRampToValueAtTime(120, now + 0.2);
+        gain.gain.setValueAtTime(0.2, now);
+        gain.gain.linearRampToValueAtTime(0.01, now + 0.2);
+
+        osc.start(now);
+        osc.stop(now + 0.2);
+        break;
+      }
+
+      case 'snap': {
+        // Line break
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(200, now);
+        osc.frequency.exponentialRampToValueAtTime(50, now + 0.3);
+        gain.gain.setValueAtTime(0.5, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+
+        osc.start(now);
+        osc.stop(now + 0.3);
+        break;
+      }
+
+      case 'catch': {
+        // Big splash
+        const noise = ctx.createBufferSource();
+        const buffer = ctx.createBuffer(1, ctx.sampleRate * 0.5, ctx.sampleRate);
+        const data = buffer.getChannelData(0);
+        for (let i = 0; i < buffer.length; i++) {
+          data[i] = Math.random() * 2 - 1;
+        }
+        noise.buffer = buffer;
+
+        const filter = ctx.createBiquadFilter();
+        filter.type = 'lowpass';
+        filter.frequency.setValueAtTime(800, now);
+        filter.frequency.exponentialRampToValueAtTime(200, now + 0.5);
+
+        const gain = ctx.createGain();
+        gain.gain.setValueAtTime(0.3, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.5);
+
+        noise.connect(filter);
+        filter.connect(gain);
+        gain.connect(ctx.destination);
+
+        noise.start(now);
+        noise.stop(now + 0.5);
+        break;
+      }
+
+      case 'coins': {
+        // Cha-ching!
+        const osc1 = ctx.createOscillator();
+        const osc2 = ctx.createOscillator();
+        const gain = ctx.createGain();
+
+        osc1.connect(gain);
+        osc2.connect(gain);
+        gain.connect(ctx.destination);
+
+        osc1.frequency.setValueAtTime(880, now);
+        osc2.frequency.setValueAtTime(1320, now);
+        gain.gain.setValueAtTime(0.3, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+
+        osc1.start(now);
+        osc2.start(now);
+        osc1.stop(now + 0.3);
+        osc2.stop(now + 0.3);
+        break;
+      }
+
+      case 'levelup': {
+        // Fanfare
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+
+        osc.frequency.setValueAtTime(523, now);      // C
+        osc.frequency.setValueAtTime(659, now + 0.1); // E
+        osc.frequency.setValueAtTime(784, now + 0.2); // G
+        osc.frequency.setValueAtTime(1047, now + 0.3); // C
+
+        gain.gain.setValueAtTime(0.4, now);
+        gain.gain.setValueAtTime(0.4, now + 0.3);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.6);
+
+        osc.start(now);
+        osc.stop(now + 0.6);
+        break;
+      }
+
+      case 'ui': {
+        // Soft click
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+
+        osc.frequency.setValueAtTime(800, now);
+        gain.gain.setValueAtTime(0.1, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.05);
+
+        osc.start(now);
+        osc.stop(now + 0.05);
+        break;
+      }
+    }
+  };
+
+  // Ambient sound loops (simplified - using oscillators to simulate nature sounds)
+  const startAmbient = (location) => {
+    if (!musicEnabled) return;
+    stopAmbient();
+
+    const ctx = initAudio();
+    const now = ctx.currentTime;
+
+    // Create simple ambient loop based on location
+    const osc1 = ctx.createOscillator();
+    const osc2 = ctx.createOscillator();
+    const gain = ctx.createGain();
+
+    osc1.connect(gain);
+    osc2.connect(gain);
+    gain.connect(ctx.destination);
+
+    // Different frequencies for different locations
+    const ambientSettings = {
+      bath: { f1: 100, f2: 150, vol: 0.03 },
+      thailand: { f1: 200, f2: 300, vol: 0.04 },
+      lochness: { f1: 80, f2: 120, vol: 0.02 },
+      bulgaria: { f1: 110, f2: 165, vol: 0.03 },
+      norway: { f1: 60, f2: 90, vol: 0.025 },
+      florida: { f1: 180, f2: 270, vol: 0.035 },
+      amazon: { f1: 220, f2: 330, vol: 0.045 },
+      australia: { f1: 190, f2: 285, vol: 0.04 },
+      japan: { f1: 250, f2: 375, vol: 0.035 },
+      vietnam: { f1: 210, f2: 315, vol: 0.04 },
+      southafrica: { f1: 140, f2: 210, vol: 0.035 },
+      iceland: { f1: 70, f2: 105, vol: 0.025 }
+    };
+
+    const settings = ambientSettings[location] || ambientSettings.bath;
+
+    osc1.type = 'sine';
+    osc2.type = 'sine';
+    osc1.frequency.setValueAtTime(settings.f1, now);
+    osc2.frequency.setValueAtTime(settings.f2, now);
+
+    // Gentle LFO effect
+    osc1.frequency.linearRampToValueAtTime(settings.f1 * 1.1, now + 5);
+    osc2.frequency.linearRampToValueAtTime(settings.f2 * 0.9, now + 5);
+
+    gain.gain.setValueAtTime(settings.vol, now);
+
+    osc1.start(now);
+    osc2.start(now);
+
+    ambientLoop.current = { osc1, osc2, gain };
+  };
+
+  const stopAmbient = () => {
+    if (ambientLoop.current) {
+      try {
+        ambientLoop.current.osc1.stop();
+        ambientLoop.current.osc2.stop();
+      } catch (e) {
+        // Already stopped
+      }
+      ambientLoop.current = null;
+    }
+  };
+
+  // Start/stop ambient when changing locations or entering/leaving game
+  useEffect(() => {
+    if (fishingScreen === 'game') {
+      startAmbient(fishingGame.currentLocation);
+    } else {
+      stopAmbient();
+    }
+
+    return () => stopAmbient();
+  }, [fishingScreen, fishingGame.currentLocation, musicEnabled]);
 
   // ==================== FISHING GAME HELPER FUNCTIONS ====================
 
@@ -1469,7 +1743,7 @@ export default function RichsToolkit() {
     <div className="mb-4">
       <label className="block text-sm font-medium text-gray-600 mb-1">{label}</label>
       <div className="flex items-center gap-2">
-        <input type={type} inputMode={type === 'number' ? 'decimal' : 'text'} value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder || '0'}
+        <input type="text" inputMode={type === 'number' ? 'decimal' : 'text'} value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder || '0'}
           className="flex-1 p-3 bg-gray-100 rounded-xl text-lg font-medium focus:outline-none focus:ring-2 focus:ring-blue-500" />
         {unit && <span className="text-gray-500 font-medium w-12">{unit}</span>}
       </div>
@@ -1722,10 +1996,8 @@ export default function RichsToolkit() {
 
   // Fishing Title Screen
   const renderFishingTitle = () => {
-    const location = FISHING_LOCATIONS[fishingGame.currentLocation];
-
     return (
-      <div className={`min-h-screen bg-gradient-to-b ${location.skyGradient} relative overflow-hidden`}>
+      <div className="min-h-screen bg-gradient-to-b from-blue-600 via-blue-500 to-cyan-400 relative overflow-hidden">
         {/* Animated background particles */}
         <div className="absolute inset-0 pointer-events-none">
           {Array.from({ length: 15 }).map((_, i) => (
@@ -1740,7 +2012,7 @@ export default function RichsToolkit() {
                 opacity: 0.3
               }}
             >
-              {location.particles[Math.floor(Math.random() * location.particles.length)]}
+              {['🐟', '🎣', '🌊'][Math.floor(Math.random() * 3)]}
             </div>
           ))}
         </div>
@@ -1750,80 +2022,25 @@ export default function RichsToolkit() {
           <div className="text-center mb-12">
             <div className="text-8xl mb-4 animate-bounce">🎣</div>
             <h1 className="text-5xl font-bold text-white mb-2 drop-shadow-lg">Rich's</h1>
-            <h2 className="text-6xl font-bold text-white drop-shadow-lg">Fishing Adventure</h2>
+            <h2 className="text-6xl font-bold text-white drop-shadow-lg mb-6">Fishing Adventure</h2>
           </div>
 
-          {/* Player Stats Summary */}
-          <div className="bg-white/90 backdrop-blur rounded-2xl p-6 mb-8 w-full max-w-md">
-            <div className="grid grid-cols-3 gap-4 text-center">
-              <div>
-                <div className="text-3xl font-bold text-blue-600">{fishingGame.level}</div>
-                <div className="text-sm text-gray-600">Level</div>
-              </div>
-              <div>
-                <div className="text-3xl font-bold text-amber-600">{fishingGame.coins}</div>
-                <div className="text-sm text-gray-600">Coins</div>
-              </div>
-              <div>
-                <div className="text-3xl font-bold text-green-600">{fishingGame.stats.totalCaught}</div>
-                <div className="text-sm text-gray-600">Fish Caught</div>
-              </div>
-            </div>
-            <div className="mt-4 bg-gray-200 rounded-full h-3 overflow-hidden">
-              <div
-                className="bg-green-500 h-full transition-all duration-300"
-                style={{ width: `${(fishingGame.xp / getXPForLevel(fishingGame.level)) * 100}%` }}
-              />
-            </div>
-            <div className="text-xs text-center text-gray-500 mt-1">
-              {fishingGame.xp} / {getXPForLevel(fishingGame.level)} XP
-            </div>
+          {/* Under Construction Message */}
+          <div className="bg-white/90 backdrop-blur rounded-2xl p-8 mb-8 w-full max-w-md text-center">
+            <div className="text-6xl mb-4">🚧</div>
+            <h3 className="text-2xl font-bold text-gray-800 mb-3">Under Construction</h3>
+            <p className="text-gray-600 mb-4">
+              This fishing game is currently being developed and is not yet ready to play.
+            </p>
+            <p className="text-sm text-gray-500">
+              Check back soon for an amazing fishing adventure!
+            </p>
           </div>
-
-          {/* Navigation Buttons */}
-          <div className="grid grid-cols-2 gap-3 w-full max-w-md mb-6">
-            <button
-              onClick={() => setFishingScreen('game')}
-              className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-4 px-6 rounded-xl shadow-lg active:scale-95 transition flex flex-col items-center gap-2"
-            >
-              <Fish size={32} />
-              <span>Start Fishing</span>
-            </button>
-            <button
-              onClick={() => setFishingScreen('worldmap')}
-              className="bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-4 px-6 rounded-xl shadow-lg active:scale-95 transition flex flex-col items-center gap-2"
-            >
-              <Map size={32} />
-              <span>World Map</span>
-            </button>
-            <button
-              onClick={() => setFishingScreen('collection')}
-              className="bg-purple-500 hover:bg-purple-600 text-white font-bold py-4 px-6 rounded-xl shadow-lg active:scale-95 transition flex flex-col items-center gap-2"
-            >
-              <BookOpen size={32} />
-              <span>Collection</span>
-            </button>
-            <button
-              onClick={() => setFishingScreen('shop')}
-              className="bg-amber-500 hover:bg-amber-600 text-white font-bold py-4 px-6 rounded-xl shadow-lg active:scale-95 transition flex flex-col items-center gap-2"
-            >
-              <ShoppingCart size={32} />
-              <span>Shop</span>
-            </button>
-          </div>
-
-          <button
-            onClick={() => setFishingScreen('stats')}
-            className="bg-white/80 hover:bg-white text-gray-800 font-semibold py-3 px-6 rounded-xl shadow-lg active:scale-95 transition flex items-center gap-2"
-          >
-            <Trophy size={24} />
-            <span>Statistics</span>
-          </button>
 
           {/* Back Button */}
           <button
             onClick={() => setCurrentScreen('home')}
-            className="mt-8 text-white font-semibold flex items-center gap-2 hover:opacity-80"
+            className="mt-8 text-white font-semibold flex items-center gap-2 hover:opacity-80 bg-white/20 backdrop-blur px-6 py-3 rounded-xl"
           >
             <ChevronLeft size={20} />
             <span>Back to Toolkit</span>
