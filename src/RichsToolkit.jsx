@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { Calculator, ChevronRight, ChevronLeft, Home, Camera, ClipboardList, PaintBucket, Ruler, Grid3X3, Package, Layers, Plus, Building2, Sun, Landmark, Image, FileText, X, Clock, MapPin, Calendar, Phone, Square, AlertTriangle, CheckCircle, Check, Flag, Send, ArrowLeftRight, Receipt, Car, Trash2, Star, MessageSquare, Copy, PhoneCall, Search, Users, Cloud, CloudRain, CloudSnow, CloudDrizzle, CloudLightning, Wind, Droplets, Thermometer, Umbrella, AlertCircle, CloudSun, Moon, Sunrise, Sunset, Eye } from 'lucide-react';
+import { Calculator, ChevronRight, ChevronLeft, Home, Camera, ClipboardList, PaintBucket, Ruler, Grid3X3, Package, Layers, Plus, Building2, Sun, Landmark, Image, FileText, X, Clock, MapPin, Calendar, Phone, Square, AlertTriangle, CheckCircle, Check, Flag, Send, ArrowLeftRight, Receipt, Car, Trash2, Star, MessageSquare, Copy, PhoneCall, Search, Users, Cloud, CloudRain, CloudSnow, CloudDrizzle, CloudLightning, Wind, Droplets, Thermometer, Umbrella, AlertCircle, CloudSun, Moon, Sunrise, Sunset, Eye, Loader2 } from 'lucide-react';
+import { useWeather } from './useWeather';
 
 export default function RichsToolkit() {
   const [currentScreen, setCurrentScreen] = useState('home');
@@ -35,50 +36,9 @@ export default function RichsToolkit() {
   
   // Weather state
   const [weatherView, setWeatherView] = useState('today'); // today, week, alerts
-  
-  // Weather data (simulated for Bath)
-  const weatherData = {
-    current: {
-      temp: 12,
-      feelsLike: 10,
-      condition: 'partly-cloudy',
-      description: 'Partly Cloudy',
-      humidity: 68,
-      windSpeed: 12,
-      windDirection: 'SW',
-      pressure: 1018,
-      visibility: 10,
-      uvIndex: 3,
-      sunrise: '07:24',
-      sunset: '16:42',
-    },
-    hourly: [
-      { time: '09:00', temp: 10, condition: 'cloudy', rain: 0 },
-      { time: '10:00', temp: 11, condition: 'partly-cloudy', rain: 0 },
-      { time: '11:00', temp: 12, condition: 'partly-cloudy', rain: 0 },
-      { time: '12:00', temp: 13, condition: 'sunny', rain: 0 },
-      { time: '13:00', temp: 14, condition: 'sunny', rain: 0 },
-      { time: '14:00', temp: 14, condition: 'partly-cloudy', rain: 0 },
-      { time: '15:00', temp: 13, condition: 'partly-cloudy', rain: 10 },
-      { time: '16:00', temp: 12, condition: 'cloudy', rain: 20 },
-      { time: '17:00', temp: 11, condition: 'cloudy', rain: 30 },
-      { time: '18:00', temp: 10, condition: 'rain', rain: 60 },
-    ],
-    daily: [
-      { day: 'Today', date: 'Mon 15', high: 14, low: 8, condition: 'partly-cloudy', rain: 20, wind: 12, workScore: 85 },
-      { day: 'Tomorrow', date: 'Tue 16', high: 12, low: 6, condition: 'rain', rain: 80, wind: 18, workScore: 30 },
-      { day: 'Wednesday', date: 'Wed 17', high: 10, low: 4, condition: 'rain', rain: 90, wind: 25, workScore: 15 },
-      { day: 'Thursday', date: 'Thu 18', high: 11, low: 5, condition: 'cloudy', rain: 40, wind: 15, workScore: 55 },
-      { day: 'Friday', date: 'Fri 19', high: 13, low: 7, condition: 'partly-cloudy', rain: 10, wind: 8, workScore: 90 },
-      { day: 'Saturday', date: 'Sat 20', high: 15, low: 8, condition: 'sunny', rain: 5, wind: 6, workScore: 95 },
-      { day: 'Sunday', date: 'Sun 21', high: 14, low: 7, condition: 'partly-cloudy', rain: 15, wind: 10, workScore: 80 },
-    ],
-    alerts: [
-      { type: 'rain', title: 'Rain Expected', message: 'Heavy rain forecast from Tuesday. Plan indoor work or protect external areas.', severity: 'warning' },
-      { type: 'lime', title: 'Lime Work Advisory', message: 'Wednesday temps below 5°C overnight. Avoid lime pointing - risk of frost damage to fresh mortar.', severity: 'danger' },
-      { type: 'wind', title: 'High Winds', message: 'Wednesday gusts up to 40mph. Secure scaffolding and loose materials.', severity: 'warning' },
-    ]
-  };
+
+  // Live weather data for Bath, UK
+  const { weatherData, loading: weatherLoading, error: weatherError } = useWeather();
 
   // Work condition assessments
   const getWorkConditions = (temp, rain, wind, condition) => {
@@ -142,6 +102,7 @@ export default function RichsToolkit() {
       case 'drizzle': return <CloudDrizzle {...iconProps} />;
       case 'snow': return <CloudSnow {...iconProps} />;
       case 'thunder': return <CloudLightning {...iconProps} />;
+      case 'storm': return <CloudLightning {...iconProps} />;
       default: return <Sun {...iconProps} />;
     }
   };
@@ -378,6 +339,37 @@ export default function RichsToolkit() {
 
   // Weather Screen
   const renderWeather = () => {
+    // Loading state
+    if (weatherLoading || !weatherData) {
+      return (
+        <div className="p-4 pb-24">
+          <button onClick={() => setCurrentScreen('home')} className="flex items-center gap-2 text-blue-500 mb-4">
+            <ChevronLeft size={20} /><span>Home</span>
+          </button>
+          <div className="flex flex-col items-center justify-center py-20">
+            <Loader2 size={48} className="text-blue-500 animate-spin mb-4" />
+            <p className="text-gray-600">Loading weather data for Bath...</p>
+          </div>
+        </div>
+      );
+    }
+
+    // Error state
+    if (weatherError) {
+      return (
+        <div className="p-4 pb-24">
+          <button onClick={() => setCurrentScreen('home')} className="flex items-center gap-2 text-blue-500 mb-4">
+            <ChevronLeft size={20} /><span>Home</span>
+          </button>
+          <div className="flex flex-col items-center justify-center py-20 px-6">
+            <AlertCircle size={48} className="text-red-500 mb-4" />
+            <p className="text-gray-900 font-semibold mb-2">Unable to load weather</p>
+            <p className="text-gray-600 text-center text-sm">{weatherError}</p>
+          </div>
+        </div>
+      );
+    }
+
     const { current, hourly, daily, alerts } = weatherData;
     const todayConditions = getWorkConditions(current.temp, daily[0].rain, current.windSpeed, current.condition);
 
@@ -876,41 +868,56 @@ export default function RichsToolkit() {
 
   // Home
   const renderHome = () => {
-    const { current, daily, alerts } = weatherData;
-    const todayWork = daily[0];
-    
     return (
       <div className="p-4 pb-24">
         <div className="mb-6"><h1 className="text-2xl font-bold text-gray-900">Rich's Toolkit</h1><p className="text-gray-500">Bath Heritage Renovations</p></div>
-        
+
         {/* Weather Card - Now Tappable */}
-        <button onClick={() => setCurrentScreen('weather')} className="w-full text-left bg-gradient-to-r from-sky-400 to-blue-500 rounded-2xl p-4 mb-4 text-white">
-          <div className="flex items-center justify-between">
-            <div>
-              <div className="flex items-center gap-2 mb-1">
-                <MapPin size={14} className="opacity-75" />
-                <p className="text-sm opacity-90">Bath, Today</p>
-              </div>
-              <p className="text-3xl font-bold">{current.temp}°C</p>
-              <p className="text-sm opacity-90">{current.description}</p>
+        {weatherLoading || !weatherData ? (
+          <div className="w-full bg-gradient-to-r from-sky-400 to-blue-500 rounded-2xl p-4 mb-4 text-white">
+            <div className="flex items-center justify-center py-6">
+              <Loader2 size={32} className="animate-spin text-white/80" />
             </div>
-            <div className="text-right">
-              <div className="text-white/90 mb-2">{getWeatherIcon(current.condition, 40)}</div>
-              <div className={`px-2 py-1 rounded-lg text-xs font-semibold ${
-                todayWork.workScore >= 80 ? 'bg-green-400/30 text-green-100' : 
-                todayWork.workScore >= 50 ? 'bg-amber-400/30 text-amber-100' : 'bg-red-400/30 text-red-100'
-              }`}>
-                {getWorkScoreLabel(todayWork.workScore)} for work
+          </div>
+        ) : weatherError ? (
+          <div className="w-full bg-gradient-to-r from-gray-400 to-gray-500 rounded-2xl p-4 mb-4 text-white">
+            <div className="flex items-center gap-3">
+              <AlertCircle size={24} />
+              <div>
+                <p className="font-semibold">Weather Unavailable</p>
+                <p className="text-sm opacity-90">Tap to retry</p>
               </div>
             </div>
           </div>
-          {alerts.length > 0 && (
-            <div className="mt-3 pt-3 border-t border-white/20 flex items-center gap-2">
-              <AlertTriangle size={14} />
-              <span className="text-sm">{alerts.length} weather alert{alerts.length > 1 ? 's' : ''} - tap for details</span>
+        ) : (
+          <button onClick={() => setCurrentScreen('weather')} className="w-full text-left bg-gradient-to-r from-sky-400 to-blue-500 rounded-2xl p-4 mb-4 text-white">
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="flex items-center gap-2 mb-1">
+                  <MapPin size={14} className="opacity-75" />
+                  <p className="text-sm opacity-90">Bath, Today</p>
+                </div>
+                <p className="text-3xl font-bold">{weatherData.current.temp}°C</p>
+                <p className="text-sm opacity-90">{weatherData.current.description}</p>
+              </div>
+              <div className="text-right">
+                <div className="text-white/90 mb-2">{getWeatherIcon(weatherData.current.condition, 40)}</div>
+                <div className={`px-2 py-1 rounded-lg text-xs font-semibold ${
+                  weatherData.daily[0].workScore >= 80 ? 'bg-green-400/30 text-green-100' :
+                  weatherData.daily[0].workScore >= 50 ? 'bg-amber-400/30 text-amber-100' : 'bg-red-400/30 text-red-100'
+                }`}>
+                  {getWorkScoreLabel(weatherData.daily[0].workScore)} for work
+                </div>
+              </div>
             </div>
-          )}
-        </button>
+            {weatherData.alerts.length > 0 && (
+              <div className="mt-3 pt-3 border-t border-white/20 flex items-center gap-2">
+                <AlertTriangle size={14} />
+                <span className="text-sm">{weatherData.alerts.length} weather alert{weatherData.alerts.length > 1 ? 's' : ''} - tap for details</span>
+              </div>
+            )}
+          </button>
+        )}
 
         <div className="grid grid-cols-2 gap-3">
           {[
