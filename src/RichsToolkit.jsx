@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Calculator, ChevronRight, ChevronLeft, Home, Camera, ClipboardList, PaintBucket, Ruler, Grid3X3, Package, Layers, Plus, Building2, Sun, Landmark, Image, FileText, X, Clock, MapPin, Calendar, Phone, Square, AlertTriangle, CheckCircle, Check, Flag, Send, ArrowLeftRight, Receipt, Car, Trash2, Star, MessageSquare, Copy, PhoneCall, Search, Users, Cloud, CloudRain, CloudSnow, CloudDrizzle, CloudLightning, Wind, Droplets, Thermometer, Umbrella, AlertCircle, CloudSun, Moon, Sunrise, Sunset, Eye, Loader2 } from 'lucide-react';
+import { Calculator, ChevronRight, ChevronLeft, Home, Camera, ClipboardList, PaintBucket, Ruler, Grid3X3, Package, Layers, Plus, Building2, Sun, Landmark, Image, FileText, X, Clock, MapPin, Calendar, Phone, Square, AlertTriangle, CheckCircle, Check, Flag, Send, ArrowLeftRight, Receipt, Car, Trash2, Star, MessageSquare, Copy, PhoneCall, Search, Users, Cloud, CloudRain, CloudSnow, CloudDrizzle, CloudLightning, Wind, Droplets, Thermometer, Umbrella, AlertCircle, CloudSun, Moon, Sunrise, Sunset, Eye, Loader2, DollarSign, TrendingUp, PiggyBank, CreditCard, Download } from 'lucide-react';
 import { useWeather } from './useWeather';
 import { useLocalStorage } from './useLocalStorage';
 
@@ -13,8 +13,20 @@ export default function RichsToolkit() {
   const [selectedRoom, setSelectedRoom] = useState(null);
   const [showNewSnag, setShowNewSnag] = useState(false);
   const [showNewRoom, setShowNewRoom] = useState(false);
+  const [showNewProject, setShowNewProject] = useState(false);
+  const [showProjectPhotos, setShowProjectPhotos] = useState(false);
   const [newSnagData, setNewSnagData] = useState({ description: '', priority: 'medium', notes: '' });
   const [newRoomName, setNewRoomName] = useState('');
+  const [newProjectData, setNewProjectData] = useState({
+    name: '',
+    grade: 'Grade II',
+    address: '',
+    clientName: '',
+    clientPhone: '',
+    clientEmail: '',
+    startDate: '',
+    notes: ''
+  });
   
   // Conversions state
   const [conversionType, setConversionType] = useState('length');
@@ -40,6 +52,37 @@ export default function RichsToolkit() {
 
   // Live weather data for Bath, UK
   const { weatherData, loading: weatherLoading, error: weatherError } = useWeather();
+
+  // Invoicing & Budget state
+  const [invoices, setInvoices] = useLocalStorage('richs-toolkit-invoices', []);
+  const [showNewInvoice, setShowNewInvoice] = useState(false);
+  const [selectedInvoice, setSelectedInvoice] = useState(null);
+  const [newInvoiceData, setNewInvoiceData] = useState({
+    project: '',
+    hourlyRate: '25',
+    markup: '15',
+    includeTime: true,
+    includeReceipts: true,
+    includeMileage: true
+  });
+
+  const [budgets, setBudgets] = useLocalStorage('richs-toolkit-budgets', {
+    projects: {},
+    personal: {
+      monthly: 2000,
+      categories: [
+        { id: 'materials', name: 'Materials', budget: 500, spent: 0, color: 'bg-blue-500' },
+        { id: 'fuel', name: 'Fuel & Travel', budget: 300, spent: 0, color: 'bg-green-500' },
+        { id: 'tools', name: 'Tools & Hire', budget: 200, spent: 0, color: 'bg-purple-500' },
+        { id: 'food', name: 'Food & Drink', budget: 400, spent: 0, color: 'bg-orange-500' },
+        { id: 'other', name: 'Other', budget: 600, spent: 0, color: 'bg-gray-500' }
+      ]
+    }
+  });
+  const [budgetTab, setBudgetTab] = useState('personal');
+
+  // Historical map state
+  const [selectedHistoricalSite, setSelectedHistoricalSite] = useState(null);
 
   // Work condition assessments
   const getWorkConditions = (temp, rain, wind, condition) => {
@@ -119,6 +162,118 @@ export default function RichsToolkit() {
     if (score >= 50) return 'Fair';
     return 'Poor';
   };
+
+  // Historical sites data for Bath
+  const historicalSites = [
+    {
+      id: 'roman-baths',
+      name: 'Roman Baths',
+      x: 50,
+      y: 45,
+      era: 'Roman (60-70 AD)',
+      grade: 'Scheduled Monument',
+      description: 'One of the finest historic sites in Northern Europe. Built around natural hot springs, the Romans constructed an elaborate bathing complex and temple to Sulis Minerva.',
+      heritage: 'The baths were built on the only naturally occurring hot springs in the UK. The water rises at 46°C from a depth of 2,700m. The Great Bath, King\'s Bath, and the Roman Temple remain remarkably preserved.',
+      construction: 'Bath stone, lead-lined pools, hypocaust heating system, intricate mosaic floors.',
+      relevance: 'Key example of Roman engineering and the foundation of Bath\'s heritage tourism.'
+    },
+    {
+      id: 'bath-abbey',
+      name: 'Bath Abbey',
+      x: 55,
+      y: 50,
+      era: 'Medieval/Gothic (1499-1616)',
+      grade: 'Grade I Listed',
+      description: 'The last great medieval church built in England. Known as the "Lantern of the West" for its large windows and light-filled interior.',
+      heritage: 'Founded in the 7th century, rebuilt as a Norman cathedral, then reconstructed in Perpendicular Gothic style. Features fan vaulting, the largest collection of Victorian stained glass in the west of England.',
+      construction: 'Bath stone, fan vaulted ceiling, flying buttresses, 52 windows depicting Christ\'s life in 617 scenes.',
+      relevance: 'Excellent example of late medieval Gothic architecture and continuous heritage conservation.'
+    },
+    {
+      id: 'royal-crescent',
+      name: 'Royal Crescent',
+      x: 20,
+      y: 30,
+      era: 'Georgian (1767-1775)',
+      grade: 'Grade I Listed',
+      description: 'Iconic sweeping crescent of 30 terraced houses designed by John Wood the Younger. One of the greatest examples of Georgian architecture in Britain.',
+      heritage: 'Built for the wealthy to enjoy Bath\'s spa waters and social season. The uniform Palladian facades hide varied interiors. No. 1 Royal Crescent is now a museum showing Georgian life.',
+      construction: 'Bath stone ashlar facing, 114 Ionic columns, uniform facade masking individual houses, lime mortar joints.',
+      relevance: 'Epitome of Georgian town planning and a masterclass in symmetrical urban design. Regular conservation work required on stone and lime mortar.'
+    },
+    {
+      id: 'the-circus',
+      name: 'The Circus',
+      x: 30,
+      y: 35,
+      era: 'Georgian (1754-1768)',
+      grade: 'Grade I Listed',
+      description: 'A circular space divided into three curved segments of townhouses, designed by John Wood the Elder. Inspired by Roman architecture, particularly the Colosseum.',
+      heritage: 'Revolutionary circular design with three tiers of columns (Doric, Ionic, Corinthian) rising up the facades. 528 different decorative emblems carved on the frieze.',
+      construction: 'Bath stone, Classical orders in superimposed tiers, hidden gardens within the circle.',
+      relevance: 'Pioneering example of Georgian urban design. Demonstrates Bath stone weathering and conservation challenges.'
+    },
+    {
+      id: 'pulteney-bridge',
+      name: 'Pulteney Bridge',
+      x: 70,
+      y: 55,
+      era: 'Georgian (1774)',
+      grade: 'Grade I Listed',
+      description: 'One of only four bridges in the world lined with shops on both sides. Designed by Robert Adam in Palladian style.',
+      heritage: 'Built to connect the city with the Pulteney Estate. Spans the River Avon with three arches. The shop facades were added to generate income and create a unified street scene.',
+      construction: 'Bath stone, three segmental arches, Venetian-inspired design with shops integrated into structure.',
+      relevance: 'Unique engineering and architectural challenge. Regular monitoring needed due to water damage and settlement.'
+    },
+    {
+      id: 'assembly-rooms',
+      name: 'Assembly Rooms',
+      x: 35,
+      y: 32,
+      era: 'Georgian (1769-1771)',
+      grade: 'Grade I Listed',
+      description: 'The heart of fashionable Georgian society. Rooms designed for balls, concerts, card playing, and tea drinking.',
+      heritage: 'Built for Bath\'s social season. Contains the spectacular 100-foot-long Ballroom with five cut-glass chandeliers. Bombed in WWII and carefully restored.',
+      construction: 'Bath stone, grand proportions, ornate plasterwork, original Georgian chandeliers (replicated after war damage).',
+      relevance: 'Major post-war restoration project. Now houses Museum of Costume. Important case study in heritage reconstruction.'
+    },
+    {
+      id: 'prior-park',
+      name: 'Prior Park',
+      x: 85,
+      y: 75,
+      era: 'Georgian (1735-1750)',
+      grade: 'Grade I Listed (house), Grade I Landscape',
+      description: 'Palladian mansion with one of the finest 18th-century landscapes in England. Designed by John Wood the Elder and Capability Brown.',
+      heritage: 'Built for Ralph Allen, who owned the Bath stone quarries. The landscape garden features a Palladian bridge (one of only four in the world), wilderness areas, and sweeping views of Bath.',
+      construction: 'Bath stone mansion, landscaped grounds with grottos, serpentine lakes, and Classical temples.',
+      relevance: 'Demonstrates the quarrying and use of Bath stone. Example of Georgian landscape design and ongoing heritage conservation.'
+    },
+    {
+      id: 'queen-square',
+      name: 'Queen Square',
+      x: 38,
+      y: 42,
+      era: 'Georgian (1729-1736)',
+      grade: 'Grade I Listed',
+      description: 'Bath\'s first major architectural statement by John Wood the Elder. Pioneered the unified Palladian facade treatment.',
+      heritage: 'The north side is designed as a single palace front, masking the individual houses behind. Set the template for later developments like The Circus and Royal Crescent.',
+      construction: 'Bath stone, Palladian proportions, rusticated ground floor, piano nobile (main floor) with Corinthian pilasters.',
+      relevance: 'First example of Wood\'s vision for Bath as a new Rome. Regular lime repointing and stone repair work essential.'
+    },
+    {
+      id: 'thermae-spa',
+      name: 'Thermae Bath Spa',
+      x: 48,
+      y: 50,
+      era: 'Modern (2006), using ancient springs',
+      grade: 'Grade II* (Hot Bath)',
+      description: 'Britain\'s only natural thermal spa, combining historic Georgian buildings with contemporary architecture. Uses the same thermal waters as the Romans.',
+      heritage: 'Built incorporating the restored 18th-century Hot Bath and Cross Bath. The new building uses local Bath stone to blend with surroundings while being distinctly contemporary.',
+      construction: 'Combination of restored Georgian Bath stone buildings and modern glass and stone architecture. Rooftop pool offers views across the city.',
+      relevance: 'Example of contemporary architecture respecting heritage context. Demonstrates sustainable use of natural thermal waters and integration of old and new.'
+    }
+  ];
 
   const [suppliers, setSuppliers] = useLocalStorage('richs-toolkit-suppliers', [
     // Merchants - Builders Merchants
@@ -223,6 +378,42 @@ export default function RichsToolkit() {
   const formatTime = (hours, minutes) => `${hours}h ${minutes}m`;
   const formatCurrency = (amount) => `£${amount.toFixed(2)}`;
   const getTodayDate = () => new Date().toISOString().split('T')[0];
+
+  // Day/Night detection based on sunrise/sunset
+  const isDaytime = () => {
+    if (!weatherData?.current?.sunrise || !weatherData?.current?.sunset) return true; // Default to day
+
+    const now = new Date();
+    const currentTime = now.getHours() * 60 + now.getMinutes();
+
+    // Parse sunrise time (HH:MM format)
+    const [sunriseHour, sunriseMin] = weatherData.current.sunrise.split(':').map(Number);
+    const sunriseTime = sunriseHour * 60 + sunriseMin;
+
+    // Parse sunset time (HH:MM format)
+    const [sunsetHour, sunsetMin] = weatherData.current.sunset.split(':').map(Number);
+    const sunsetTime = sunsetHour * 60 + sunsetMin;
+
+    return currentTime >= sunriseTime && currentTime < sunsetTime;
+  };
+
+  const getTheme = () => {
+    const isDay = isDaytime();
+    return {
+      isDay,
+      bg: isDay ? 'bg-gray-50' : 'bg-slate-900',
+      cardBg: isDay ? 'bg-white' : 'bg-slate-800',
+      text: isDay ? 'text-gray-900' : 'text-gray-100',
+      textSecondary: isDay ? 'text-gray-500' : 'text-gray-400',
+      border: isDay ? 'border-gray-100' : 'border-slate-700',
+      headerGradient: isDay
+        ? 'from-sky-400 to-blue-500'
+        : 'from-indigo-900 via-purple-900 to-slate-900',
+      weatherCardGradient: isDay
+        ? 'from-sky-400 to-blue-500'
+        : 'from-indigo-600 to-purple-700',
+    };
+  };
   
   const getWeekTotal = (entries, field = 'hours') => {
     const weekAgo = new Date(); weekAgo.setDate(weekAgo.getDate() - 7);
@@ -321,6 +512,170 @@ export default function RichsToolkit() {
 
   const toggleSnagComplete = (projectId, roomId, itemId) => {
     setProjects(projects.map(p => p.id === projectId ? { ...p, snagging: p.snagging.map(room => room.id === roomId ? { ...room, items: room.items.map(item => item.id === itemId ? { ...item, complete: !item.complete } : item) } : room) } : p));
+  };
+
+  const deleteSnagItem = (projectId, roomId, itemId) => {
+    setProjects(projects.map(p =>
+      p.id === projectId
+        ? { ...p, snagging: p.snagging.map(room =>
+            room.id === roomId
+              ? { ...room, items: room.items.filter(item => item.id !== itemId) }
+              : room
+          )}
+        : p
+    ));
+    // Update selectedRoom state if we're viewing it
+    if (selectedRoom) {
+      setSelectedRoom(prev => ({
+        ...prev,
+        items: prev.items.filter(item => item.id !== itemId)
+      }));
+    }
+  };
+
+  const addNewProject = () => {
+    if (!newProjectData.name) return;
+    const newProject = {
+      id: Date.now(),
+      name: newProjectData.name,
+      grade: newProjectData.grade,
+      address: newProjectData.address,
+      clientName: newProjectData.clientName,
+      clientPhone: newProjectData.clientPhone,
+      clientEmail: newProjectData.clientEmail,
+      startDate: newProjectData.startDate || getTodayDate(),
+      notes: newProjectData.notes,
+      photos: [],
+      snagging: []
+    };
+    setProjects([...projects, newProject]);
+    setNewProjectData({
+      name: '',
+      grade: 'Grade II',
+      address: '',
+      clientName: '',
+      clientPhone: '',
+      clientEmail: '',
+      startDate: '',
+      notes: ''
+    });
+    setShowNewProject(false);
+  };
+
+  const handlePhotoUpload = (projectId, event) => {
+    const files = event.target.files;
+    if (!files || files.length === 0) return;
+
+    Array.from(files).forEach(file => {
+      if (file.size > 5 * 1024 * 1024) { // 5MB limit
+        alert('Photo too large. Please use photos under 5MB.');
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const photoData = {
+          id: Date.now() + Math.random(),
+          url: reader.result,
+          name: file.name,
+          date: new Date().toISOString(),
+          caption: ''
+        };
+
+        setProjects(projects.map(p =>
+          p.id === projectId
+            ? { ...p, photos: [...(p.photos || []), photoData] }
+            : p
+        ));
+      };
+      reader.readAsDataURL(file);
+    });
+  };
+
+  const deletePhoto = (projectId, photoId) => {
+    setProjects(projects.map(p =>
+      p.id === projectId
+        ? { ...p, photos: (p.photos || []).filter(photo => photo.id !== photoId) }
+        : p
+    ));
+  };
+
+  // Invoice Generation
+  const generateInvoice = () => {
+    if (!newInvoiceData.project) return;
+
+    const projectTimeEntries = timeEntries.filter(e => e.project === newInvoiceData.project);
+    const projectReceipts = receipts.filter(r => r.project === newInvoiceData.project);
+    const projectMileage = mileageEntries.filter(m => m.project === newInvoiceData.project);
+
+    const hourlyRate = parseFloat(newInvoiceData.hourlyRate) || 0;
+    const markup = parseFloat(newInvoiceData.markup) || 0;
+
+    let laborTotal = 0;
+    if (newInvoiceData.includeTime) {
+      const totalHours = projectTimeEntries.reduce((sum, entry) =>
+        sum + entry.hours + entry.minutes / 60, 0);
+      laborTotal = totalHours * hourlyRate;
+    }
+
+    let materialsTotal = 0;
+    if (newInvoiceData.includeReceipts) {
+      materialsTotal = projectReceipts.reduce((sum, receipt) => sum + receipt.amount, 0);
+      materialsTotal = materialsTotal * (1 + markup / 100);
+    }
+
+    let mileageTotal = 0;
+    if (newInvoiceData.includeMileage) {
+      const totalMiles = projectMileage.reduce((sum, entry) =>
+        sum + entry.miles * (entry.return ? 2 : 1), 0);
+      mileageTotal = totalMiles * 0.45; // HMRC rate
+    }
+
+    const subtotal = laborTotal + materialsTotal + mileageTotal;
+    const vat = subtotal * 0.20;
+    const total = subtotal + vat;
+
+    const invoice = {
+      id: Date.now(),
+      invoiceNumber: `INV-${Date.now().toString().slice(-6)}`,
+      project: newInvoiceData.project,
+      date: getTodayDate(),
+      dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+      status: 'unpaid',
+      laborHours: newInvoiceData.includeTime ? projectTimeEntries.reduce((sum, e) => sum + e.hours + e.minutes / 60, 0) : 0,
+      hourlyRate,
+      laborTotal,
+      materialsTotal,
+      mileageTotal,
+      subtotal,
+      vat,
+      total,
+      items: {
+        time: newInvoiceData.includeTime ? projectTimeEntries : [],
+        receipts: newInvoiceData.includeReceipts ? projectReceipts : [],
+        mileage: newInvoiceData.includeMileage ? projectMileage : []
+      }
+    };
+
+    setInvoices([invoice, ...invoices]);
+    setNewInvoiceData({
+      project: '',
+      hourlyRate: '25',
+      markup: '15',
+      includeTime: true,
+      includeReceipts: true,
+      includeMileage: true
+    });
+    setShowNewInvoice(false);
+    setSelectedInvoice(invoice);
+  };
+
+  const toggleInvoiceStatus = (invoiceId) => {
+    setInvoices(invoices.map(inv =>
+      inv.id === invoiceId
+        ? { ...inv, status: inv.status === 'paid' ? 'unpaid' : 'paid' }
+        : inv
+    ));
   };
 
   const addTimeEntry = () => {
@@ -749,6 +1104,169 @@ export default function RichsToolkit() {
     </div>
   );
 
+  const renderNewProjectModal = () => (
+    <div className="fixed inset-0 bg-black/50 z-50 flex items-end overflow-y-auto">
+      <div className="bg-white rounded-t-3xl w-full p-6 max-h-[90vh] overflow-y-auto">
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-xl font-bold">New Project</h2>
+          <button onClick={() => setShowNewProject(false)} className="p-2"><X size={24} /></button>
+        </div>
+        <div className="space-y-4">
+          <div>
+            <label className="text-sm font-medium text-gray-700 mb-1 block">Project Name *</label>
+            <input
+              type="text"
+              value={newProjectData.name}
+              onChange={(e) => setNewProjectData({ ...newProjectData, name: e.target.value })}
+              placeholder="e.g. Royal Crescent - No. 12"
+              className="w-full p-3 bg-gray-100 rounded-xl"
+            />
+          </div>
+          <div>
+            <label className="text-sm font-medium text-gray-700 mb-1 block">Grade</label>
+            <select
+              value={newProjectData.grade}
+              onChange={(e) => setNewProjectData({ ...newProjectData, grade: e.target.value })}
+              className="w-full p-3 bg-gray-100 rounded-xl"
+            >
+              <option value="Grade I">Grade I</option>
+              <option value="Grade II*">Grade II*</option>
+              <option value="Grade II">Grade II</option>
+              <option value="Unlisted">Unlisted</option>
+            </select>
+          </div>
+          <div>
+            <label className="text-sm font-medium text-gray-700 mb-1 block">Address</label>
+            <input
+              type="text"
+              value={newProjectData.address}
+              onChange={(e) => setNewProjectData({ ...newProjectData, address: e.target.value })}
+              placeholder="Full address"
+              className="w-full p-3 bg-gray-100 rounded-xl"
+            />
+          </div>
+          <div>
+            <label className="text-sm font-medium text-gray-700 mb-1 block">Client Name</label>
+            <input
+              type="text"
+              value={newProjectData.clientName}
+              onChange={(e) => setNewProjectData({ ...newProjectData, clientName: e.target.value })}
+              placeholder="Client name"
+              className="w-full p-3 bg-gray-100 rounded-xl"
+            />
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="text-sm font-medium text-gray-700 mb-1 block">Client Phone</label>
+              <input
+                type="tel"
+                value={newProjectData.clientPhone}
+                onChange={(e) => setNewProjectData({ ...newProjectData, clientPhone: e.target.value })}
+                placeholder="Phone"
+                className="w-full p-3 bg-gray-100 rounded-xl"
+              />
+            </div>
+            <div>
+              <label className="text-sm font-medium text-gray-700 mb-1 block">Start Date</label>
+              <input
+                type="date"
+                value={newProjectData.startDate}
+                onChange={(e) => setNewProjectData({ ...newProjectData, startDate: e.target.value })}
+                className="w-full p-3 bg-gray-100 rounded-xl"
+              />
+            </div>
+          </div>
+          <div>
+            <label className="text-sm font-medium text-gray-700 mb-1 block">Client Email</label>
+            <input
+              type="email"
+              value={newProjectData.clientEmail}
+              onChange={(e) => setNewProjectData({ ...newProjectData, clientEmail: e.target.value })}
+              placeholder="email@example.com"
+              className="w-full p-3 bg-gray-100 rounded-xl"
+            />
+          </div>
+          <div>
+            <label className="text-sm font-medium text-gray-700 mb-1 block">Notes</label>
+            <textarea
+              value={newProjectData.notes}
+              onChange={(e) => setNewProjectData({ ...newProjectData, notes: e.target.value })}
+              placeholder="Project notes..."
+              rows="3"
+              className="w-full p-3 bg-gray-100 rounded-xl"
+            />
+          </div>
+          <button onClick={addNewProject} className="w-full p-4 bg-amber-500 text-white rounded-xl font-semibold">
+            Create Project
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+
+  const renderProjectPhotos = () => selectedSnaggingProject && (
+    <div className="fixed inset-0 bg-black/50 z-50 flex items-end">
+      <div className="bg-white rounded-t-3xl w-full p-6 max-h-[90vh] overflow-y-auto">
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-xl font-bold">{selectedSnaggingProject.name} - Photos</h2>
+          <button onClick={() => setShowProjectPhotos(false)} className="p-2"><X size={24} /></button>
+        </div>
+
+        <label className="w-full p-4 bg-blue-500 text-white rounded-xl font-semibold mb-4 flex items-center justify-center cursor-pointer">
+          <Camera size={20} className="mr-2" />
+          Take / Upload Photo
+          <input
+            type="file"
+            accept="image/*"
+            capture="environment"
+            multiple
+            onChange={(e) => handlePhotoUpload(selectedSnaggingProject.id, e)}
+            className="hidden"
+          />
+        </label>
+
+        {selectedSnaggingProject.photos?.length > 0 ? (
+          <div className="grid grid-cols-2 gap-3">
+            {selectedSnaggingProject.photos.map((photo) => (
+              <div key={photo.id} className="relative bg-gray-100 rounded-xl overflow-hidden">
+                <img src={photo.url} alt={photo.name} className="w-full h-40 object-cover" />
+                <button
+                  onClick={() => deletePhoto(selectedSnaggingProject.id, photo.id)}
+                  className="absolute top-2 right-2 bg-red-500 text-white p-1.5 rounded-full"
+                >
+                  <Trash2 size={16} />
+                </button>
+                <div className="p-2 bg-white/90">
+                  <p className="text-xs text-gray-600">{new Date(photo.date).toLocaleDateString()}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-12 text-gray-500">
+            <Camera size={48} className="mx-auto mb-2 opacity-30" />
+            <p>No photos yet</p>
+            <p className="text-sm">Add photos to document your work</p>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+
+  const renderNewInvoiceModal = () => (
+    <div className="fixed inset-0 bg-black/50 z-50 flex items-end">
+      <div className="bg-white rounded-t-3xl w-full p-6 max-h-[90vh] overflow-y-auto">
+        <div className="flex items-center justify-between mb-6"><h2 className="text-xl font-bold">Generate Invoice</h2><button onClick={() => setShowNewInvoice(false)} className="p-2"><X size={24} /></button></div>
+        <div className="space-y-4">
+          <div><label className="text-sm font-medium text-gray-700 mb-1 block">Project</label><select value={newInvoiceData.project} onChange={(e) => setNewInvoiceData({...newInvoiceData, project: e.target.value})} className="w-full p-3 bg-gray-100 rounded-xl">{projects.map(p => <option key={p.id} value={p.name}>{p.name}</option>)}</select></div>
+          <div className="grid grid-cols-2 gap-3"><div><label className="text-sm font-medium text-gray-700 mb-1 block">Hourly Rate (£)</label><input type="number" value={newInvoiceData.hourlyRate} onChange={(e) => setNewInvoiceData({...newInvoiceData, hourlyRate: e.target.value})} className="w-full p-3 bg-gray-100 rounded-xl" /></div><div><label className="text-sm font-medium text-gray-700 mb-1 block">Markup (%)</label><input type="number" value={newInvoiceData.markup} onChange={(e) => setNewInvoiceData({...newInvoiceData, markup: e.target.value})} className="w-full p-3 bg-gray-100 rounded-xl" /></div></div>
+          <div><label className="text-sm font-medium text-gray-700 mb-2 block">Include:</label><div className="space-y-2"><label className="flex items-center gap-2"><input type="checkbox" checked={newInvoiceData.includeTime} onChange={(e) => setNewInvoiceData({...newInvoiceData, includeTime: e.target.checked})} className="w-4 h-4" /><span>Time Entries</span></label><label className="flex items-center gap-2"><input type="checkbox" checked={newInvoiceData.includeReceipts} onChange={(e) => setNewInvoiceData({...newInvoiceData, includeReceipts: e.target.checked})} className="w-4 h-4" /><span>Receipts (with markup)</span></label><label className="flex items-center gap-2"><input type="checkbox" checked={newInvoiceData.includeMileage} onChange={(e) => setNewInvoiceData({...newInvoiceData, includeMileage: e.target.checked})} className="w-4 h-4" /><span>Mileage</span></label></div></div>
+          <button onClick={generateInvoice} className="w-full p-4 bg-emerald-500 text-white rounded-xl font-semibold">Generate Invoice</button>
+        </div>
+      </div>
+    </div>
+  );
+
   // Time & Expenses
   const renderTimeExpenses = () => {
     const weeklyHours = getWeekTotal(timeEntries, 'hours');
@@ -780,7 +1298,13 @@ export default function RichsToolkit() {
     <div className={`bg-white rounded-xl p-4 border ${item.complete ? 'border-green-200 bg-green-50/50' : 'border-gray-100'} shadow-sm`}>
       <div className="flex items-start gap-3">
         <button onClick={() => toggleSnagComplete(projectId, roomId, item.id)} className={`mt-0.5 w-6 h-6 rounded-full border-2 flex items-center justify-center ${item.complete ? 'bg-green-500 border-green-500 text-white' : 'border-gray-300'}`}>{item.complete && <Check size={14} />}</button>
-        <p className={`font-medium ${item.complete ? 'text-gray-400 line-through' : 'text-gray-900'}`}>{item.description}</p>
+        <p className={`flex-1 font-medium ${item.complete ? 'text-gray-400 line-through' : 'text-gray-900'}`}>{item.description}</p>
+        <button
+          onClick={() => deleteSnagItem(projectId, roomId, item.id)}
+          className="p-1.5 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+        >
+          <Trash2 size={16} />
+        </button>
       </div>
     </div>
   );
@@ -806,8 +1330,28 @@ export default function RichsToolkit() {
   const renderSnagging = () => (
     <div className="p-4 pb-24">
       <button onClick={() => setCurrentScreen('home')} className="flex items-center gap-2 text-blue-500 mb-4"><ChevronLeft size={20} />Home</button>
-      <div className="flex items-center gap-4 mb-6"><div className="bg-amber-500 w-14 h-14 rounded-2xl flex items-center justify-center"><ClipboardList size={28} className="text-white" /></div><div><h1 className="text-xl font-bold text-gray-900">Snagging Lists</h1></div></div>
-      <div className="space-y-3">{projects.map((p) => <button key={p.id} onClick={() => setSelectedSnaggingProject(p)} className="w-full bg-white rounded-xl p-4 shadow-sm border border-gray-100 text-left"><p className="font-semibold">{p.name}</p><p className="text-sm text-gray-500">{p.snagging?.length || 0} rooms</p></button>)}</div>
+      <div className="flex items-center gap-4 mb-6"><div className="bg-amber-500 w-14 h-14 rounded-2xl flex items-center justify-center"><ClipboardList size={28} className="text-white" /></div><div><h1 className="text-xl font-bold text-gray-900">Projects</h1></div></div>
+      <button onClick={() => setShowNewProject(true)} className="w-full p-4 bg-amber-500 text-white rounded-xl font-semibold mb-4"><Plus size={20} className="inline mr-2" />New Project</button>
+      <div className="space-y-3">{projects.map((p) => (
+        <div key={p.id} className="w-full bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+          <div className="flex items-center justify-between mb-2">
+            <button onClick={() => setSelectedSnaggingProject(p)} className="flex-1 text-left">
+              <p className="font-semibold text-gray-900">{p.name}</p>
+              <p className="text-sm text-gray-500">{p.grade} • {p.snagging?.length || 0} rooms</p>
+            </button>
+            <button
+              onClick={() => {
+                setSelectedSnaggingProject(p);
+                setShowProjectPhotos(true);
+              }}
+              className="ml-2 p-2 bg-blue-50 text-blue-600 rounded-lg flex items-center gap-1"
+            >
+              <Camera size={18} />
+              <span className="text-xs font-medium">{p.photos?.length || 0}</span>
+            </button>
+          </div>
+        </div>
+      ))}</div>
     </div>
   );
 
@@ -891,15 +1435,212 @@ export default function RichsToolkit() {
     </div>
   );
 
+  // Weather Background Animations
+  const WeatherBackground = ({ condition }) => {
+    if (!condition) return null;
+
+    const renderWeatherElements = () => {
+      switch (condition) {
+        case 'sunny':
+          return Array.from({ length: 5 }).map((_, i) => (
+            <div
+              key={i}
+              className="weather-sunray"
+              style={{
+                top: `${20 + i * 15}%`,
+                left: `${10 + i * 20}%`,
+                animationDelay: `${i * 1.5}s`,
+                transform: `rotate(${i * 30}deg)`
+              }}
+            />
+          ));
+
+        case 'partly-cloudy':
+          return (
+            <>
+              {Array.from({ length: 2 }).map((_, i) => (
+                <div
+                  key={`sun-${i}`}
+                  className="weather-sunray"
+                  style={{
+                    top: `${15 + i * 20}%`,
+                    left: `${15 + i * 30}%`,
+                    animationDelay: `${i * 2}s`,
+                    transform: `rotate(${i * 45}deg)`
+                  }}
+                />
+              ))}
+              {Array.from({ length: 3 }).map((_, i) => (
+                <div
+                  key={`cloud-${i}`}
+                  className="weather-cloud"
+                  style={{
+                    top: `${25 + i * 25}%`,
+                    animationDelay: `${i * 8}s`,
+                    animationDuration: `${20 + i * 5}s`
+                  }}
+                />
+              ))}
+            </>
+          );
+
+        case 'cloudy':
+          return Array.from({ length: 5 }).map((_, i) => (
+            <div
+              key={i}
+              className="weather-cloud"
+              style={{
+                top: `${15 + i * 18}%`,
+                animationDelay: `${i * 5}s`,
+                animationDuration: `${22 + i * 3}s`
+              }}
+            />
+          ));
+
+        case 'rain':
+          return Array.from({ length: 20 }).map((_, i) => (
+            <div
+              key={i}
+              className="weather-raindrop"
+              style={{
+                left: `${5 + (i * 5)}%`,
+                top: `${Math.random() * 20}%`,
+                animationDelay: `${Math.random() * 2}s`,
+                animationDuration: `${0.8 + Math.random() * 0.5}s`
+              }}
+            />
+          ));
+
+        case 'snow':
+          return Array.from({ length: 15 }).map((_, i) => (
+            <div
+              key={i}
+              className="weather-snowflake"
+              style={{
+                left: `${5 + (i * 6)}%`,
+                top: `${Math.random() * 20}%`,
+                animationDelay: `${Math.random() * 4}s`,
+                animationDuration: `${3 + Math.random() * 2}s`
+              }}
+            />
+          ));
+
+        case 'storm':
+          return (
+            <>
+              {Array.from({ length: 15 }).map((_, i) => (
+                <div
+                  key={`rain-${i}`}
+                  className="weather-raindrop"
+                  style={{
+                    left: `${5 + (i * 6)}%`,
+                    top: `${Math.random() * 20}%`,
+                    animationDelay: `${Math.random() * 1}s`,
+                    animationDuration: `${0.5 + Math.random() * 0.3}s`
+                  }}
+                />
+              ))}
+              {Array.from({ length: 8 }).map((_, i) => (
+                <div
+                  key={`wind-${i}`}
+                  className="weather-windline"
+                  style={{
+                    top: `${20 + i * 10}%`,
+                    animationDelay: `${i * 0.3}s`
+                  }}
+                />
+              ))}
+            </>
+          );
+
+        default:
+          return null;
+      }
+    };
+
+    return (
+      <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
+        {renderWeatherElements()}
+      </div>
+    );
+  };
+
+  // Historical Site Modal
+  const renderHistoricalSiteModal = () => {
+    if (!selectedHistoricalSite) return null;
+    const theme = getTheme();
+    const site = historicalSites.find(s => s.id === selectedHistoricalSite);
+    if (!site) return null;
+
+    return (
+      <div className="fixed inset-0 bg-black/50 flex items-end sm:items-center justify-center z-50 p-4" onClick={() => setSelectedHistoricalSite(null)}>
+        <div className={`${theme.cardBg} rounded-t-3xl sm:rounded-3xl w-full max-w-lg max-h-[85vh] overflow-y-auto transition-colors duration-500`} onClick={(e) => e.stopPropagation()}>
+          <div className="sticky top-0 bg-gradient-to-r from-amber-600 to-orange-600 p-4 rounded-t-3xl sm:rounded-t-2xl flex justify-between items-start">
+            <div className="flex-1">
+              <h2 className="text-xl font-bold text-white mb-1">{site.name}</h2>
+              <p className="text-amber-100 text-sm">{site.era}</p>
+            </div>
+            <button onClick={() => setSelectedHistoricalSite(null)} className="text-white/80 hover:text-white ml-4">
+              <X size={24} />
+            </button>
+          </div>
+
+          <div className="p-4 space-y-4">
+            <div>
+              <div className="flex items-center gap-2 mb-2">
+                <Landmark size={18} className={theme.textSecondary} />
+                <span className={`text-sm font-semibold ${theme.text} transition-colors duration-500`}>{site.grade}</span>
+              </div>
+              <p className={`${theme.text} transition-colors duration-500`}>{site.description}</p>
+            </div>
+
+            <div className={`${theme.isDay ? 'bg-amber-50' : 'bg-amber-900/20'} rounded-xl p-3 transition-colors duration-500`}>
+              <h3 className={`font-semibold ${theme.text} mb-2 flex items-center gap-2 transition-colors duration-500`}>
+                <Building2 size={16} />
+                Heritage Significance
+              </h3>
+              <p className={`text-sm ${theme.text} transition-colors duration-500`}>{site.heritage}</p>
+            </div>
+
+            <div className={`${theme.isDay ? 'bg-stone-50' : 'bg-stone-900/20'} rounded-xl p-3 transition-colors duration-500`}>
+              <h3 className={`font-semibold ${theme.text} mb-2 flex items-center gap-2 transition-colors duration-500`}>
+                <Layers size={16} />
+                Construction Details
+              </h3>
+              <p className={`text-sm ${theme.text} transition-colors duration-500`}>{site.construction}</p>
+            </div>
+
+            <div className={`${theme.isDay ? 'bg-blue-50' : 'bg-blue-900/20'} rounded-xl p-3 transition-colors duration-500`}>
+              <h3 className={`font-semibold ${theme.text} mb-2 flex items-center gap-2 transition-colors duration-500`}>
+                <PaintBucket size={16} />
+                Relevance to Conservation Work
+              </h3>
+              <p className={`text-sm ${theme.text} transition-colors duration-500`}>{site.relevance}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   // Home
   const renderHome = () => {
+    const theme = getTheme();
+
     return (
-      <div className="p-4 pb-24">
-        <div className="mb-6"><h1 className="text-2xl font-bold text-gray-900">Rich's Toolkit</h1><p className="text-gray-500">Bath Heritage Renovations</p></div>
+      <div className="p-4 pb-24 relative">
+        {/* Weather Background Animations */}
+        {weatherData && <WeatherBackground condition={weatherData.current.condition} />}
+
+        <div className="mb-6 relative z-10">
+          <h1 className={`text-2xl font-bold ${theme.text} transition-colors duration-500`}>Rich's Toolkit</h1>
+          <p className={`${theme.textSecondary} transition-colors duration-500`}>Bath Heritage Renovations</p>
+        </div>
 
         {/* Weather Card - Now Tappable */}
+        <div className="relative z-10">
         {weatherLoading || !weatherData ? (
-          <div className="w-full bg-gradient-to-r from-sky-400 to-blue-500 rounded-2xl p-4 mb-4 text-white">
+          <div className={`w-full bg-gradient-to-r ${theme.weatherCardGradient} rounded-2xl p-4 mb-4 text-white transition-all duration-500`}>
             <div className="flex items-center justify-center py-6">
               <Loader2 size={32} className="animate-spin text-white/80" />
             </div>
@@ -915,7 +1656,7 @@ export default function RichsToolkit() {
             </div>
           </div>
         ) : (
-          <button onClick={() => setCurrentScreen('weather')} className="w-full text-left bg-gradient-to-r from-sky-400 to-blue-500 rounded-2xl p-4 mb-4 text-white">
+          <button onClick={() => setCurrentScreen('weather')} className={`w-full text-left bg-gradient-to-r ${theme.weatherCardGradient} rounded-2xl p-4 mb-4 text-white transition-all duration-500`}>
             <div className="flex items-center justify-between">
               <div>
                 <div className="flex items-center gap-2 mb-1">
@@ -943,32 +1684,194 @@ export default function RichsToolkit() {
             )}
           </button>
         )}
+        </div>
 
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-2 gap-3 relative z-10">
           {[
             { id: 'calculators', title: 'Calculators', icon: Calculator, color: 'bg-green-500', desc: 'Materials & quantities' },
             { id: 'snagging', title: 'Snagging', icon: ClipboardList, color: 'bg-amber-500', desc: 'Punch lists' },
             { id: 'time', title: 'Time & Expenses', icon: Clock, color: 'bg-rose-500', desc: 'Hours & receipts' },
+            { id: 'invoices', title: 'Invoices', icon: FileText, color: 'bg-emerald-500', desc: 'Generate & track' },
+            { id: 'budget', title: 'Budget', icon: PiggyBank, color: 'bg-pink-500', desc: 'Track spending' },
             { id: 'suppliers', title: 'Suppliers', icon: Phone, color: 'bg-teal-500', desc: 'Quick dial' },
             { id: 'weather', title: 'Weather', icon: Cloud, color: 'bg-sky-500', desc: '7-day forecast' },
             { id: 'conversions', title: 'Conversions', icon: ArrowLeftRight, color: 'bg-indigo-500', desc: 'Imperial ↔ Metric' },
           ].map((feature) => {
             const IconComponent = feature.icon;
-            return <button key={feature.id} onClick={() => setCurrentScreen(feature.id)} className="bg-white rounded-2xl p-4 text-left shadow-sm border border-gray-100 active:scale-95 transition-transform"><div className={`${feature.color} w-12 h-12 rounded-xl flex items-center justify-center mb-3`}><IconComponent size={24} className="text-white" /></div><h3 className="font-semibold text-gray-900">{feature.title}</h3><p className="text-sm text-gray-500">{feature.desc}</p></button>;
+            return <button key={feature.id} onClick={() => setCurrentScreen(feature.id)} className={`${theme.cardBg} rounded-2xl p-4 text-left shadow-sm border ${theme.border} active:scale-95 transition-all duration-500`}><div className={`${feature.color} w-12 h-12 rounded-xl flex items-center justify-center mb-3`}><IconComponent size={24} className="text-white" /></div><h3 className={`font-semibold ${theme.text}`}>{feature.title}</h3><p className={`text-sm ${theme.textSecondary}`}>{feature.desc}</p></button>;
           })}
         </div>
         
-        <div className="mt-6">
-          <h2 className="text-lg font-semibold text-gray-900 mb-3">Recent Projects</h2>
+        <div className="mt-6 relative z-10">
+          <h2 className={`text-lg font-semibold ${theme.text} mb-3 transition-colors duration-500`}>Recent Projects</h2>
           <div className="space-y-2">
             {projects.slice(0, 2).map((project) => (
-              <div key={project.id} className="bg-white rounded-xl p-4 flex items-center justify-between shadow-sm border border-gray-100">
-                <div className="flex items-center gap-3"><div className="w-10 h-10 bg-stone-100 rounded-lg flex items-center justify-center"><Building2 size={20} className="text-stone-600" /></div><div><p className="font-medium">{project.name}</p><p className="text-sm text-gray-500">{project.grade}</p></div></div>
-                <ChevronRight size={20} className="text-gray-400" />
+              <div key={project.id} className={`${theme.cardBg} rounded-xl p-4 flex items-center justify-between shadow-sm border ${theme.border} transition-all duration-500`}>
+                <div className="flex items-center gap-3"><div className={`w-10 h-10 ${theme.isDay ? 'bg-stone-100' : 'bg-stone-700'} rounded-lg flex items-center justify-center transition-colors duration-500`}><Building2 size={20} className={`${theme.isDay ? 'text-stone-600' : 'text-stone-300'} transition-colors duration-500`} /></div><div><p className={`font-medium ${theme.text} transition-colors duration-500`}>{project.name}</p><p className={`text-sm ${theme.textSecondary} transition-colors duration-500`}>{project.grade}</p></div></div>
+                <ChevronRight size={20} className={`${theme.textSecondary} transition-colors duration-500`} />
               </div>
             ))}
           </div>
         </div>
+
+        {/* Interactive Historical Map of Bath */}
+        <div className="mt-8 relative z-10">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h2 className={`text-lg font-semibold ${theme.text} transition-colors duration-500`}>Historical Bath</h2>
+              <p className={`text-sm ${theme.textSecondary} transition-colors duration-500`}>Tap a marker to explore</p>
+            </div>
+            <Landmark size={24} className={`${theme.textSecondary} transition-colors duration-500`} />
+          </div>
+
+          <div className={`${theme.cardBg} rounded-2xl p-4 shadow-sm border ${theme.border} transition-all duration-500 overflow-hidden`}>
+            <div className="relative w-full" style={{ paddingBottom: '85%' }}>
+              {/* SVG Map */}
+              <svg viewBox="0 0 100 100" className="absolute inset-0 w-full h-full">
+                {/* River Avon */}
+                <path
+                  d="M 0 60 Q 25 58, 40 55 Q 55 52, 70 56 Q 85 60, 100 58"
+                  fill="none"
+                  stroke={theme.isDay ? '#93C5FD' : '#3B82F6'}
+                  strokeWidth="3"
+                  opacity="0.6"
+                  className="transition-all duration-500"
+                />
+                <path
+                  d="M 0 63 Q 25 61, 40 58 Q 55 55, 70 59 Q 85 63, 100 61"
+                  fill="none"
+                  stroke={theme.isDay ? '#93C5FD' : '#3B82F6'}
+                  strokeWidth="2"
+                  opacity="0.4"
+                  className="transition-all duration-500"
+                />
+
+                {/* Main streets - simplified layout */}
+                <line x1="15" y1="20" x2="60" y2="45" stroke={theme.isDay ? '#D1D5DB' : '#4B5563'} strokeWidth="0.5" opacity="0.4" className="transition-all duration-500" />
+                <line x1="30" y1="30" x2="70" y2="50" stroke={theme.isDay ? '#D1D5DB' : '#4B5563'} strokeWidth="0.5" opacity="0.4" className="transition-all duration-500" />
+                <line x1="20" y1="35" x2="55" y2="50" stroke={theme.isDay ? '#D1D5DB' : '#4B5563'} strokeWidth="0.5" opacity="0.4" className="transition-all duration-500" />
+
+                {/* Green spaces */}
+                <circle cx="18" cy="28" r="4" fill={theme.isDay ? '#86EFAC' : '#166534'} opacity="0.3" className="transition-all duration-500" />
+                <circle cx="36" cy="40" r="3.5" fill={theme.isDay ? '#86EFAC' : '#166534'} opacity="0.3" className="transition-all duration-500" />
+                <ellipse cx="83" cy="73" rx="6" ry="8" fill={theme.isDay ? '#86EFAC' : '#166534'} opacity="0.3" className="transition-all duration-500" />
+
+                {/* Historical site markers */}
+                {historicalSites.map((site) => (
+                  <g key={site.id} onClick={() => setSelectedHistoricalSite(site.id)} className="cursor-pointer">
+                    {/* Marker glow effect */}
+                    <circle
+                      cx={site.x}
+                      cy={site.y}
+                      r="3"
+                      fill="#F59E0B"
+                      opacity="0.3"
+                      className="animate-ping"
+                      style={{ animationDuration: '2s' }}
+                    />
+                    {/* Main marker */}
+                    <circle
+                      cx={site.x}
+                      cy={site.y}
+                      r="2.5"
+                      fill="#F59E0B"
+                      stroke="#FFFFFF"
+                      strokeWidth="0.5"
+                      className="hover:r-3 transition-all"
+                    />
+                    {/* Marker center */}
+                    <circle
+                      cx={site.x}
+                      cy={site.y}
+                      r="1"
+                      fill="#FFFFFF"
+                    />
+                  </g>
+                ))}
+              </svg>
+
+              {/* Legend overlay */}
+              <div className={`absolute bottom-2 left-2 ${theme.isDay ? 'bg-white/90' : 'bg-slate-800/90'} rounded-lg p-2 text-xs transition-colors duration-500`}>
+                <div className="flex items-center gap-1.5 mb-1">
+                  <div className="w-2 h-2 rounded-full bg-amber-500"></div>
+                  <span className={`${theme.text} transition-colors duration-500`}>{historicalSites.length} Heritage Sites</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <div className={`w-3 h-0.5 ${theme.isDay ? 'bg-blue-300' : 'bg-blue-500'} transition-colors duration-500`}></div>
+                  <span className={`${theme.text} transition-colors duration-500`}>River Avon</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Site quick list */}
+            <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+              <div className="grid grid-cols-2 gap-2 text-xs">
+                {historicalSites.slice(0, 6).map((site) => (
+                  <button
+                    key={site.id}
+                    onClick={() => setSelectedHistoricalSite(site.id)}
+                    className={`text-left p-2 rounded-lg ${theme.isDay ? 'hover:bg-amber-50' : 'hover:bg-amber-900/20'} transition-colors duration-300`}
+                  >
+                    <span className={`font-medium ${theme.text} transition-colors duration-500`}>{site.name}</span>
+                    <br />
+                    <span className={`${theme.textSecondary} transition-colors duration-500`}>{site.era.split('(')[0].trim()}</span>
+                  </button>
+                ))}
+              </div>
+              {historicalSites.length > 6 && (
+                <p className={`text-center mt-2 ${theme.textSecondary} text-xs transition-colors duration-500`}>
+                  +{historicalSites.length - 6} more sites on map
+                </p>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  // Invoices Screen
+  const renderInvoices = () => (
+    <div className="p-4 pb-24">
+      <button onClick={() => setCurrentScreen('home')} className="flex items-center gap-2 text-blue-500 mb-4"><ChevronLeft size={20} />Home</button>
+      <div className="flex items-center gap-4 mb-6"><div className="bg-emerald-500 w-14 h-14 rounded-2xl flex items-center justify-center"><FileText size={28} className="text-white" /></div><div><h1 className="text-xl font-bold">Invoices</h1></div></div>
+      <button onClick={() => setShowNewInvoice(true)} className="w-full p-4 bg-emerald-500 text-white rounded-xl font-semibold mb-4"><Plus size={20} className="inline mr-2" />Generate Invoice</button>
+      {invoices.length > 0 ? (
+        <div className="space-y-3">{invoices.map(inv => (
+          <div key={inv.id} className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+            <div className="flex justify-between items-start mb-2">
+              <div><p className="font-semibold">{inv.invoiceNumber}</p><p className="text-sm text-gray-500">{inv.project}</p></div>
+              <button onClick={() => toggleInvoiceStatus(inv.id)} className={`px-3 py-1 rounded-lg text-xs font-semibold ${inv.status === 'paid' ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'}`}>{inv.status === 'paid' ? 'Paid' : 'Unpaid'}</button>
+            </div>
+            <div className="flex justify-between text-sm"><span className="text-gray-600">{new Date(inv.date).toLocaleDateString()}</span><span className="font-bold text-emerald-600">£{inv.total.toFixed(2)}</span></div>
+          </div>
+        ))}</div>
+      ) : (<div className="text-center py-12 text-gray-500"><FileText size={48} className="mx-auto mb-2 opacity-30" /><p>No invoices yet</p></div>)}
+    </div>
+  );
+
+  // Budget Screen
+  const renderBudget = () => {
+    const totalBudget = budgets.personal.categories.reduce((sum, cat) => sum + cat.budget, 0);
+    const totalSpent = budgets.personal.categories.reduce((sum, cat) => sum + cat.spent, 0);
+    return (
+      <div className="p-4 pb-24">
+        <button onClick={() => setCurrentScreen('home')} className="flex items-center gap-2 text-blue-500 mb-4"><ChevronLeft size={20} />Home</button>
+        <div className="flex items-center gap-4 mb-6"><div className="bg-pink-500 w-14 h-14 rounded-2xl flex items-center justify-center"><PiggyBank size={28} className="text-white" /></div><div><h1 className="text-xl font-bold">Budget Tracker</h1></div></div>
+        <div className="bg-gradient-to-r from-pink-500 to-rose-500 rounded-2xl p-4 mb-4 text-white">
+          <p className="text-sm opacity-90 mb-1">Monthly Budget</p>
+          <p className="text-3xl font-bold">£{totalSpent.toFixed(0)} / £{totalBudget.toFixed(0)}</p>
+          <div className="mt-2 bg-white/20 rounded-full h-2"><div className="bg-white rounded-full h-2" style={{width: `${Math.min((totalSpent/totalBudget)*100, 100)}%`}}></div></div>
+        </div>
+        <div className="space-y-3">{budgets.personal.categories.map(cat => {
+          const percent = (cat.spent / cat.budget) * 100;
+          return (
+            <div key={cat.id} className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+              <div className="flex justify-between items-center mb-2"><span className="font-semibold">{cat.name}</span><span className="text-sm text-gray-600">£{cat.spent} / £{cat.budget}</span></div>
+              <div className="bg-gray-100 rounded-full h-2"><div className={`${cat.color} rounded-full h-2`} style={{width: `${Math.min(percent, 100)}%`}}></div></div>
+            </div>
+          );
+        })}</div>
       </div>
     );
   };
@@ -980,6 +1883,8 @@ export default function RichsToolkit() {
     if (currentScreen === 'heritage') return renderHeritage();
     if (currentScreen === 'conversions') return renderConversions();
     if (currentScreen === 'time') return renderTimeExpenses();
+    if (currentScreen === 'invoices') return renderInvoices();
+    if (currentScreen === 'budget') return renderBudget();
     if (currentScreen === 'suppliers') return renderSuppliers();
     if (currentScreen === 'weather') return renderWeather();
     if (currentScreen === 'snagging') {
@@ -990,17 +1895,14 @@ export default function RichsToolkit() {
     return renderHome();
   };
 
-  return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-sm mx-auto bg-gray-50 min-h-screen relative">
-        <div className="bg-gray-50 px-6 py-2 flex justify-between items-center text-sm">
-          <span className="font-medium">9:41</span>
-          <div className="flex items-center gap-1"><div className="w-4 h-4 flex items-end gap-0.5"><div className="w-1 h-1 bg-gray-900 rounded-sm"></div><div className="w-1 h-2 bg-gray-900 rounded-sm"></div><div className="w-1 h-3 bg-gray-900 rounded-sm"></div><div className="w-1 h-4 bg-gray-900 rounded-sm"></div></div><span className="ml-1 font-medium">100%</span></div>
-        </div>
+  const theme = getTheme();
 
+  return (
+    <div className={`min-h-screen ${theme.bg} transition-colors duration-500`}>
+      <div className={`max-w-sm mx-auto ${theme.bg} min-h-screen relative transition-colors duration-500`}>
         {renderCurrentScreen()}
 
-        <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-6 py-3 max-w-sm mx-auto">
+        <div className={`fixed bottom-0 left-0 right-0 ${theme.cardBg} border-t ${theme.border} px-6 py-3 max-w-sm mx-auto transition-all duration-500`}>
           <div className="flex justify-around">
             {[
               { icon: Home, label: 'Home', screen: 'home' },
@@ -1010,7 +1912,7 @@ export default function RichsToolkit() {
             ].map((item) => {
               const NavIcon = item.icon;
               const isActive = currentScreen === item.screen || (item.screen === 'calculators' && currentScreen === 'calculator');
-              return <button key={item.label} onClick={() => { setCurrentScreen(item.screen); setSelectedSnaggingProject(null); setSelectedRoom(null); setHeritageSection(null); }} className={`flex flex-col items-center gap-1 ${isActive ? 'text-blue-500' : 'text-gray-400'}`}><NavIcon size={24} /><span className="text-xs">{item.label}</span></button>;
+              return <button key={item.label} onClick={() => { setCurrentScreen(item.screen); setSelectedSnaggingProject(null); setSelectedRoom(null); setHeritageSection(null); }} className={`flex flex-col items-center gap-1 transition-colors duration-500 ${isActive ? 'text-blue-500' : theme.textSecondary}`}><NavIcon size={24} /><span className="text-xs">{item.label}</span></button>;
             })}
           </div>
         </div>
@@ -1020,8 +1922,12 @@ export default function RichsToolkit() {
         {showAddMileage && renderAddMileageModal()}
         {showNewSnag && renderNewSnagModal()}
         {showNewRoom && renderNewRoomModal()}
+        {showNewProject && renderNewProjectModal()}
+        {showProjectPhotos && renderProjectPhotos()}
+        {showNewInvoice && renderNewInvoiceModal()}
         {showAddSupplier && renderAddSupplierModal()}
         {showMaterialList && renderMaterialListModal()}
+        {renderHistoricalSiteModal()}
       </div>
     </div>
   );

@@ -43,3 +43,115 @@ input[type="number"]::-webkit-outer-spin-button {
   -webkit-appearance: none;
   margin: 0;
 }
+
+/* Weather Animations */
+@keyframes float-sunrays {
+  0%, 100% {
+    transform: translateY(0px) translateX(0px) rotate(0deg);
+    opacity: 0.15;
+  }
+  50% {
+    transform: translateY(-20px) translateX(10px) rotate(5deg);
+    opacity: 0.25;
+  }
+}
+
+@keyframes drift-clouds {
+  0% {
+    transform: translateX(-100px);
+    opacity: 0;
+  }
+  10% {
+    opacity: 0.1;
+  }
+  90% {
+    opacity: 0.1;
+  }
+  100% {
+    transform: translateX(500px);
+    opacity: 0;
+  }
+}
+
+@keyframes fall-rain {
+  0% {
+    transform: translateY(-20px);
+    opacity: 0.3;
+  }
+  100% {
+    transform: translateY(500px);
+    opacity: 0;
+  }
+}
+
+@keyframes fall-snow {
+  0% {
+    transform: translateY(-20px) translateX(0);
+    opacity: 0.6;
+  }
+  100% {
+    transform: translateY(500px) translateX(50px);
+    opacity: 0;
+  }
+}
+
+@keyframes blow-wind {
+  0% {
+    transform: translateX(-50px);
+    opacity: 0;
+  }
+  50% {
+    opacity: 0.2;
+  }
+  100% {
+    transform: translateX(400px);
+    opacity: 0;
+  }
+}
+
+.weather-sunray {
+  position: absolute;
+  width: 100px;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, rgba(251, 191, 36, 0.3), transparent);
+  animation: float-sunrays 8s ease-in-out infinite;
+  pointer-events: none;
+}
+
+.weather-cloud {
+  position: absolute;
+  width: 80px;
+  height: 30px;
+  background: rgba(209, 213, 219, 0.15);
+  border-radius: 50px;
+  animation: drift-clouds 25s linear infinite;
+  pointer-events: none;
+}
+
+.weather-raindrop {
+  position: absolute;
+  width: 2px;
+  height: 15px;
+  background: linear-gradient(180deg, transparent, rgba(96, 165, 250, 0.4));
+  animation: fall-rain 1s linear infinite;
+  pointer-events: none;
+}
+
+.weather-snowflake {
+  position: absolute;
+  width: 6px;
+  height: 6px;
+  background: rgba(255, 255, 255, 0.7);
+  border-radius: 50%;
+  animation: fall-snow 4s linear infinite;
+  pointer-events: none;
+}
+
+.weather-windline {
+  position: absolute;
+  width: 60px;
+  height: 1.5px;
+  background: linear-gradient(90deg, transparent, rgba(156, 163, 175, 0.25), transparent);
+  animation: blow-wind 3s ease-in-out infinite;
+  pointer-events: none;
+}
