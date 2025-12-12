@@ -93,6 +93,12 @@ export default function RichsToolkit() {
   // Current time state
   const [currentTime, setCurrentTime] = useState(new Date());
 
+  // Timer state
+  const [isTimerRunning, setIsTimerRunning] = useState(false);
+  const [timerSeconds, setTimerSeconds] = useState(0);
+  const [timerProject, setTimerProject] = useState('');
+  const [showTimerModal, setShowTimerModal] = useState(false);
+
   // Update time every minute
   useEffect(() => {
     const timer = setInterval(() => {
@@ -101,6 +107,19 @@ export default function RichsToolkit() {
 
     return () => clearInterval(timer);
   }, []);
+
+  // Timer effect - runs every second when timer is active
+  useEffect(() => {
+    let interval;
+    if (isTimerRunning) {
+      interval = setInterval(() => {
+        setTimerSeconds(prev => prev + 1);
+      }, 1000);
+    }
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [isTimerRunning]);
 
   // Register service worker for offline functionality (PWA)
   useEffect(() => {
@@ -167,6 +186,10 @@ export default function RichsToolkit() {
   const [selectedPhotos, setSelectedPhotos] = useState([]);
   const [filterTag, setFilterTag] = useState('all');
   const [filterMonth, setFilterMonth] = useState('all');
+  const [photoSearchQuery, setPhotoSearchQuery] = useState('');
+  const [photoSortBy, setPhotoSortBy] = useState('date-desc');
+  const [photoGroupBy, setPhotoGroupBy] = useState('none');
+  const [newPhotoData, setNewPhotoData] = useState({ note: '', tags: '', project: '', isReceipt: false });
 
   // ==================== FISHING GAME DATA ====================
 
@@ -1353,6 +1376,8 @@ export default function RichsToolkit() {
   const [concreteInputs, setConcreteInputs] = useState({ length: '', width: '', depth: '' });
   const [studInputs, setStudInputs] = useState({ length: '', height: '2400' });
   const [vatInputs, setVatInputs] = useState({ amount: '', margin: '15' });
+  const [savedCalculations, setSavedCalculations] = useLocalStorage('richs-toolkit-saved-calcs', []);
+  const [showCalcHistory, setShowCalcHistory] = useState(false);
 
   const calculators = [
     { id: 'plaster', title: 'Plaster & Skim', icon: Layers, color: 'bg-amber-500', desc: 'Bonding, multi-finish, lime' },
@@ -1389,6 +1414,81 @@ export default function RichsToolkit() {
   const formatTime = (hours, minutes) => `${hours}h ${minutes}m`;
   const formatCurrency = (amount) => `£${amount.toFixed(2)}`;
   const getTodayDate = () => new Date().toISOString().split('T')[0];
+
+  // Timer functions
+  const formatTimerDisplay = (seconds) => {
+    const hrs = Math.floor(seconds / 3600);
+    const mins = Math.floor((seconds % 3600) / 60);
+    const secs = seconds % 60;
+    if (hrs > 0) {
+      return `${hrs}:${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+    }
+    return `${mins}:${String(secs).padStart(2, '0')}`;
+  };
+
+  const startTimer = (project = '') => {
+    setTimerProject(project);
+    setIsTimerRunning(true);
+    setShowTimerModal(false);
+  };
+
+  const stopTimer = () => {
+    if (timerSeconds > 0 && timerProject) {
+      // Save to time entries
+      const hours = Math.floor(timerSeconds / 3600);
+      const minutes = Math.floor((timerSeconds % 3600) / 60);
+      const newEntry = {
+        id: Date.now(),
+        project: timerProject,
+        hours,
+        minutes,
+        notes: `Timer: ${formatTimerDisplay(timerSeconds)}`,
+        date: getTodayDate()
+      };
+      setTimeEntries([newEntry, ...timeEntries]);
+    }
+    setIsTimerRunning(false);
+    setTimerSeconds(0);
+    setTimerProject('');
+  };
+
+  const resetTimer = () => {
+    setIsTimerRunning(false);
+    setTimerSeconds(0);
+    setTimerProject('');
+  };
+
+  // Calculator save/share functions
+  const saveCalculation = (calcType, inputs, results) => {
+    const calc = {
+      id: Date.now(),
+      type: calcType,
+      inputs,
+      results,
+      timestamp: new Date().toISOString()
+    };
+    setSavedCalculations([calc, ...savedCalculations]);
+  };
+
+  const shareCalculation = (calcType, inputs, results) => {
+    const calc = calculators.find(c => c.id === calcType);
+    let text = `📐 ${calc?.title} Calculation\n\n`;
+    text += `Inputs:\n`;
+    Object.entries(inputs).forEach(([key, value]) => {
+      if (value) text += `  ${key}: ${value}\n`;
+    });
+    text += `\nResults:\n`;
+    Object.entries(results).forEach(([key, value]) => {
+      text += `  ${key}: ${value}\n`;
+    });
+
+    if (navigator.share) {
+      navigator.share({ text });
+    } else {
+      navigator.clipboard?.writeText(text);
+      alert('Calculation copied to clipboard!');
+    }
+  };
 
   // Budget management functions
   const updateCategoryBudget = (categoryId, field, value) => {
@@ -2898,8 +2998,9 @@ export default function RichsToolkit() {
   const renderGallery = () => {
     const theme = getTheme();
 
-    // Get all unique tags
+    // Get all unique tags and projects
     const allTags = [...new Set(photos.flatMap(p => p.tags || []))];
+    const allProjects = [...new Set(photos.map(p => p.project).filter(p => p))];
 
     // Get unique months
     const months = [...new Set(photos.map(p => {
@@ -2907,17 +3008,57 @@ export default function RichsToolkit() {
       return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
     }))].sort().reverse();
 
-    // Filter photos
+    // Filter, search, and sort photos
     let filteredPhotos = photos;
+
+    // Search filter
+    if (photoSearchQuery) {
+      const query = photoSearchQuery.toLowerCase();
+      filteredPhotos = filteredPhotos.filter(p =>
+        (p.note && p.note.toLowerCase().includes(query)) ||
+        (p.tags && p.tags.some(tag => tag.toLowerCase().includes(query))) ||
+        (p.project && p.project.toLowerCase().includes(query))
+      );
+    }
+
+    // Tag filter
     if (filterTag !== 'all') {
       filteredPhotos = filteredPhotos.filter(p => p.tags && p.tags.includes(filterTag));
     }
+
+    // Month filter
     if (filterMonth !== 'all') {
       filteredPhotos = filteredPhotos.filter(p => {
         const date = new Date(p.timestamp);
         const photoMonth = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
         return photoMonth === filterMonth;
       });
+    }
+
+    // Sort photos
+    filteredPhotos = [...filteredPhotos].sort((a, b) => {
+      switch(photoSortBy) {
+        case 'date-desc':
+          return new Date(b.timestamp) - new Date(a.timestamp);
+        case 'date-asc':
+          return new Date(a.timestamp) - new Date(b.timestamp);
+        case 'project':
+          return (a.project || '').localeCompare(b.project || '');
+        default:
+          return 0;
+      }
+    });
+
+    // Group photos if needed
+    const groupedPhotos = {};
+    if (photoGroupBy === 'project') {
+      filteredPhotos.forEach(photo => {
+        const key = photo.project || 'No Project';
+        if (!groupedPhotos[key]) groupedPhotos[key] = [];
+        groupedPhotos[key].push(photo);
+      });
+    } else {
+      groupedPhotos['all'] = filteredPhotos;
     }
 
     return (
@@ -2931,8 +3072,29 @@ export default function RichsToolkit() {
           <p className={`${theme.textSecondary}`}>Capture and annotate site photos</p>
         </div>
 
-        {/* Filters */}
+        {/* Search and Filters */}
         <div className="mb-4 space-y-2">
+          <div className="relative">
+            <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+            <input
+              type="text"
+              value={photoSearchQuery}
+              onChange={(e) => setPhotoSearchQuery(e.target.value)}
+              placeholder="Search photos..."
+              className="w-full pl-10 pr-4 py-2 bg-white border border-gray-200 rounded-lg text-sm"
+            />
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            <select value={photoSortBy} onChange={(e) => setPhotoSortBy(e.target.value)} className="p-2 bg-white border border-gray-200 rounded-lg text-sm">
+              <option value="date-desc">Newest First</option>
+              <option value="date-asc">Oldest First</option>
+              <option value="project">By Project</option>
+            </select>
+            <select value={photoGroupBy} onChange={(e) => setPhotoGroupBy(e.target.value)} className="p-2 bg-white border border-gray-200 rounded-lg text-sm">
+              <option value="none">No Grouping</option>
+              <option value="project">Group by Project</option>
+            </select>
+          </div>
           <select value={filterTag} onChange={(e) => setFilterTag(e.target.value)} className="w-full p-2 bg-white border border-gray-200 rounded-lg text-sm">
             <option value="all">All Tags</option>
             {allTags.map(tag => <option key={tag} value={tag}>{tag}</option>)}
@@ -3013,8 +3175,16 @@ export default function RichsToolkit() {
             <p className="text-sm text-gray-400 mt-1">{photos.length === 0 ? 'Tap "Take Photo" to get started' : 'Try adjusting your filters'}</p>
           </div>
         ) : (
-          <div className="grid grid-cols-2 gap-3">
-            {filteredPhotos.map((photo) => (
+          <div className="space-y-6">
+            {Object.entries(groupedPhotos).map(([groupName, groupPhotos]) => (
+              <div key={groupName}>
+                {photoGroupBy !== 'none' && (
+                  <h3 className={`text-lg font-semibold ${theme.text} mb-3`}>
+                    📁 {groupName} ({groupPhotos.length})
+                  </h3>
+                )}
+                <div className="grid grid-cols-2 gap-3">
+                  {groupPhotos.map((photo) => (
               <div key={photo.id} className={`${theme.cardBg} rounded-xl overflow-hidden shadow-sm border ${theme.border} ${bulkDeleteMode && selectedPhotos.includes(photo.id) ? 'ring-4 ring-red-500' : ''}`}>
                 <div className="relative aspect-square">
                   {bulkDeleteMode && (
@@ -3041,6 +3211,11 @@ export default function RichsToolkit() {
                   {photo.pairedWith && (
                     <div className={`absolute top-2 right-2 px-2 py-1 rounded-lg text-xs font-bold text-white ${photo.pairType === 'before' ? 'bg-orange-500' : 'bg-green-500'}`}>
                       {photo.pairType === 'before' ? 'BEFORE' : 'AFTER'}
+                    </div>
+                  )}
+                  {photo.isReceipt && (
+                    <div className="absolute top-2 left-2 px-2 py-1 rounded-lg text-xs font-bold text-white bg-blue-500">
+                      📄 RECEIPT
                     </div>
                   )}
                 </div>
@@ -3137,6 +3312,9 @@ export default function RichsToolkit() {
                 )}
               </div>
             ))}
+                </div>
+              </div>
+            ))}
           </div>
         )}
 
@@ -3182,26 +3360,28 @@ export default function RichsToolkit() {
                 onClick={() => {
                   setShowAnnotation(false);
                   setCapturedPhoto(null);
+                  setNewPhotoData({ note: '', tags: '', project: '', isReceipt: false });
                 }}
                 className="text-gray-600"
               >
                 <X size={24} />
               </button>
-              <h3 className="font-semibold">Add Note & Save</h3>
+              <h3 className="font-semibold">Add Details & Save</h3>
               <button
                 onClick={() => {
-                  const note = prompt('Add a note for this photo (optional):');
-                  const tags = prompt('Add tags (comma-separated, optional):');
                   const newPhoto = {
                     id: Date.now().toString(),
                     dataUrl: capturedPhoto,
-                    note: note || '',
-                    tags: tags ? tags.split(',').map(t => t.trim()).filter(t => t) : [],
+                    note: newPhotoData.note,
+                    tags: newPhotoData.tags ? newPhotoData.tags.split(',').map(t => t.trim()).filter(t => t) : [],
+                    project: newPhotoData.project,
+                    isReceipt: newPhotoData.isReceipt,
                     timestamp: new Date().toISOString(),
                   };
                   setPhotos([newPhoto, ...photos]);
                   setShowAnnotation(false);
                   setCapturedPhoto(null);
+                  setNewPhotoData({ note: '', tags: '', project: '', isReceipt: false });
                 }}
                 className="text-blue-500 font-semibold"
               >
@@ -3210,7 +3390,53 @@ export default function RichsToolkit() {
             </div>
 
             <div className="flex-1 overflow-auto p-4">
-              <img src={capturedPhoto} alt="Preview" className="w-full rounded-xl" />
+              <img src={capturedPhoto} alt="Preview" className="w-full rounded-xl mb-4" />
+
+              {/* Photo details form */}
+              <div className="space-y-3">
+                <div>
+                  <label className="text-sm font-medium text-gray-700 block mb-1">Note</label>
+                  <textarea
+                    value={newPhotoData.note}
+                    onChange={(e) => setNewPhotoData({...newPhotoData, note: e.target.value})}
+                    placeholder="Add note (optional)"
+                    className="w-full p-3 bg-gray-100 rounded-xl"
+                    rows="2"
+                  />
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-gray-700 block mb-1">Tags</label>
+                  <input
+                    type="text"
+                    value={newPhotoData.tags}
+                    onChange={(e) => setNewPhotoData({...newPhotoData, tags: e.target.value})}
+                    placeholder="e.g. before, lime work, stonework"
+                    className="w-full p-3 bg-gray-100 rounded-xl"
+                  />
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-gray-700 block mb-1">Project</label>
+                  <select
+                    value={newPhotoData.project}
+                    onChange={(e) => setNewPhotoData({...newPhotoData, project: e.target.value})}
+                    className="w-full p-3 bg-gray-100 rounded-xl"
+                  >
+                    <option value="">No project</option>
+                    {projects.map(p => <option key={p.id} value={p.name}>{p.name}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      checked={newPhotoData.isReceipt}
+                      onChange={(e) => setNewPhotoData({...newPhotoData, isReceipt: e.target.checked})}
+                      className="w-5 h-5"
+                    />
+                    <span className="text-sm font-medium text-gray-700">This is a receipt/invoice</span>
+                  </label>
+                </div>
+              </div>
             </div>
           </div>
         )}
@@ -3361,7 +3587,13 @@ export default function RichsToolkit() {
             ))}
           </div>
           <button onClick={addMaterialListItem} className="w-full p-3 bg-gray-100 text-gray-600 rounded-xl mb-4 flex items-center justify-center gap-2"><Plus size={18} /> Add Item</button>
-          <button onClick={() => navigator.clipboard?.writeText(generateMaterialListText())} className="w-full p-4 bg-teal-500 text-white rounded-xl font-semibold flex items-center justify-center gap-2"><Copy size={20} /> Copy List</button>
+          <div className="grid grid-cols-2 gap-2">
+            <button onClick={() => navigator.clipboard?.writeText(generateMaterialListText())} className="p-4 bg-teal-500 text-white rounded-xl font-semibold flex items-center justify-center gap-2"><Copy size={18} /> Copy</button>
+            <button onClick={() => {
+              const text = encodeURIComponent(generateMaterialListText());
+              window.open(`https://wa.me/?text=${text}`, '_blank');
+            }} className="p-4 bg-green-500 text-white rounded-xl font-semibold flex items-center justify-center gap-2"><Send size={18} /> WhatsApp</button>
+          </div>
         </div>
       </div>
     );
@@ -3616,6 +3848,29 @@ export default function RichsToolkit() {
     </div>
   );
 
+  const renderTimerModal = () => (
+    <div className="fixed inset-0 bg-black/50 z-50 flex items-end">
+      <div className="bg-white rounded-t-3xl w-full p-6">
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-xl font-bold">Start Timer</h2>
+          <button onClick={() => setShowTimerModal(false)} className="p-2"><X size={24} /></button>
+        </div>
+        <div className="space-y-4">
+          <div>
+            <label className="text-sm font-medium text-gray-700 mb-2 block">Select Project (optional)</label>
+            <select value={timerProject} onChange={(e) => setTimerProject(e.target.value)} className="w-full p-3 bg-gray-100 rounded-xl">
+              <option value="">No project (general time)</option>
+              {projects.map(p => <option key={p.id} value={p.name}>{p.name}</option>)}
+            </select>
+          </div>
+          <button onClick={() => startTimer(timerProject)} className="w-full p-4 bg-green-500 text-white rounded-xl font-semibold flex items-center justify-center gap-2">
+            <Clock size={20} /> Start Timer
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+
   // Time & Expenses
   const renderTimeExpenses = () => {
     const weeklyHours = getWeekTotal(timeEntries, 'hours');
@@ -3751,6 +4006,82 @@ export default function RichsToolkit() {
     </div>
   );
 
+  // Calculator History Modal
+  const renderCalcHistoryModal = () => (
+    <div className="fixed inset-0 bg-black/50 z-50 flex items-end">
+      <div className="bg-white rounded-t-3xl w-full p-6 max-h-[80vh] overflow-y-auto">
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-xl font-bold">Saved Calculations</h2>
+          <button onClick={() => setShowCalcHistory(false)} className="p-2"><X size={24} /></button>
+        </div>
+        {savedCalculations.length === 0 ? (
+          <div className="text-center py-8 text-gray-500">
+            <p className="mb-2">📐</p>
+            <p className="text-sm">No saved calculations yet</p>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {savedCalculations.map((calc) => {
+              const calcInfo = calculators.find(c => c.id === calc.type);
+              const CalcIcon = calcInfo?.icon;
+              return (
+                <div key={calc.id} className={`${calcInfo?.color || 'bg-gray-500'} bg-opacity-10 rounded-xl p-4 border ${calcInfo?.color?.replace('bg-', 'border-') || 'border-gray-200'}`}>
+                  <div className="flex items-start justify-between mb-3">
+                    <div className="flex items-center gap-2">
+                      {CalcIcon && (
+                        <div className={`${calcInfo.color} w-10 h-10 rounded-lg flex items-center justify-center`}>
+                          <CalcIcon size={20} className="text-white" />
+                        </div>
+                      )}
+                      <div>
+                        <p className="font-semibold text-gray-900">{calcInfo?.title || calc.type}</p>
+                        <p className="text-xs text-gray-500">{new Date(calc.timestamp).toLocaleString()}</p>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => {
+                        if (confirm('Delete this calculation?')) {
+                          setSavedCalculations(savedCalculations.filter(c => c.id !== calc.id));
+                        }
+                      }}
+                      className="p-2 hover:bg-red-100 rounded-lg transition"
+                    >
+                      <Trash2 size={18} className="text-red-600" />
+                    </button>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3 text-sm">
+                    <div>
+                      <p className="text-xs font-semibold text-gray-600 mb-1">Inputs:</p>
+                      <div className="space-y-1">
+                        {Object.entries(calc.inputs).map(([key, value]) =>
+                          value ? (
+                            <p key={key} className="text-xs text-gray-700">
+                              <span className="font-medium">{key}:</span> {value}
+                            </p>
+                          ) : null
+                        )}
+                      </div>
+                    </div>
+                    <div>
+                      <p className="text-xs font-semibold text-gray-600 mb-1">Results:</p>
+                      <div className="space-y-1">
+                        {Object.entries(calc.results).map(([key, value]) => (
+                          <p key={key} className="text-xs text-gray-700">
+                            <span className="font-medium">{key}:</span> {value}
+                          </p>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+
   // Calculators
   const renderCalculator = () => {
     const calc = calculators.find(c => c.id === selectedCalc);
@@ -3763,11 +4094,34 @@ export default function RichsToolkit() {
     else if (selectedCalc === 'concrete') { results = calculateConcrete(); content = (<><div className="grid grid-cols-2 gap-3"><InputField label="Length" value={concreteInputs.length} onChange={(v) => setConcreteInputs({...concreteInputs, length: v})} unit="mm" /><InputField label="Width" value={concreteInputs.width} onChange={(v) => setConcreteInputs({...concreteInputs, width: v})} unit="mm" /></div><InputField label="Depth" value={concreteInputs.depth} onChange={(v) => setConcreteInputs({...concreteInputs, depth: v})} unit="mm" /><div className="pt-4 border-t grid grid-cols-2 gap-3"><ResultCard label="Volume" value={results.volume} unit="m³" /><ResultCard label="Bags" value={results.bags25kg} unit="25kg" highlight /></div></>); }
     else if (selectedCalc === 'vat') { results = calculateVAT(); content = (<><InputField label="Amount" value={vatInputs.amount} onChange={(v) => setVatInputs({...vatInputs, amount: v})} unit="£" placeholder="Enter price" /><InputField label="Margin %" value={vatInputs.margin} onChange={(v) => setVatInputs({...vatInputs, margin: v})} unit="%" placeholder="15" /><div className="pt-4 border-t space-y-2"><p className="text-sm font-semibold text-gray-600 mb-2">VAT Calculations (20%)</p><div className="grid grid-cols-2 gap-3"><ResultCard label="+ VAT" value={`£${results.withVAT}`} /><ResultCard label="- VAT" value={`£${results.withoutVAT}`} /></div><div className="grid grid-cols-2 gap-3 mt-2"><ResultCard label="VAT Amount" value={`£${results.vatAmount}`} /></div><p className="text-sm font-semibold text-gray-600 mt-4 mb-2">Margin Calculations</p><div className="grid grid-cols-2 gap-3"><ResultCard label={`Sell (+${results.margin}%)`} value={`£${results.sellPrice}`} highlight /><ResultCard label="Cost Price" value={`£${results.costFromSell}`} /></div></div></>); }
     else { results = calculateStud(); content = (<><InputField label="Length" value={studInputs.length} onChange={(v) => setStudInputs({...studInputs, length: v})} unit="mm" /><InputField label="Height" value={studInputs.height} onChange={(v) => setStudInputs({...studInputs, height: v})} unit="mm" /><div className="pt-4 border-t grid grid-cols-2 gap-3"><ResultCard label="Studs" value={results.studs} unit="pcs" /><ResultCard label="Boards" value={results.boardsNeeded} unit="sheets" highlight /></div></>); }
+    // Get current inputs based on selected calculator
+    let currentInputs = {};
+    if (selectedCalc === 'plaster') currentInputs = plasterInputs;
+    else if (selectedCalc === 'paint') currentInputs = paintInputs;
+    else if (selectedCalc === 'timber') currentInputs = timberInputs;
+    else if (selectedCalc === 'tiles') currentInputs = tileInputs;
+    else if (selectedCalc === 'concrete') currentInputs = concreteInputs;
+    else if (selectedCalc === 'vat') currentInputs = vatInputs;
+    else currentInputs = studInputs;
+
     return (
       <div className="p-4 pb-24">
         <button onClick={() => setCurrentScreen('calculators')} className="flex items-center gap-2 text-blue-500 mb-4"><ChevronLeft size={20} />Calculators</button>
-        <div className="flex items-center gap-4 mb-6"><div className={`${calc?.color} w-14 h-14 rounded-2xl flex items-center justify-center`}>{CalcIcon && <CalcIcon size={28} className="text-white" />}</div><div><h1 className="text-xl font-bold">{calc?.title}</h1></div></div>
-        <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">{content}</div>
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-4">
+            <div className={`${calc?.color} w-14 h-14 rounded-2xl flex items-center justify-center`}>{CalcIcon && <CalcIcon size={28} className="text-white" />}</div>
+            <h1 className="text-xl font-bold">{calc?.title}</h1>
+          </div>
+          <button onClick={() => setShowCalcHistory(true)} className="p-2 bg-gray-100 rounded-lg"><Clock size={20} /></button>
+        </div>
+        <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 mb-4">{content}</div>
+        <div className="grid grid-cols-2 gap-2">
+          <button onClick={() => {
+            saveCalculation(selectedCalc, currentInputs, results);
+            alert('Calculation saved!');
+          }} className="p-3 bg-blue-500 text-white rounded-xl font-semibold flex items-center justify-center gap-2"><Download size={18} /> Save</button>
+          <button onClick={() => shareCalculation(selectedCalc, currentInputs, results)} className="p-3 bg-green-500 text-white rounded-xl font-semibold flex items-center justify-center gap-2"><Send size={18} /> Share</button>
+        </div>
       </div>
     );
   };
@@ -4050,22 +4404,41 @@ export default function RichsToolkit() {
         </div>
 
         {invoices.length > 0 ? (
-          <div className="space-y-3">{invoices.map(inv => (
-            <div key={inv.id} className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+          <div className="space-y-3">{invoices.map(inv => {
+            const dueDate = new Date(inv.dueDate);
+            const today = new Date();
+            const daysUntilDue = Math.ceil((dueDate - today) / (1000 * 60 * 60 * 24));
+            const isOverdue = inv.status === 'unpaid' && daysUntilDue < 0;
+
+            return (
+            <div key={inv.id} className={`rounded-xl p-4 shadow-sm border ${isOverdue ? 'bg-red-50 border-red-200' : 'bg-white border-gray-100'}`}>
               <div className="flex justify-between items-start mb-2">
                 <div>
                   <p className="font-semibold">{inv.invoiceNumber}</p>
                   <p className="text-sm text-gray-500">{inv.project}</p>
                   {inv.client && <p className="text-xs text-blue-600">Client: {inv.client}</p>}
+                  {inv.status === 'unpaid' && (
+                    <p className={`text-xs font-semibold mt-1 ${isOverdue ? 'text-red-600' : daysUntilDue <= 7 ? 'text-amber-600' : 'text-gray-600'}`}>
+                      {isOverdue ? `⚠️ ${Math.abs(daysUntilDue)} days overdue` : `Due in ${daysUntilDue} days`}
+                    </p>
+                  )}
                 </div>
-                <div className="flex gap-2">
-                  <button onClick={() => generateInvoicePDF(inv)} className="px-3 py-1 rounded-lg text-xs font-semibold bg-blue-100 text-blue-700 flex items-center gap-1"><Download size={12} /> PDF</button>
-                  <button onClick={() => toggleInvoiceStatus(inv.id)} className={`px-3 py-1 rounded-lg text-xs font-semibold ${inv.status === 'paid' ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'}`}>{inv.status === 'paid' ? 'Paid' : 'Unpaid'}</button>
+                <div className="flex flex-col gap-2">
+                  <div className="flex gap-2">
+                    <button onClick={() => generateInvoicePDF(inv)} className="px-3 py-1 rounded-lg text-xs font-semibold bg-blue-100 text-blue-700 flex items-center gap-1"><Download size={12} /> PDF</button>
+                    <button onClick={() => {
+                      const subject = encodeURIComponent(`Invoice ${inv.invoiceNumber} - ${inv.project}`);
+                      const body = encodeURIComponent(`Please find attached invoice ${inv.invoiceNumber} for ${inv.project}.\n\nTotal: £${inv.total.toFixed(2)}\nDue: ${new Date(inv.dueDate).toLocaleDateString()}\n\nThank you!`);
+                      window.location.href = `mailto:${inv.client ? '' : ''}?subject=${subject}&body=${body}`;
+                    }} className="px-3 py-1 rounded-lg text-xs font-semibold bg-purple-100 text-purple-700 flex items-center gap-1"><Mail size={12} /> Email</button>
+                  </div>
+                  <button onClick={() => toggleInvoiceStatus(inv.id)} className={`px-3 py-1 rounded-lg text-xs font-semibold ${inv.status === 'paid' ? 'bg-green-100 text-green-700' : isOverdue ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-700'}`}>{inv.status === 'paid' ? 'Paid' : 'Unpaid'}</button>
                 </div>
               </div>
               <div className="flex justify-between text-sm"><span className="text-gray-600">{new Date(inv.date).toLocaleDateString()}</span><span className="font-bold text-emerald-600">£{inv.total.toFixed(2)}</span></div>
             </div>
-          ))}</div>
+            );
+          })}</div>
         ) : (<div className="text-center py-12 text-gray-500"><FileText size={48} className="mx-auto mb-2 opacity-30" /><p>No invoices yet</p></div>)}
       </div>
     );
@@ -4367,10 +4740,32 @@ export default function RichsToolkit() {
   return (
     <div className={`min-h-screen ${theme.bg} transition-colors duration-500`}>
       <div className={`max-w-sm mx-auto ${theme.bg} min-h-screen relative transition-colors duration-500`}>
-        {/* Time and date display - top right corner */}
-        <div className={`fixed top-4 right-4 ${theme.cardBg} px-3 py-2 rounded-lg shadow-sm border ${theme.border} transition-all duration-500 z-50 text-right`}>
-          <div className={`text-sm font-semibold ${theme.text} transition-colors duration-500`}>{formatCurrentTime()}</div>
-          <div className={`text-xs ${theme.textSecondary} transition-colors duration-500`}>{formatCurrentDate()}</div>
+        {/* Time and date display - top right corner with timer */}
+        <div className={`fixed top-4 right-4 ${theme.cardBg} rounded-lg shadow-sm border ${theme.border} transition-all duration-500 z-50`}>
+          <div className="px-3 py-2 text-right">
+            <div className={`text-sm font-semibold ${theme.text} transition-colors duration-500`}>{formatCurrentTime()}</div>
+            <div className={`text-xs ${theme.textSecondary} transition-colors duration-500`}>{formatCurrentDate()}</div>
+          </div>
+          {/* Timer display */}
+          {isTimerRunning && (
+            <div className="px-3 py-2 border-t border-gray-200 bg-green-50">
+              <div className="text-xs text-green-700 font-semibold mb-1">⏱️ Timer Running</div>
+              <div className="text-lg font-bold text-green-600">{formatTimerDisplay(timerSeconds)}</div>
+              {timerProject && <div className="text-xs text-green-600 truncate max-w-[120px]">{timerProject}</div>}
+              <div className="flex gap-1 mt-2">
+                <button onClick={stopTimer} className="flex-1 text-xs py-1 bg-green-600 text-white rounded">Stop & Save</button>
+                <button onClick={resetTimer} className="px-2 text-xs py-1 bg-gray-300 text-gray-700 rounded">Reset</button>
+              </div>
+            </div>
+          )}
+          {/* Start timer button when not running */}
+          {!isTimerRunning && (
+            <div className="px-3 py-2 border-t border-gray-200">
+              <button onClick={() => setShowTimerModal(true)} className="w-full text-xs py-1.5 bg-blue-500 text-white rounded-lg flex items-center justify-center gap-1">
+                <Clock size={12} /> Start Timer
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Greeting popup */}
@@ -4485,6 +4880,8 @@ export default function RichsToolkit() {
         {showProjectPhotos && renderProjectPhotos()}
         {showNewInvoice && renderNewInvoiceModal()}
         {showAddClient && renderAddClientModal()}
+        {showTimerModal && renderTimerModal()}
+        {showCalcHistory && renderCalcHistoryModal()}
         {showAddSupplier && renderAddSupplierModal()}
         {showMaterialList && renderMaterialListModal()}
       </div>
