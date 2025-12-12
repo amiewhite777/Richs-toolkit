@@ -335,6 +335,25 @@ export default function RichsToolkit() {
     setProjects(projects.map(p => p.id === projectId ? { ...p, snagging: p.snagging.map(room => room.id === roomId ? { ...room, items: room.items.map(item => item.id === itemId ? { ...item, complete: !item.complete } : item) } : room) } : p));
   };
 
+  const deleteSnagItem = (projectId, roomId, itemId) => {
+    setProjects(projects.map(p =>
+      p.id === projectId
+        ? { ...p, snagging: p.snagging.map(room =>
+            room.id === roomId
+              ? { ...room, items: room.items.filter(item => item.id !== itemId) }
+              : room
+          )}
+        : p
+    ));
+    // Update selectedRoom state if we're viewing it
+    if (selectedRoom) {
+      setSelectedRoom(prev => ({
+        ...prev,
+        items: prev.items.filter(item => item.id !== itemId)
+      }));
+    }
+  };
+
   const addNewProject = () => {
     if (!newProjectData.name) return;
     const newProject = {
@@ -1008,7 +1027,13 @@ export default function RichsToolkit() {
     <div className={`bg-white rounded-xl p-4 border ${item.complete ? 'border-green-200 bg-green-50/50' : 'border-gray-100'} shadow-sm`}>
       <div className="flex items-start gap-3">
         <button onClick={() => toggleSnagComplete(projectId, roomId, item.id)} className={`mt-0.5 w-6 h-6 rounded-full border-2 flex items-center justify-center ${item.complete ? 'bg-green-500 border-green-500 text-white' : 'border-gray-300'}`}>{item.complete && <Check size={14} />}</button>
-        <p className={`font-medium ${item.complete ? 'text-gray-400 line-through' : 'text-gray-900'}`}>{item.description}</p>
+        <p className={`flex-1 font-medium ${item.complete ? 'text-gray-400 line-through' : 'text-gray-900'}`}>{item.description}</p>
+        <button
+          onClick={() => deleteSnagItem(projectId, roomId, item.id)}
+          className="p-1.5 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+        >
+          <Trash2 size={16} />
+        </button>
       </div>
     </div>
   );
@@ -1139,13 +1164,147 @@ export default function RichsToolkit() {
     </div>
   );
 
+  // Weather Background Animations
+  const WeatherBackground = ({ condition }) => {
+    if (!condition) return null;
+
+    const renderWeatherElements = () => {
+      switch (condition) {
+        case 'sunny':
+          return Array.from({ length: 5 }).map((_, i) => (
+            <div
+              key={i}
+              className="weather-sunray"
+              style={{
+                top: `${20 + i * 15}%`,
+                left: `${10 + i * 20}%`,
+                animationDelay: `${i * 1.5}s`,
+                transform: `rotate(${i * 30}deg)`
+              }}
+            />
+          ));
+
+        case 'partly-cloudy':
+          return (
+            <>
+              {Array.from({ length: 2 }).map((_, i) => (
+                <div
+                  key={`sun-${i}`}
+                  className="weather-sunray"
+                  style={{
+                    top: `${15 + i * 20}%`,
+                    left: `${15 + i * 30}%`,
+                    animationDelay: `${i * 2}s`,
+                    transform: `rotate(${i * 45}deg)`
+                  }}
+                />
+              ))}
+              {Array.from({ length: 3 }).map((_, i) => (
+                <div
+                  key={`cloud-${i}`}
+                  className="weather-cloud"
+                  style={{
+                    top: `${25 + i * 25}%`,
+                    animationDelay: `${i * 8}s`,
+                    animationDuration: `${20 + i * 5}s`
+                  }}
+                />
+              ))}
+            </>
+          );
+
+        case 'cloudy':
+          return Array.from({ length: 5 }).map((_, i) => (
+            <div
+              key={i}
+              className="weather-cloud"
+              style={{
+                top: `${15 + i * 18}%`,
+                animationDelay: `${i * 5}s`,
+                animationDuration: `${22 + i * 3}s`
+              }}
+            />
+          ));
+
+        case 'rain':
+          return Array.from({ length: 20 }).map((_, i) => (
+            <div
+              key={i}
+              className="weather-raindrop"
+              style={{
+                left: `${5 + (i * 5)}%`,
+                top: `${Math.random() * 20}%`,
+                animationDelay: `${Math.random() * 2}s`,
+                animationDuration: `${0.8 + Math.random() * 0.5}s`
+              }}
+            />
+          ));
+
+        case 'snow':
+          return Array.from({ length: 15 }).map((_, i) => (
+            <div
+              key={i}
+              className="weather-snowflake"
+              style={{
+                left: `${5 + (i * 6)}%`,
+                top: `${Math.random() * 20}%`,
+                animationDelay: `${Math.random() * 4}s`,
+                animationDuration: `${3 + Math.random() * 2}s`
+              }}
+            />
+          ));
+
+        case 'storm':
+          return (
+            <>
+              {Array.from({ length: 15 }).map((_, i) => (
+                <div
+                  key={`rain-${i}`}
+                  className="weather-raindrop"
+                  style={{
+                    left: `${5 + (i * 6)}%`,
+                    top: `${Math.random() * 20}%`,
+                    animationDelay: `${Math.random() * 1}s`,
+                    animationDuration: `${0.5 + Math.random() * 0.3}s`
+                  }}
+                />
+              ))}
+              {Array.from({ length: 8 }).map((_, i) => (
+                <div
+                  key={`wind-${i}`}
+                  className="weather-windline"
+                  style={{
+                    top: `${20 + i * 10}%`,
+                    animationDelay: `${i * 0.3}s`
+                  }}
+                />
+              ))}
+            </>
+          );
+
+        default:
+          return null;
+      }
+    };
+
+    return (
+      <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
+        {renderWeatherElements()}
+      </div>
+    );
+  };
+
   // Home
   const renderHome = () => {
     return (
-      <div className="p-4 pb-24">
-        <div className="mb-6"><h1 className="text-2xl font-bold text-gray-900">Rich's Toolkit</h1><p className="text-gray-500">Bath Heritage Renovations</p></div>
+      <div className="p-4 pb-24 relative">
+        {/* Weather Background Animations */}
+        {weatherData && <WeatherBackground condition={weatherData.current.condition} />}
+
+        <div className="mb-6 relative z-10"><h1 className="text-2xl font-bold text-gray-900">Rich's Toolkit</h1><p className="text-gray-500">Bath Heritage Renovations</p></div>
 
         {/* Weather Card - Now Tappable */}
+        <div className="relative z-10">
         {weatherLoading || !weatherData ? (
           <div className="w-full bg-gradient-to-r from-sky-400 to-blue-500 rounded-2xl p-4 mb-4 text-white">
             <div className="flex items-center justify-center py-6">
@@ -1191,8 +1350,9 @@ export default function RichsToolkit() {
             )}
           </button>
         )}
+        </div>
 
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-2 gap-3 relative z-10">
           {[
             { id: 'calculators', title: 'Calculators', icon: Calculator, color: 'bg-green-500', desc: 'Materials & quantities' },
             { id: 'snagging', title: 'Snagging', icon: ClipboardList, color: 'bg-amber-500', desc: 'Punch lists' },
@@ -1241,11 +1401,6 @@ export default function RichsToolkit() {
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-sm mx-auto bg-gray-50 min-h-screen relative">
-        <div className="bg-gray-50 px-6 py-2 flex justify-between items-center text-sm">
-          <span className="font-medium">9:41</span>
-          <div className="flex items-center gap-1"><div className="w-4 h-4 flex items-end gap-0.5"><div className="w-1 h-1 bg-gray-900 rounded-sm"></div><div className="w-1 h-2 bg-gray-900 rounded-sm"></div><div className="w-1 h-3 bg-gray-900 rounded-sm"></div><div className="w-1 h-4 bg-gray-900 rounded-sm"></div></div><span className="ml-1 font-medium">100%</span></div>
-        </div>
-
         {renderCurrentScreen()}
 
         <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-6 py-3 max-w-sm mx-auto">
