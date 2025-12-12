@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Calculator, ChevronRight, ChevronLeft, Home, Camera, ClipboardList, PaintBucket, Ruler, Grid3X3, Package, Layers, Plus, Building2, Sun, Landmark, Image, FileText, X, Clock, MapPin, Calendar, Phone, Square, AlertTriangle, CheckCircle, Check, Flag, Send, ArrowLeftRight, Receipt, Car, Trash2, Star, MessageSquare, Copy, PhoneCall, Search, Users, Cloud, CloudRain, CloudSnow, CloudDrizzle, CloudLightning, Wind, Droplets, Thermometer, Umbrella, AlertCircle, CloudSun, Moon, Sunrise, Sunset, Eye, Loader2 } from 'lucide-react';
+import { Calculator, ChevronRight, ChevronLeft, Home, Camera, ClipboardList, PaintBucket, Ruler, Grid3X3, Package, Layers, Plus, Building2, Sun, Landmark, Image, FileText, X, Clock, MapPin, Calendar, Phone, Square, AlertTriangle, CheckCircle, Check, Flag, Send, ArrowLeftRight, Receipt, Car, Trash2, Star, MessageSquare, Copy, PhoneCall, Search, Users, Cloud, CloudRain, CloudSnow, CloudDrizzle, CloudLightning, Wind, Droplets, Thermometer, Umbrella, AlertCircle, CloudSun, Moon, Sunrise, Sunset, Eye, Loader2, DollarSign, TrendingUp, PiggyBank, CreditCard, Download } from 'lucide-react';
 import { useWeather } from './useWeather';
 import { useLocalStorage } from './useLocalStorage';
 
@@ -52,6 +52,34 @@ export default function RichsToolkit() {
 
   // Live weather data for Bath, UK
   const { weatherData, loading: weatherLoading, error: weatherError } = useWeather();
+
+  // Invoicing & Budget state
+  const [invoices, setInvoices] = useLocalStorage('richs-toolkit-invoices', []);
+  const [showNewInvoice, setShowNewInvoice] = useState(false);
+  const [selectedInvoice, setSelectedInvoice] = useState(null);
+  const [newInvoiceData, setNewInvoiceData] = useState({
+    project: '',
+    hourlyRate: '25',
+    markup: '15',
+    includeTime: true,
+    includeReceipts: true,
+    includeMileage: true
+  });
+
+  const [budgets, setBudgets] = useLocalStorage('richs-toolkit-budgets', {
+    projects: {},
+    personal: {
+      monthly: 2000,
+      categories: [
+        { id: 'materials', name: 'Materials', budget: 500, spent: 0, color: 'bg-blue-500' },
+        { id: 'fuel', name: 'Fuel & Travel', budget: 300, spent: 0, color: 'bg-green-500' },
+        { id: 'tools', name: 'Tools & Hire', budget: 200, spent: 0, color: 'bg-purple-500' },
+        { id: 'food', name: 'Food & Drink', budget: 400, spent: 0, color: 'bg-orange-500' },
+        { id: 'other', name: 'Other', budget: 600, spent: 0, color: 'bg-gray-500' }
+      ]
+    }
+  });
+  const [budgetTab, setBudgetTab] = useState('personal');
 
   // Work condition assessments
   const getWorkConditions = (temp, rain, wind, condition) => {
@@ -418,6 +446,84 @@ export default function RichsToolkit() {
       p.id === projectId
         ? { ...p, photos: (p.photos || []).filter(photo => photo.id !== photoId) }
         : p
+    ));
+  };
+
+  // Invoice Generation
+  const generateInvoice = () => {
+    if (!newInvoiceData.project) return;
+
+    const projectTimeEntries = timeEntries.filter(e => e.project === newInvoiceData.project);
+    const projectReceipts = receipts.filter(r => r.project === newInvoiceData.project);
+    const projectMileage = mileageEntries.filter(m => m.project === newInvoiceData.project);
+
+    const hourlyRate = parseFloat(newInvoiceData.hourlyRate) || 0;
+    const markup = parseFloat(newInvoiceData.markup) || 0;
+
+    let laborTotal = 0;
+    if (newInvoiceData.includeTime) {
+      const totalHours = projectTimeEntries.reduce((sum, entry) =>
+        sum + entry.hours + entry.minutes / 60, 0);
+      laborTotal = totalHours * hourlyRate;
+    }
+
+    let materialsTotal = 0;
+    if (newInvoiceData.includeReceipts) {
+      materialsTotal = projectReceipts.reduce((sum, receipt) => sum + receipt.amount, 0);
+      materialsTotal = materialsTotal * (1 + markup / 100);
+    }
+
+    let mileageTotal = 0;
+    if (newInvoiceData.includeMileage) {
+      const totalMiles = projectMileage.reduce((sum, entry) =>
+        sum + entry.miles * (entry.return ? 2 : 1), 0);
+      mileageTotal = totalMiles * 0.45; // HMRC rate
+    }
+
+    const subtotal = laborTotal + materialsTotal + mileageTotal;
+    const vat = subtotal * 0.20;
+    const total = subtotal + vat;
+
+    const invoice = {
+      id: Date.now(),
+      invoiceNumber: `INV-${Date.now().toString().slice(-6)}`,
+      project: newInvoiceData.project,
+      date: getTodayDate(),
+      dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+      status: 'unpaid',
+      laborHours: newInvoiceData.includeTime ? projectTimeEntries.reduce((sum, e) => sum + e.hours + e.minutes / 60, 0) : 0,
+      hourlyRate,
+      laborTotal,
+      materialsTotal,
+      mileageTotal,
+      subtotal,
+      vat,
+      total,
+      items: {
+        time: newInvoiceData.includeTime ? projectTimeEntries : [],
+        receipts: newInvoiceData.includeReceipts ? projectReceipts : [],
+        mileage: newInvoiceData.includeMileage ? projectMileage : []
+      }
+    };
+
+    setInvoices([invoice, ...invoices]);
+    setNewInvoiceData({
+      project: '',
+      hourlyRate: '25',
+      markup: '15',
+      includeTime: true,
+      includeReceipts: true,
+      includeMileage: true
+    });
+    setShowNewInvoice(false);
+    setSelectedInvoice(invoice);
+  };
+
+  const toggleInvoiceStatus = (invoiceId) => {
+    setInvoices(invoices.map(inv =>
+      inv.id === invoiceId
+        ? { ...inv, status: inv.status === 'paid' ? 'unpaid' : 'paid' }
+        : inv
     ));
   };
 
@@ -996,6 +1102,20 @@ export default function RichsToolkit() {
     </div>
   );
 
+  const renderNewInvoiceModal = () => (
+    <div className="fixed inset-0 bg-black/50 z-50 flex items-end">
+      <div className="bg-white rounded-t-3xl w-full p-6 max-h-[90vh] overflow-y-auto">
+        <div className="flex items-center justify-between mb-6"><h2 className="text-xl font-bold">Generate Invoice</h2><button onClick={() => setShowNewInvoice(false)} className="p-2"><X size={24} /></button></div>
+        <div className="space-y-4">
+          <div><label className="text-sm font-medium text-gray-700 mb-1 block">Project</label><select value={newInvoiceData.project} onChange={(e) => setNewInvoiceData({...newInvoiceData, project: e.target.value})} className="w-full p-3 bg-gray-100 rounded-xl">{projects.map(p => <option key={p.id} value={p.name}>{p.name}</option>)}</select></div>
+          <div className="grid grid-cols-2 gap-3"><div><label className="text-sm font-medium text-gray-700 mb-1 block">Hourly Rate (£)</label><input type="number" value={newInvoiceData.hourlyRate} onChange={(e) => setNewInvoiceData({...newInvoiceData, hourlyRate: e.target.value})} className="w-full p-3 bg-gray-100 rounded-xl" /></div><div><label className="text-sm font-medium text-gray-700 mb-1 block">Markup (%)</label><input type="number" value={newInvoiceData.markup} onChange={(e) => setNewInvoiceData({...newInvoiceData, markup: e.target.value})} className="w-full p-3 bg-gray-100 rounded-xl" /></div></div>
+          <div><label className="text-sm font-medium text-gray-700 mb-2 block">Include:</label><div className="space-y-2"><label className="flex items-center gap-2"><input type="checkbox" checked={newInvoiceData.includeTime} onChange={(e) => setNewInvoiceData({...newInvoiceData, includeTime: e.target.checked})} className="w-4 h-4" /><span>Time Entries</span></label><label className="flex items-center gap-2"><input type="checkbox" checked={newInvoiceData.includeReceipts} onChange={(e) => setNewInvoiceData({...newInvoiceData, includeReceipts: e.target.checked})} className="w-4 h-4" /><span>Receipts (with markup)</span></label><label className="flex items-center gap-2"><input type="checkbox" checked={newInvoiceData.includeMileage} onChange={(e) => setNewInvoiceData({...newInvoiceData, includeMileage: e.target.checked})} className="w-4 h-4" /><span>Mileage</span></label></div></div>
+          <button onClick={generateInvoice} className="w-full p-4 bg-emerald-500 text-white rounded-xl font-semibold">Generate Invoice</button>
+        </div>
+      </div>
+    </div>
+  );
+
   // Time & Expenses
   const renderTimeExpenses = () => {
     const weeklyHours = getWeekTotal(timeEntries, 'hours');
@@ -1357,6 +1477,8 @@ export default function RichsToolkit() {
             { id: 'calculators', title: 'Calculators', icon: Calculator, color: 'bg-green-500', desc: 'Materials & quantities' },
             { id: 'snagging', title: 'Snagging', icon: ClipboardList, color: 'bg-amber-500', desc: 'Punch lists' },
             { id: 'time', title: 'Time & Expenses', icon: Clock, color: 'bg-rose-500', desc: 'Hours & receipts' },
+            { id: 'invoices', title: 'Invoices', icon: FileText, color: 'bg-emerald-500', desc: 'Generate & track' },
+            { id: 'budget', title: 'Budget', icon: PiggyBank, color: 'bg-pink-500', desc: 'Track spending' },
             { id: 'suppliers', title: 'Suppliers', icon: Phone, color: 'bg-teal-500', desc: 'Quick dial' },
             { id: 'weather', title: 'Weather', icon: Cloud, color: 'bg-sky-500', desc: '7-day forecast' },
             { id: 'conversions', title: 'Conversions', icon: ArrowLeftRight, color: 'bg-indigo-500', desc: 'Imperial ↔ Metric' },
@@ -1381,6 +1503,52 @@ export default function RichsToolkit() {
     );
   };
 
+  // Invoices Screen
+  const renderInvoices = () => (
+    <div className="p-4 pb-24">
+      <button onClick={() => setCurrentScreen('home')} className="flex items-center gap-2 text-blue-500 mb-4"><ChevronLeft size={20} />Home</button>
+      <div className="flex items-center gap-4 mb-6"><div className="bg-emerald-500 w-14 h-14 rounded-2xl flex items-center justify-center"><FileText size={28} className="text-white" /></div><div><h1 className="text-xl font-bold">Invoices</h1></div></div>
+      <button onClick={() => setShowNewInvoice(true)} className="w-full p-4 bg-emerald-500 text-white rounded-xl font-semibold mb-4"><Plus size={20} className="inline mr-2" />Generate Invoice</button>
+      {invoices.length > 0 ? (
+        <div className="space-y-3">{invoices.map(inv => (
+          <div key={inv.id} className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+            <div className="flex justify-between items-start mb-2">
+              <div><p className="font-semibold">{inv.invoiceNumber}</p><p className="text-sm text-gray-500">{inv.project}</p></div>
+              <button onClick={() => toggleInvoiceStatus(inv.id)} className={`px-3 py-1 rounded-lg text-xs font-semibold ${inv.status === 'paid' ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'}`}>{inv.status === 'paid' ? 'Paid' : 'Unpaid'}</button>
+            </div>
+            <div className="flex justify-between text-sm"><span className="text-gray-600">{new Date(inv.date).toLocaleDateString()}</span><span className="font-bold text-emerald-600">£{inv.total.toFixed(2)}</span></div>
+          </div>
+        ))}</div>
+      ) : (<div className="text-center py-12 text-gray-500"><FileText size={48} className="mx-auto mb-2 opacity-30" /><p>No invoices yet</p></div>)}
+    </div>
+  );
+
+  // Budget Screen
+  const renderBudget = () => {
+    const totalBudget = budgets.personal.categories.reduce((sum, cat) => sum + cat.budget, 0);
+    const totalSpent = budgets.personal.categories.reduce((sum, cat) => sum + cat.spent, 0);
+    return (
+      <div className="p-4 pb-24">
+        <button onClick={() => setCurrentScreen('home')} className="flex items-center gap-2 text-blue-500 mb-4"><ChevronLeft size={20} />Home</button>
+        <div className="flex items-center gap-4 mb-6"><div className="bg-pink-500 w-14 h-14 rounded-2xl flex items-center justify-center"><PiggyBank size={28} className="text-white" /></div><div><h1 className="text-xl font-bold">Budget Tracker</h1></div></div>
+        <div className="bg-gradient-to-r from-pink-500 to-rose-500 rounded-2xl p-4 mb-4 text-white">
+          <p className="text-sm opacity-90 mb-1">Monthly Budget</p>
+          <p className="text-3xl font-bold">£{totalSpent.toFixed(0)} / £{totalBudget.toFixed(0)}</p>
+          <div className="mt-2 bg-white/20 rounded-full h-2"><div className="bg-white rounded-full h-2" style={{width: `${Math.min((totalSpent/totalBudget)*100, 100)}%`}}></div></div>
+        </div>
+        <div className="space-y-3">{budgets.personal.categories.map(cat => {
+          const percent = (cat.spent / cat.budget) * 100;
+          return (
+            <div key={cat.id} className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+              <div className="flex justify-between items-center mb-2"><span className="font-semibold">{cat.name}</span><span className="text-sm text-gray-600">£{cat.spent} / £{cat.budget}</span></div>
+              <div className="bg-gray-100 rounded-full h-2"><div className={`${cat.color} rounded-full h-2`} style={{width: `${Math.min(percent, 100)}%`}}></div></div>
+            </div>
+          );
+        })}</div>
+      </div>
+    );
+  };
+
   const renderCurrentScreen = () => {
     if (currentScreen === 'home') return renderHome();
     if (currentScreen === 'calculators') return renderCalculatorsList();
@@ -1388,6 +1556,8 @@ export default function RichsToolkit() {
     if (currentScreen === 'heritage') return renderHeritage();
     if (currentScreen === 'conversions') return renderConversions();
     if (currentScreen === 'time') return renderTimeExpenses();
+    if (currentScreen === 'invoices') return renderInvoices();
+    if (currentScreen === 'budget') return renderBudget();
     if (currentScreen === 'suppliers') return renderSuppliers();
     if (currentScreen === 'weather') return renderWeather();
     if (currentScreen === 'snagging') {
@@ -1425,6 +1595,7 @@ export default function RichsToolkit() {
         {showNewRoom && renderNewRoomModal()}
         {showNewProject && renderNewProjectModal()}
         {showProjectPhotos && renderProjectPhotos()}
+        {showNewInvoice && renderNewInvoiceModal()}
         {showAddSupplier && renderAddSupplierModal()}
         {showMaterialList && renderMaterialListModal()}
       </div>
