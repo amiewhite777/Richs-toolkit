@@ -399,6 +399,224 @@ export default function RichsToolkit() {
     setTimeout(() => setNotification(null), 3000);
   };
 
+  // ==================== FISHING MECHANICS ====================
+
+  // Start casting (hold button)
+  const handleCastStart = (rodIndex) => {
+    const newRodStates = [...rodStates];
+    if (newRodStates[rodIndex].state !== 'idle') return;
+
+    newRodStates[rodIndex] = { ...newRodStates[rodIndex], state: 'charging', power: 0 };
+    setRodStates(newRodStates);
+    setIsCasting(true);
+  };
+
+  // Release cast button
+  const handleCastRelease = (rodIndex) => {
+    const newRodStates = [...rodStates];
+    if (newRodStates[rodIndex].state !== 'charging') return;
+
+    const power = newRodStates[rodIndex].power;
+    if (power < 20) {
+      // Too weak, cancel cast
+      newRodStates[rodIndex] = { state: 'idle', power: 0, waitTime: 0, fish: null, tension: 0, progress: 0 };
+    } else {
+      // Cast successful, enter waiting state
+      const waitTime = 3000 + Math.random() * 5000; // 3-8 seconds wait
+      newRodStates[rodIndex] = {
+        ...newRodStates[rodIndex],
+        state: 'waiting',
+        waitTime: waitTime,
+        waitStart: Date.now()
+      };
+    }
+    setRodStates(newRodStates);
+    setIsCasting(false);
+  };
+
+  // Hook fish during bite
+  const handleHookFish = (rodIndex) => {
+    const newRodStates = [...rodStates];
+    if (newRodStates[rodIndex].state !== 'bite') return;
+
+    const fish = selectRandomFish();
+    newRodStates[rodIndex] = {
+      ...newRodStates[rodIndex],
+      state: 'fighting',
+      fish: fish,
+      tension: 30,
+      progress: 10,
+      fishPullDirection: (Math.random() - 0.5) * 2 // -1 to 1
+    };
+    setRodStates(newRodStates);
+  };
+
+  // Reel during fight
+  const handleReel = (rodIndex) => {
+    const newRodStates = [...rodStates];
+    const rod = newRodStates[rodIndex];
+    if (rod.state !== 'fighting') return;
+
+    // Reeling increases progress but also tension
+    rod.progress = Math.min(100, rod.progress + 5);
+    rod.tension = Math.min(100, rod.tension + 8);
+
+    // Check if won
+    if (rod.progress >= 100) {
+      handleCatchFish(rodIndex, rod.fish);
+      return;
+    }
+
+    // Check if lost
+    if (rod.tension >= 100) {
+      handleLoseFish(rodIndex);
+      return;
+    }
+
+    setRodStates(newRodStates);
+  };
+
+  // Drag (let line out) during fight
+  const handleDrag = (rodIndex) => {
+    const newRodStates = [...rodStates];
+    const rod = newRodStates[rodIndex];
+    if (rod.state !== 'fighting') return;
+
+    // Dragging reduces tension but also progress slightly
+    rod.tension = Math.max(0, rod.tension - 10);
+    rod.progress = Math.max(0, rod.progress - 2);
+
+    setRodStates(newRodStates);
+  };
+
+  // Catch fish successfully
+  const handleCatchFish = (rodIndex, fish) => {
+    const weight = generateFishWeight(fish);
+    const variant = Math.random() < 0.05 ? ['golden', 'albino', 'giant'][Math.floor(Math.random() * 3)] : null;
+    let finalWeight = weight;
+    if (variant === 'giant') finalWeight = weight * 1.5;
+
+    // Update game state
+    setFishingGame(prev => {
+      const newCollection = { ...prev.fishCollection };
+      newCollection[fish.id] = (newCollection[fish.id] || 0) + 1;
+
+      const newPBs = { ...prev.personalBests };
+      if (!newPBs[fish.id] || finalWeight > newPBs[fish.id]) {
+        newPBs[fish.id] = finalWeight;
+      }
+
+      const coinValue = variant === 'golden' ? fish.value * 2 : fish.value;
+      const xpValue = variant === 'albino' ? fish.xp * 1.5 : fish.xp;
+
+      const newStats = { ...prev.stats };
+      newStats.totalCaught += 1;
+      newStats.totalWeight += finalWeight;
+      newStats.biggestCatch = Math.max(newStats.biggestCatch, finalWeight);
+      newStats.totalCoins += coinValue;
+      if (!prev.fishCollection[fish.id]) newStats.speciesDiscovered += 1;
+      newStats[`${fish.rarity}Caught`] = (newStats[`${fish.rarity}Caught`] || 0) + 1;
+
+      return {
+        ...prev,
+        coins: prev.coins + coinValue,
+        fishCollection: newCollection,
+        personalBests: newPBs,
+        stats: newStats
+      };
+    });
+
+    addXP(fish.xp);
+
+    // Show catch modal
+    setCatchModal({
+      fish,
+      weight: finalWeight,
+      variant,
+      isNewSpecies: !fishingGame.fishCollection[fish.id],
+      isNewPB: !fishingGame.personalBests[fish.id] || finalWeight > fishingGame.personalBests[fish.id]
+    });
+
+    // Reset rod
+    const newRodStates = [...rodStates];
+    newRodStates[rodIndex] = { state: 'idle', power: 0, waitTime: 0, fish: null, tension: 0, progress: 0 };
+    setRodStates(newRodStates);
+  };
+
+  // Lose fish (line snapped)
+  const handleLoseFish = (rodIndex) => {
+    showNotification('💔 Line snapped! Fish escaped!', 'error');
+    const newRodStates = [...rodStates];
+    newRodStates[rodIndex] = { state: 'idle', power: 0, waitTime: 0, fish: null, tension: 0, progress: 0 };
+    setRodStates(newRodStates);
+  };
+
+  // Fishing game loop
+  useEffect(() => {
+    if (fishingScreen !== 'game') return;
+
+    const gameLoop = () => {
+      const now = Date.now();
+      const deltaTime = now - lastFrameTime.current;
+      lastFrameTime.current = now;
+
+      setRodStates(prev => {
+        const newStates = [...prev];
+        let changed = false;
+
+        newStates.forEach((rod, i) => {
+          if (rod.state === 'charging') {
+            // Increase power while charging
+            rod.power = Math.min(100, rod.power + deltaTime / 15);
+            changed = true;
+          } else if (rod.state === 'waiting') {
+            // Check if bite should occur
+            const elapsed = now - rod.waitStart;
+            if (elapsed >= rod.waitTime) {
+              rod.state = 'bite';
+              rod.biteStart = now;
+              showNotification(`🎣 BITE! Tap to hook! (Rod ${i + 1})`, 'success');
+              changed = true;
+            }
+          } else if (rod.state === 'bite') {
+            // Auto-miss after 2.5 seconds
+            const elapsed = now - rod.biteStart;
+            if (elapsed >= 2500) {
+              rod.state = 'idle';
+              rod.power = 0;
+              rod.waitTime = 0;
+              showNotification('😞 Missed the bite!', 'error');
+              changed = true;
+            }
+          } else if (rod.state === 'fighting') {
+            // Fish fights back over time
+            rod.tension = Math.min(100, rod.tension + deltaTime / 200);
+            changed = true;
+
+            // Check if lost
+            if (rod.tension >= 100) {
+              handleLoseFish(i);
+              changed = true;
+            }
+          }
+        });
+
+        return changed ? newStates : prev;
+      });
+
+      fishingAnimationFrame.current = requestAnimationFrame(gameLoop);
+    };
+
+    lastFrameTime.current = Date.now();
+    fishingAnimationFrame.current = requestAnimationFrame(gameLoop);
+
+    return () => {
+      if (fishingAnimationFrame.current) {
+        cancelAnimationFrame(fishingAnimationFrame.current);
+      }
+    };
+  }, [fishingScreen, rodStates]);
+
   // Work condition assessments
   const getWorkConditions = (temp, rain, wind, condition) => {
     const conditions = [];
@@ -1298,9 +1516,10 @@ export default function RichsToolkit() {
     );
   };
 
-  // Fishing Game Screen (with multi-rod mechanics) - SIMPLIFIED FOR NOW
+  // Fishing Game Screen (with multi-rod mechanics)
   const renderFishingGame = () => {
     const location = FISHING_LOCATIONS[fishingGame.currentLocation];
+    const activeRod = rodStates[activeRodIndex] || rodStates[0];
 
     return (
       <div className={`min-h-screen bg-gradient-to-b ${location.skyGradient} relative overflow-hidden pb-24`}>
@@ -1338,11 +1557,63 @@ export default function RichsToolkit() {
         </div>
 
         {/* Water Area */}
-        <div className={`relative mx-4 h-64 bg-gradient-to-b ${location.waterGradient} rounded-2xl shadow-2xl mb-6`}>
-          {/* Simple bobber placeholder - full mechanics coming */}
-          <div className="absolute inset-0 flex items-center justify-center">
-            <div className="text-6xl animate-bounce">⚓</div>
-          </div>
+        <div className={`relative mx-4 h-64 bg-gradient-to-b ${location.waterGradient} rounded-2xl shadow-2xl mb-6 overflow-hidden`}>
+          {/* Bobber Animation */}
+          {activeRod.state === 'waiting' && (
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="text-6xl animate-bounce">🎣</div>
+            </div>
+          )}
+          {activeRod.state === 'bite' && (
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="text-6xl animate-pulse">
+                <div className="text-red-500 font-bold text-3xl mb-2">BITE!</div>
+                <div>🐟</div>
+              </div>
+            </div>
+          )}
+          {activeRod.state === 'fighting' && activeRod.fish && (
+            <div className="absolute inset-0 p-4">
+              <div className="text-center text-white mb-4">
+                <div className="text-4xl mb-2">{FISH_DATA[activeRod.fish.id].emoji}</div>
+                <div className="font-bold">{FISH_DATA[activeRod.fish.id].name}</div>
+              </div>
+              {/* Tension Bar */}
+              <div className="mb-3">
+                <div className="flex justify-between text-xs text-white mb-1">
+                  <span>Tension</span>
+                  <span>{Math.round(activeRod.tension)}%</span>
+                </div>
+                <div className="h-3 bg-black/30 rounded-full overflow-hidden">
+                  <div
+                    className={`h-full transition-all ${
+                      activeRod.tension > 75 ? 'bg-red-500' :
+                      activeRod.tension > 50 ? 'bg-yellow-500' : 'bg-green-500'
+                    }`}
+                    style={{ width: `${activeRod.tension}%` }}
+                  />
+                </div>
+              </div>
+              {/* Progress Bar */}
+              <div>
+                <div className="flex justify-between text-xs text-white mb-1">
+                  <span>Progress</span>
+                  <span>{Math.round(activeRod.progress)}%</span>
+                </div>
+                <div className="h-3 bg-black/30 rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-blue-500 transition-all"
+                    style={{ width: `${activeRod.progress}%` }}
+                  />
+                </div>
+              </div>
+            </div>
+          )}
+          {activeRod.state === 'idle' && (
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="text-4xl opacity-50">🌊</div>
+            </div>
+          )}
         </div>
 
         {/* Control Panel */}
@@ -1350,30 +1621,105 @@ export default function RichsToolkit() {
           <div className="bg-gradient-to-br from-amber-700 to-amber-900 rounded-2xl p-6 shadow-2xl">
             {/* Rod Tabs */}
             <div className="flex gap-2 mb-4">
-              {Array.from({ length: fishingGame.maxRods }).map((_, i) => (
+              {Array.from({ length: fishingGame.maxRods }).map((_, i) => {
+                const rod = rodStates[i] || { state: 'idle' };
+                const stateEmoji = {
+                  idle: '⚪',
+                  charging: '🔵',
+                  waiting: '🟡',
+                  bite: '🔴',
+                  fighting: '🟣'
+                };
+                return (
+                  <button
+                    key={i}
+                    onClick={() => setActiveRodIndex(i)}
+                    className={`flex-1 py-2 px-4 rounded-lg font-semibold transition ${
+                      activeRodIndex === i
+                        ? 'bg-blue-500 text-white'
+                        : 'bg-amber-800/50 text-amber-200'
+                    }`}
+                  >
+                    {stateEmoji[rod.state] || '⚪'} Rod {i + 1}
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Controls based on rod state */}
+            {activeRod.state === 'idle' && (
+              <div>
                 <button
-                  key={i}
-                  onClick={() => setActiveRodIndex(i)}
-                  className={`flex-1 py-2 px-4 rounded-lg font-semibold transition ${
-                    activeRodIndex === i
-                      ? 'bg-blue-500 text-white'
-                      : 'bg-amber-800/50 text-amber-200'
-                  }`}
+                  onMouseDown={() => handleCastStart(activeRodIndex)}
+                  onMouseUp={() => handleCastRelease(activeRodIndex)}
+                  onTouchStart={() => handleCastStart(activeRodIndex)}
+                  onTouchEnd={() => handleCastRelease(activeRodIndex)}
+                  className="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-4 rounded-xl shadow-lg active:scale-95 transition"
                 >
-                  🎣 Rod {i + 1}
+                  🎣 HOLD TO CAST
                 </button>
-              ))}
-            </div>
+              </div>
+            )}
 
-            {/* Simple Cast Button - Full mechanics coming */}
-            <button className="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-4 rounded-xl shadow-lg active:scale-95 transition">
-              🎣 HOLD TO CAST
-            </button>
+            {activeRod.state === 'charging' && (
+              <div>
+                <div className="mb-3">
+                  <div className="flex justify-between text-xs text-amber-100 mb-1">
+                    <span>Cast Power</span>
+                    <span>{Math.round(activeRod.power)}%</span>
+                  </div>
+                  <div className="h-4 bg-black/30 rounded-full overflow-hidden">
+                    <div
+                      className={`h-full transition-all ${
+                        activeRod.power > 80 ? 'bg-green-500' :
+                        activeRod.power > 50 ? 'bg-yellow-500' : 'bg-red-500'
+                      }`}
+                      style={{ width: `${activeRod.power}%` }}
+                    />
+                  </div>
+                </div>
+                <button
+                  onMouseUp={() => handleCastRelease(activeRodIndex)}
+                  onTouchEnd={() => handleCastRelease(activeRodIndex)}
+                  className="w-full bg-green-500 text-white font-bold py-4 rounded-xl shadow-lg"
+                >
+                  ⬆️ RELEASE TO CAST
+                </button>
+              </div>
+            )}
 
-            <div className="mt-4 text-center text-amber-100 text-sm">
-              <p>Full multi-rod fishing mechanics</p>
-              <p>coming in next update!</p>
-            </div>
+            {activeRod.state === 'waiting' && (
+              <div className="text-center text-amber-100">
+                <p className="text-lg font-bold mb-2">⏳ Waiting for a bite...</p>
+                <p className="text-sm opacity-80">Watch the bobber!</p>
+              </div>
+            )}
+
+            {activeRod.state === 'bite' && (
+              <button
+                onClick={() => handleHookFish(activeRodIndex)}
+                className="w-full bg-red-500 hover:bg-red-600 text-white font-bold py-6 rounded-xl shadow-lg animate-pulse text-xl"
+              >
+                🪝 TAP TO HOOK!
+              </button>
+            )}
+
+            {activeRod.state === 'fighting' && (
+              <div className="grid grid-cols-2 gap-3">
+                <button
+                  onClick={() => handleDrag(activeRodIndex)}
+                  className="bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-4 rounded-xl shadow-lg active:scale-95 transition"
+                >
+                  🔄 DRAG
+                </button>
+                <button
+                  onClick={() => handleReel(activeRodIndex)}
+                  className="bg-green-500 hover:bg-green-600 text-white font-bold py-4 rounded-xl shadow-lg active:scale-95 transition"
+                >
+                  ⚡ REEL
+                </button>
+              </div>
+            )}
           </div>
         </div>
 
@@ -1392,6 +1738,72 @@ export default function RichsToolkit() {
             <span className="text-xs">Shop</span>
           </button>
         </div>
+
+        {/* Notification */}
+        {notification && (
+          <div className="fixed top-20 left-1/2 transform -translate-x-1/2 z-50 animate-bounce">
+            <div className={`px-6 py-3 rounded-xl shadow-2xl font-bold text-white ${
+              notification.type === 'success' ? 'bg-green-500' :
+              notification.type === 'error' ? 'bg-red-500' : 'bg-blue-500'
+            }`}>
+              {notification.message}
+            </div>
+          </div>
+        )}
+
+        {/* Catch Modal */}
+        {catchModal && (
+          <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
+            <div className="bg-gradient-to-br from-amber-100 to-amber-50 rounded-3xl p-8 max-w-md w-full shadow-2xl">
+              <div className="text-center mb-6">
+                <div className="text-8xl mb-4">{catchModal.fish.emoji}</div>
+                <h2 className="text-3xl font-bold text-gray-800 mb-2">{catchModal.fish.name}</h2>
+                <div className={`inline-block px-4 py-1 rounded-full text-sm font-bold ${getRarityStyle(catchModal.fish.rarity)}`}>
+                  {catchModal.fish.rarity.toUpperCase()}
+                </div>
+                {catchModal.variant && (
+                  <div className="mt-2">
+                    <span className="inline-block px-4 py-1 rounded-full text-sm font-bold bg-gradient-to-r from-yellow-400 to-orange-400 text-white">
+                      {catchModal.variant === 'golden' && '✨ GOLDEN VARIANT!'}
+                      {catchModal.variant === 'albino' && '🤍 ALBINO VARIANT!'}
+                      {catchModal.variant === 'giant' && '🔷 GIANT VARIANT!'}
+                    </span>
+                  </div>
+                )}
+              </div>
+
+              <div className="bg-white rounded-2xl p-6 mb-6">
+                <div className="grid grid-cols-2 gap-4 text-center">
+                  <div>
+                    <div className="text-3xl font-bold text-blue-600">{catchModal.weight}kg</div>
+                    <div className="text-sm text-gray-600">Weight</div>
+                  </div>
+                  <div>
+                    <div className="text-3xl font-bold text-amber-600">{catchModal.variant === 'golden' ? catchModal.fish.value * 2 : catchModal.fish.value}</div>
+                    <div className="text-sm text-gray-600">Coins</div>
+                  </div>
+                </div>
+                {catchModal.isNewSpecies && (
+                  <div className="mt-4 bg-green-100 text-green-800 px-4 py-2 rounded-lg font-bold text-center">
+                    🆕 NEW SPECIES!
+                  </div>
+                )}
+                {catchModal.isNewPB && (
+                  <div className="mt-4 bg-blue-100 text-blue-800 px-4 py-2 rounded-lg font-bold text-center">
+                    🏆 NEW PERSONAL BEST!
+                  </div>
+                )}
+              </div>
+
+              <button
+                onClick={() => setCatchModal(null)}
+                className="w-full bg-gradient-to-r from-blue-500 to-blue-600 text-white font-bold py-4 rounded-xl shadow-lg hover:from-blue-600 hover:to-blue-700 active:scale-95 transition"
+              >
+                Continue Fishing
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     );
   };
