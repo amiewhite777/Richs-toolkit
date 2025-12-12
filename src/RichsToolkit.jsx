@@ -96,6 +96,21 @@ export default function RichsToolkit() {
     return () => clearInterval(timer);
   }, []);
 
+  // Register service worker for offline functionality (PWA)
+  useEffect(() => {
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js')
+          .then((registration) => {
+            console.log('ServiceWorker registered:', registration);
+          })
+          .catch((error) => {
+            console.log('ServiceWorker registration failed:', error);
+          });
+      });
+    }
+  }, []);
+
   // Work condition assessments
   const getWorkConditions = (temp, rain, wind, condition) => {
     const conditions = [];
@@ -1512,6 +1527,9 @@ export default function RichsToolkit() {
         <div className="mb-6 relative z-10">
           <h1 className={`text-2xl font-bold ${theme.text} transition-colors duration-500`}>Rich's Toolkit</h1>
           <p className={`${theme.textSecondary} transition-colors duration-500`}>Bath Heritage Renovations</p>
+          <div className={`mt-2 px-3 py-2 rounded-lg ${theme.cardBg} border ${theme.border} transition-all duration-500`}>
+            <p className={`text-sm italic ${theme.textSecondary} transition-colors duration-500 text-center`}>"{getDailyAffirmation()}"</p>
+          </div>
         </div>
 
         {/* Weather Card - Now Tappable */}
@@ -1836,6 +1854,71 @@ export default function RichsToolkit() {
     if (month === 11) return 'christmas';
 
     return null;
+  };
+
+  // Get daily builder affirmation (rotates through 50 quotes)
+  const getDailyAffirmation = () => {
+    const affirmations = [
+      "Every brick laid is progress made.",
+      "Quality work speaks louder than words.",
+      "Heritage isn't just restored, it's honoured.",
+      "Precision today prevents problems tomorrow.",
+      "Your craftsmanship preserves history.",
+      "Measure twice, build once, build right.",
+      "Each project tells a story of skill.",
+      "Excellence in every joint and corner.",
+      "Building Bath's future while honouring its past.",
+      "Your attention to detail makes the difference.",
+      "Georgian elegance meets modern expertise.",
+      "Restoration is an art, and you're the artist.",
+      "Steady hands, steady progress.",
+      "Every day shapes something beautiful.",
+      "Lime mortar and patience create perfection.",
+      "Your work will stand the test of time.",
+      "Heritage buildings deserve heritage skills.",
+      "Build with pride, restore with respect.",
+      "Another day, another masterpiece in progress.",
+      "The best builders never stop learning.",
+      "Your skills bring old stones to life.",
+      "Quality craftsmanship is never rushed.",
+      "Bath's heritage is safe in your hands.",
+      "Every restoration preserves a piece of history.",
+      "Skilled hands, sharp mind, beautiful work.",
+      "From foundation to finish, excellence matters.",
+      "Today's effort is tomorrow's legacy.",
+      "Building better, one project at a time.",
+      "Your work echoes through the centuries.",
+      "Precision, patience, and pride in every task.",
+      "The best view comes after the hardest climb.",
+      "Every challenge overcome is a skill sharpened.",
+      "Your dedication shows in every detail.",
+      "Georgian Bath lives on through your work.",
+      "Restoration requires patience and passion.",
+      "Building strong foundations for lasting results.",
+      "Your craftsmanship honours the original builders.",
+      "Every project is a chance to excel.",
+      "Heritage work is heart work.",
+      "From Bath stone to Bath pride.",
+      "Your skills preserve architectural treasures.",
+      "Building tomorrow while respecting yesterday.",
+      "Quality over quantity, always.",
+      "The right tools and the right attitude.",
+      "Your work adds value to Bath's beauty.",
+      "Every restoration tells two stories.",
+      "Skilled hands create timeless work.",
+      "Building with integrity, restoring with care.",
+      "Your expertise keeps history alive.",
+      "Another day to build something remarkable."
+    ];
+
+    // Use day of year to select affirmation (resets at midnight)
+    const startOfYear = new Date(currentTime.getFullYear(), 0, 0);
+    const diff = currentTime - startOfYear;
+    const oneDay = 1000 * 60 * 60 * 24;
+    const dayOfYear = Math.floor(diff / oneDay);
+
+    // Rotate through all 50 affirmations
+    return affirmations[dayOfYear % affirmations.length];
   };
 
   const specialEvent = getSpecialEvent();

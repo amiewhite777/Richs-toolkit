@@ -118,6 +118,14 @@ export const useWeather = () => {
       try {
         setLoading(true);
 
+        // Try to load cached weather data first
+        const cachedData = localStorage.getItem('richs-toolkit-weather-cache');
+        if (cachedData) {
+          const parsed = JSON.parse(cachedData);
+          setWeatherData(parsed);
+          setLoading(false);
+        }
+
         // Open-Meteo API - free, no API key required
         const url = `https://api.open-meteo.com/v1/forecast?` +
           `latitude=${BATH_LAT}&longitude=${BATH_LON}` +
@@ -198,17 +206,32 @@ export const useWeather = () => {
         // Generate alerts
         const alerts = generateAlerts(daily);
 
-        setWeatherData({
+        const weatherUpdate = {
           current,
           hourly,
           daily,
           alerts,
-        });
+          lastUpdated: new Date().toISOString(),
+        };
+
+        setWeatherData(weatherUpdate);
+
+        // Cache weather data for offline use
+        localStorage.setItem('richs-toolkit-weather-cache', JSON.stringify(weatherUpdate));
 
         setError(null);
       } catch (err) {
         console.error('Weather fetch error:', err);
-        setError(err.message);
+
+        // If offline and we have cached data, use it
+        const cachedData = localStorage.getItem('richs-toolkit-weather-cache');
+        if (cachedData) {
+          const parsed = JSON.parse(cachedData);
+          setWeatherData(parsed);
+          setError('Using cached weather data (offline)');
+        } else {
+          setError(err.message);
+        }
       } finally {
         setLoading(false);
       }
