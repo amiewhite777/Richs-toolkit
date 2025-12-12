@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Calculator, ChevronRight, ChevronLeft, Home, Camera, ClipboardList, PaintBucket, Ruler, Grid3X3, Package, Layers, Plus, Building2, Sun, Landmark, Image, FileText, X, Clock, MapPin, Calendar, Phone, Square, AlertTriangle, CheckCircle, Check, Flag, Send, ArrowLeftRight, Receipt, Car, Trash2, Star, MessageSquare, Copy, PhoneCall, Search, Users, Cloud, CloudRain, CloudSnow, CloudDrizzle, CloudLightning, Wind, Droplets, Thermometer, Umbrella, AlertCircle, CloudSun, Moon, Sunrise, Sunset, Eye, Loader2, DollarSign, TrendingUp, PiggyBank, CreditCard, Download, Settings } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { Calculator, ChevronRight, ChevronLeft, Home, Camera, ClipboardList, PaintBucket, Ruler, Grid3X3, Package, Layers, Plus, Building2, Sun, Landmark, Image, FileText, X, Clock, MapPin, Calendar, Phone, Square, AlertTriangle, CheckCircle, Check, Flag, Send, ArrowLeftRight, Receipt, Car, Trash2, Star, MessageSquare, Copy, PhoneCall, Search, Users, Cloud, CloudRain, CloudSnow, CloudDrizzle, CloudLightning, Wind, Droplets, Thermometer, Umbrella, AlertCircle, CloudSun, Moon, Sunrise, Sunset, Eye, Loader2, DollarSign, TrendingUp, PiggyBank, CreditCard, Download, Settings, Fish, Waves, Trophy, ShoppingCart, Map, BookOpen, Target, Zap, Lock, Unlock } from 'lucide-react';
 import { useWeather } from './useWeather';
 import { useLocalStorage } from './useLocalStorage';
 
@@ -155,6 +155,784 @@ export default function RichsToolkit() {
   const [showCamera, setShowCamera] = useState(false);
   const [capturedPhoto, setCapturedPhoto] = useState(null);
   const [showAnnotation, setShowAnnotation] = useState(false);
+
+  // ==================== FISHING GAME DATA ====================
+
+  // Fishing Game Locations (All 12 locations)
+  const FISHING_LOCATIONS = {
+    bath: {
+      id: 'bath',
+      name: 'River Avon, Bath',
+      country: '🇬🇧',
+      unlockLevel: 1,
+      description: 'Your home waters. Misty mornings and peaceful afternoons on the historic River Avon.',
+      skyGradient: 'from-emerald-800 via-emerald-600 to-sky-400',
+      waterGradient: 'from-emerald-700/80 to-emerald-900/90',
+      particles: ['🍃', '🦆'],
+      fish: ['roach', 'perch', 'bream', 'chub', 'pike', 'carp', 'tench', 'ghostpike']
+    },
+    thailand: {
+      id: 'thailand',
+      name: 'Chao Phraya River, Thailand',
+      country: '🇹🇭',
+      unlockLevel: 5,
+      description: 'Golden temples reflect on warm tropical waters. Giant fish lurk in the depths.',
+      skyGradient: 'from-amber-500 via-orange-400 to-yellow-300',
+      waterGradient: 'from-amber-700/70 to-amber-900/80',
+      particles: ['🪷', '✨'],
+      fish: ['tilapia', 'stripedcatfish', 'giantsnakehead', 'giantgourami', 'siamesecarp', 'mekongcatfish', 'nagaking']
+    },
+    lochness: {
+      id: 'lochness',
+      name: 'Loch Ness, Scottish Highlands',
+      country: '🏴󠁧󠁢󠁳󠁣󠁴󠁿',
+      unlockLevel: 10,
+      description: 'Ancient lochs shrouded in mist and legend. Something big lurks below.',
+      skyGradient: 'from-slate-700 via-slate-500 to-slate-400',
+      waterGradient: 'from-slate-700/90 to-slate-900/95',
+      particles: ['🌧️', '🦅'],
+      fish: ['browntrout', 'rainbowtrout', 'atlanticsalmon', 'arcticchar', 'feroxtrout', 'thelaird']
+    },
+    bulgaria: {
+      id: 'bulgaria',
+      name: 'River Danube, Bulgaria',
+      country: '🇧🇬',
+      unlockLevel: 15,
+      description: 'Second-longest river in Europe. Ancient waters flowing through green valleys.',
+      skyGradient: 'from-green-700 via-green-500 to-sky-300',
+      waterGradient: 'from-green-800/70 to-green-950/85',
+      particles: ['🌿', '🦢'],
+      fish: ['europeanperch', 'zander', 'wels', 'danubecarp', 'danubesalmon', 'sterlet', 'beluga']
+    },
+    norway: {
+      id: 'norway',
+      name: 'Lofoten Islands, Norway',
+      country: '🇳🇴',
+      unlockLevel: 20,
+      description: 'Arctic waters beneath dramatic peaks. Northern lights dance above frigid seas.',
+      skyGradient: 'from-indigo-900 via-blue-700 to-cyan-500',
+      waterGradient: 'from-blue-900/90 to-slate-950/95',
+      particles: ['❄️', '🌌'],
+      fish: ['cod', 'haddock', 'halibut', 'wolffish', 'redfish', 'coalfish', 'skrei', 'arcticchar_norway']
+    },
+    florida: {
+      id: 'florida',
+      name: 'Everglades, Florida',
+      country: '🇺🇸',
+      unlockLevel: 25,
+      description: 'Swamps teeming with prehistoric predators. Sun-scorched waters hide monsters.',
+      skyGradient: 'from-orange-600 via-yellow-500 to-blue-400',
+      waterGradient: 'from-green-700/60 to-green-900/80',
+      particles: ['🐊', '🦩'],
+      fish: ['largemouthbass', 'snook', 'tarpon', 'redfish_florida', 'garfish', 'peacockbass', 'floridagator', 'bullshark']
+    },
+    amazon: {
+      id: 'amazon',
+      name: 'Amazon River, Brazil',
+      country: '🇧🇷',
+      unlockLevel: 30,
+      description: 'The lungs of Earth. Dense jungle conceals the most biodiverse waters on the planet.',
+      skyGradient: 'from-green-800 via-lime-600 to-yellow-400',
+      waterGradient: 'from-amber-800/60 to-amber-950/75',
+      particles: ['🦜', '🌺'],
+      fish: ['piranha', 'peacockbass_amazon', 'payara', 'arapaima', 'redtailcatfish', 'tambaqui', 'electriceel', 'pirarucu']
+    },
+    australia: {
+      id: 'australia',
+      name: 'Great Barrier Reef, Australia',
+      country: '🇦🇺',
+      unlockLevel: 35,
+      description: 'Crystal-clear coral reefs. Vibrant fish dance through underwater rainbows.',
+      skyGradient: 'from-cyan-400 via-blue-400 to-teal-300',
+      waterGradient: 'from-cyan-600/50 to-blue-800/70',
+      particles: ['🐠', '🪸'],
+      fish: ['barramundi', 'queenfish', 'giantrevally', 'goldentrevally', 'coraltrout', 'mackerel', 'blackmarlin', 'greatwhiteshark']
+    },
+    japan: {
+      id: 'japan',
+      name: 'Lake Biwa, Japan',
+      country: '🇯🇵',
+      unlockLevel: 40,
+      description: 'Ancient lake of Japan. Cherry blossoms fall on sacred waters holding legendary fish.',
+      skyGradient: 'from-pink-400 via-purple-300 to-blue-400',
+      waterGradient: 'from-purple-700/60 to-indigo-900/80',
+      particles: ['🌸', '🎋'],
+      fish: ['biwasalmon', 'blackbass', 'bluegill', 'crucian', 'ayufish', 'biwatrout', 'catfish_japan', 'masteroi']
+    },
+    vietnam: {
+      id: 'vietnam',
+      name: 'Mekong Delta, Vietnam',
+      country: '🇻🇳',
+      unlockLevel: 45,
+      description: 'Muddy waters flow past floating markets. The Mekong bounty feeds millions.',
+      skyGradient: 'from-amber-600 via-yellow-500 to-orange-400',
+      waterGradient: 'from-yellow-800/65 to-amber-950/80',
+      particles: ['🍜', '⛵'],
+      fish: ['mekongcatfish_vietnam', 'giantcarp', 'stripedcatfish_vietnam', 'snakehead', 'giantgourami_vietnam', 'tigerfish', 'mekongdragon']
+    },
+    southafrica: {
+      id: 'southafrica',
+      name: 'Cape Point, South Africa',
+      country: '🇿🇦',
+      unlockLevel: 50,
+      description: 'Where two oceans meet. Wild Atlantic waves crash against African shores.',
+      skyGradient: 'from-orange-700 via-red-500 to-yellow-400',
+      waterGradient: 'from-blue-700/70 to-blue-950/90',
+      particles: ['🦭', '🐳'],
+      fish: ['yellowfintuna', 'snoek', 'kabeljou', 'kingfish', 'steenbras', 'bonito', 'greatwhite', 'capeleviathan']
+    },
+    iceland: {
+      id: 'iceland',
+      name: 'Blue Lagoon, Iceland',
+      country: '🇮🇸',
+      unlockLevel: 55,
+      description: 'Geothermal pools beneath glaciers. Steam rises from waters warmed by the core of Earth.',
+      skyGradient: 'from-blue-300 via-cyan-200 to-white',
+      waterGradient: 'from-cyan-400/40 to-blue-600/60',
+      particles: ['💎', '🌊'],
+      fish: ['atlanticsalmon_iceland', 'arcticchar_iceland', 'browntrout_iceland', 'seabass', 'wolffish_iceland', 'icelandictreasure']
+    }
+  };
+
+  // Fish Database
+  const FISH_DATA = {
+    // River Avon, Bath
+    roach: { id: 'roach', emoji: '🐟', name: 'Roach', rarity: 'common', minWeight: 0.2, maxWeight: 1.5, fight: 20, value: 10, xp: 15, location: 'bath' },
+    perch: { id: 'perch', emoji: '🐠', name: 'Perch', rarity: 'common', minWeight: 0.3, maxWeight: 2.8, fight: 30, value: 15, xp: 20, location: 'bath' },
+    bream: { id: 'bream', emoji: '🐟', name: 'Bream', rarity: 'uncommon', minWeight: 0.8, maxWeight: 5, fight: 25, value: 25, xp: 30, location: 'bath' },
+    chub: { id: 'chub', emoji: '🐠', name: 'Chub', rarity: 'uncommon', minWeight: 1, maxWeight: 6, fight: 40, value: 35, xp: 40, location: 'bath' },
+    pike: { id: 'pike', emoji: '🦈', name: 'Pike', rarity: 'rare', minWeight: 2, maxWeight: 15, fight: 70, value: 100, xp: 80, location: 'bath' },
+    carp: { id: 'carp', emoji: '🐡', name: 'Common Carp', rarity: 'rare', minWeight: 3, maxWeight: 25, fight: 60, value: 120, xp: 100, location: 'bath' },
+    tench: { id: 'tench', emoji: '🐠', name: 'Tench', rarity: 'epic', minWeight: 1, maxWeight: 8, fight: 45, value: 150, xp: 120, location: 'bath' },
+    ghostpike: { id: 'ghostpike', emoji: '👻', name: 'Ghost Pike', rarity: 'legendary', minWeight: 15, maxWeight: 30, fight: 95, value: 1000, xp: 500, location: 'bath', description: 'The albino legend of the Avon' },
+
+    // Chao Phraya River, Thailand
+    tilapia: { id: 'tilapia', emoji: '🐟', name: 'Tilapia', rarity: 'common', minWeight: 0.3, maxWeight: 2, fight: 15, value: 8, xp: 12, location: 'thailand' },
+    stripedcatfish: { id: 'stripedcatfish', emoji: '🐠', name: 'Striped Catfish', rarity: 'common', minWeight: 1, maxWeight: 15, fight: 35, value: 30, xp: 35, location: 'thailand' },
+    giantsnakehead: { id: 'giantsnakehead', emoji: '🐍', name: 'Giant Snakehead', rarity: 'uncommon', minWeight: 2, maxWeight: 12, fight: 55, value: 60, xp: 50, location: 'thailand' },
+    giantgourami: { id: 'giantgourami', emoji: '🐠', name: 'Giant Gourami', rarity: 'uncommon', minWeight: 3, maxWeight: 20, fight: 40, value: 80, xp: 70, location: 'thailand' },
+    siamesecarp: { id: 'siamesecarp', emoji: '🐡', name: 'Siamese Carp', rarity: 'rare', minWeight: 10, maxWeight: 100, fight: 80, value: 200, xp: 150, location: 'thailand' },
+    mekongcatfish: { id: 'mekongcatfish', emoji: '🦈', name: 'Mekong Giant Catfish', rarity: 'epic', minWeight: 20, maxWeight: 150, fight: 90, value: 400, xp: 200, location: 'thailand' },
+    nagaking: { id: 'nagaking', emoji: '🐉', name: 'Naga King', rarity: 'legendary', minWeight: 80, maxWeight: 200, fight: 100, value: 2000, xp: 600, location: 'thailand', description: 'Serpent deity of the river' },
+
+    // Loch Ness, Scotland
+    browntrout: { id: 'browntrout', emoji: '🐟', name: 'Brown Trout', rarity: 'common', minWeight: 0.5, maxWeight: 8, fight: 45, value: 40, xp: 35, location: 'lochness' },
+    rainbowtrout: { id: 'rainbowtrout', emoji: '🌈', name: 'Rainbow Trout', rarity: 'common', minWeight: 0.4, maxWeight: 6, fight: 50, value: 35, xp: 30, location: 'lochness' },
+    atlanticsalmon: { id: 'atlanticsalmon', emoji: '🐠', name: 'Atlantic Salmon', rarity: 'uncommon', minWeight: 3, maxWeight: 25, fight: 70, value: 150, xp: 100, location: 'lochness' },
+    arcticchar: { id: 'arcticchar', emoji: '❄️', name: 'Arctic Char', rarity: 'rare', minWeight: 1, maxWeight: 10, fight: 55, value: 120, xp: 90, location: 'lochness' },
+    feroxtrout: { id: 'feroxtrout', emoji: '🦈', name: 'Ferox Trout', rarity: 'epic', minWeight: 5, maxWeight: 15, fight: 75, value: 250, xp: 150, location: 'lochness' },
+    thelaird: { id: 'thelaird', emoji: '👑', name: 'The Laird', rarity: 'legendary', minWeight: 30, maxWeight: 50, fight: 98, value: 2500, xp: 700, location: 'lochness', description: 'Ancient salmon, older than the castle' },
+
+    // River Danube, Bulgaria
+    europeanperch: { id: 'europeanperch', emoji: '🐠', name: 'European Perch', rarity: 'common', minWeight: 0.4, maxWeight: 3, fight: 35, value: 20, xp: 25, location: 'bulgaria' },
+    zander: { id: 'zander', emoji: '🐟', name: 'Zander', rarity: 'common', minWeight: 1, maxWeight: 12, fight: 50, value: 45, xp: 40, location: 'bulgaria' },
+    wels: { id: 'wels', emoji: '🐋', name: 'Wels Catfish', rarity: 'uncommon', minWeight: 10, maxWeight: 80, fight: 75, value: 150, xp: 120, location: 'bulgaria' },
+    danubecarp: { id: 'danubecarp', emoji: '🐡', name: 'Danube Carp', rarity: 'rare', minWeight: 5, maxWeight: 30, fight: 65, value: 180, xp: 140, location: 'bulgaria' },
+    danubesalmon: { id: 'danubesalmon', emoji: '🐟', name: 'Danube Salmon', rarity: 'epic', minWeight: 8, maxWeight: 40, fight: 85, value: 350, xp: 200, location: 'bulgaria' },
+    sterlet: { id: 'sterlet', emoji: '🐠', name: 'Sterlet Sturgeon', rarity: 'epic', minWeight: 5, maxWeight: 15, fight: 70, value: 400, xp: 250, location: 'bulgaria' },
+    beluga: { id: 'beluga', emoji: '🐋', name: 'Beluga Sturgeon', rarity: 'legendary', minWeight: 50, maxWeight: 300, fight: 100, value: 5000, xp: 800, location: 'bulgaria', description: 'Ancient giant of the deep' },
+
+    // Lofoten Islands, Norway
+    cod: { id: 'cod', emoji: '🐟', name: 'Atlantic Cod', rarity: 'common', minWeight: 1, maxWeight: 15, fight: 40, value: 35, xp: 30, location: 'norway' },
+    haddock: { id: 'haddock', emoji: '🐠', name: 'Haddock', rarity: 'common', minWeight: 0.8, maxWeight: 10, fight: 35, value: 30, xp: 25, location: 'norway' },
+    halibut: { id: 'halibut', emoji: '🐡', name: 'Halibut', rarity: 'uncommon', minWeight: 10, maxWeight: 100, fight: 80, value: 200, xp: 150, location: 'norway' },
+    wolffish: { id: 'wolffish', emoji: '🦈', name: 'Atlantic Wolffish', rarity: 'uncommon', minWeight: 5, maxWeight: 25, fight: 70, value: 150, xp: 120, location: 'norway' },
+    redfish: { id: 'redfish', emoji: '🐟', name: 'Redfish', rarity: 'rare', minWeight: 3, maxWeight: 20, fight: 60, value: 180, xp: 140, location: 'norway' },
+    coalfish: { id: 'coalfish', emoji: '🐠', name: 'Coalfish', rarity: 'rare', minWeight: 2, maxWeight: 15, fight: 55, value: 140, xp: 110, location: 'norway' },
+    skrei: { id: 'skrei', emoji: '👑', name: 'Skrei Cod', rarity: 'epic', minWeight: 10, maxWeight: 30, fight: 75, value: 450, xp: 280, location: 'norway' },
+    arcticchar_norway: { id: 'arcticchar_norway', emoji: '❄️', name: 'Arctic Char', rarity: 'legendary', minWeight: 15, maxWeight: 40, fight: 90, value: 3000, xp: 750, location: 'norway', description: 'Northern lights guardian' },
+
+    // Everglades, Florida
+    largemouthbass: { id: 'largemouthbass', emoji: '🐟', name: 'Largemouth Bass', rarity: 'common', minWeight: 1, maxWeight: 8, fight: 50, value: 40, xp: 35, location: 'florida' },
+    snook: { id: 'snook', emoji: '🐠', name: 'Snook', rarity: 'common', minWeight: 2, maxWeight: 15, fight: 60, value: 60, xp: 50, location: 'florida' },
+    tarpon: { id: 'tarpon', emoji: '🐡', name: 'Tarpon', rarity: 'uncommon', minWeight: 10, maxWeight: 100, fight: 90, value: 250, xp: 180, location: 'florida' },
+    redfish_florida: { id: 'redfish_florida', emoji: '🐠', name: 'Redfish', rarity: 'uncommon', minWeight: 3, maxWeight: 20, fight: 55, value: 120, xp: 100, location: 'florida' },
+    garfish: { id: 'garfish', emoji: '🦈', name: 'Alligator Gar', rarity: 'rare', minWeight: 20, maxWeight: 120, fight: 85, value: 300, xp: 220, location: 'florida' },
+    peacockbass: { id: 'peacockbass', emoji: '🦚', name: 'Peacock Bass', rarity: 'epic', minWeight: 3, maxWeight: 12, fight: 70, value: 350, xp: 250, location: 'florida' },
+    floridagator: { id: 'floridagator', emoji: '🐊', name: 'Florida Gator', rarity: 'epic', minWeight: 50, maxWeight: 200, fight: 95, value: 600, xp: 400, location: 'florida' },
+    bullshark: { id: 'bullshark', emoji: '🦈', name: 'Bull Shark', rarity: 'legendary', minWeight: 80, maxWeight: 250, fight: 100, value: 4000, xp: 850, location: 'florida', description: 'Apex predator of the swamps' },
+
+    // Amazon River, Brazil
+    piranha: { id: 'piranha', emoji: '🐟', name: 'Red Piranha', rarity: 'common', minWeight: 0.5, maxWeight: 3, fight: 40, value: 25, xp: 20, location: 'amazon' },
+    peacockbass_amazon: { id: 'peacockbass_amazon', emoji: '🦚', name: 'Peacock Bass', rarity: 'common', minWeight: 2, maxWeight: 10, fight: 55, value: 50, xp: 45, location: 'amazon' },
+    payara: { id: 'payara', emoji: '🦷', name: 'Payara', rarity: 'uncommon', minWeight: 3, maxWeight: 15, fight: 70, value: 120, xp: 100, location: 'amazon' },
+    arapaima: { id: 'arapaima', emoji: '🐋', name: 'Arapaima', rarity: 'rare', minWeight: 50, maxWeight: 200, fight: 90, value: 450, xp: 300, location: 'amazon' },
+    redtailcatfish: { id: 'redtailcatfish', emoji: '🐠', name: 'Redtail Catfish', rarity: 'rare', minWeight: 10, maxWeight: 60, fight: 75, value: 280, xp: 200, location: 'amazon' },
+    tambaqui: { id: 'tambaqui', emoji: '🐡', name: 'Tambaqui', rarity: 'epic', minWeight: 15, maxWeight: 40, fight: 65, value: 400, xp: 280, location: 'amazon' },
+    electriceel: { id: 'electriceel', emoji: '⚡', name: 'Electric Eel', rarity: 'epic', minWeight: 5, maxWeight: 20, fight: 80, value: 500, xp: 350, location: 'amazon' },
+    pirarucu: { id: 'pirarucu', emoji: '🐉', name: 'Pirarucu', rarity: 'legendary', minWeight: 100, maxWeight: 300, fight: 100, value: 6000, xp: 900, location: 'amazon', description: 'Living fossil of the Amazon' },
+
+    // Great Barrier Reef, Australia
+    barramundi: { id: 'barramundi', emoji: '🐟', name: 'Barramundi', rarity: 'common', minWeight: 2, maxWeight: 20, fight: 60, value: 70, xp: 60, location: 'australia' },
+    queenfish: { id: 'queenfish', emoji: '🐠', name: 'Queenfish', rarity: 'common', minWeight: 1, maxWeight: 12, fight: 55, value: 50, xp: 45, location: 'australia' },
+    giantrevally: { id: 'giantrevally', emoji: '💎', name: 'Giant Trevally', rarity: 'uncommon', minWeight: 5, maxWeight: 50, fight: 85, value: 200, xp: 150, location: 'australia' },
+    goldentrevally: { id: 'goldentrevally', emoji: '✨', name: 'Golden Trevally', rarity: 'rare', minWeight: 3, maxWeight: 15, fight: 65, value: 250, xp: 180, location: 'australia' },
+    coraltrout: { id: 'coraltrout', emoji: '🐡', name: 'Coral Trout', rarity: 'rare', minWeight: 2, maxWeight: 10, fight: 60, value: 220, xp: 160, location: 'australia' },
+    mackerel: { id: 'mackerel', emoji: '🐟', name: 'Spanish Mackerel', rarity: 'epic', minWeight: 5, maxWeight: 25, fight: 75, value: 400, xp: 280, location: 'australia' },
+    blackmarlin: { id: 'blackmarlin', emoji: '🗡️', name: 'Black Marlin', rarity: 'epic', minWeight: 100, maxWeight: 500, fight: 95, value: 800, xp: 500, location: 'australia' },
+    greatwhiteshark: { id: 'greatwhiteshark', emoji: '🦈', name: 'Great White Shark', rarity: 'legendary', minWeight: 200, maxWeight: 1000, fight: 100, value: 10000, xp: 1000, location: 'australia', description: 'King of the reef' },
+
+    // Lake Biwa, Japan
+    biwasalmon: { id: 'biwasalmon', emoji: '🐟', name: 'Biwa Salmon', rarity: 'common', minWeight: 0.8, maxWeight: 6, fight: 45, value: 50, xp: 40, location: 'japan' },
+    blackbass: { id: 'blackbass', emoji: '🐠', name: 'Black Bass', rarity: 'common', minWeight: 1, maxWeight: 8, fight: 50, value: 55, xp: 45, location: 'japan' },
+    bluegill: { id: 'bluegill', emoji: '🐟', name: 'Bluegill', rarity: 'uncommon', minWeight: 0.3, maxWeight: 2, fight: 30, value: 40, xp: 35, location: 'japan' },
+    crucian: { id: 'crucian', emoji: '🐡', name: 'Crucian Carp', rarity: 'uncommon', minWeight: 0.5, maxWeight: 4, fight: 35, value: 60, xp: 50, location: 'japan' },
+    ayufish: { id: 'ayufish', emoji: '✨', name: 'Ayu Fish', rarity: 'rare', minWeight: 0.2, maxWeight: 0.5, fight: 40, value: 180, xp: 120, location: 'japan' },
+    biwatrout: { id: 'biwatrout', emoji: '🌸', name: 'Biwa Trout', rarity: 'epic', minWeight: 3, maxWeight: 15, fight: 70, value: 450, xp: 300, location: 'japan' },
+    catfish_japan: { id: 'catfish_japan', emoji: '😺', name: 'Japanese Catfish', rarity: 'epic', minWeight: 5, maxWeight: 25, fight: 65, value: 400, xp: 280, location: 'japan' },
+    masteroi: { id: 'masteroi', emoji: '🎌', name: 'Master Koi', rarity: 'legendary', minWeight: 20, maxWeight: 50, fight: 85, value: 8000, xp: 950, location: 'japan', description: 'Sacred guardian of Lake Biwa' },
+
+    // Mekong Delta, Vietnam
+    mekongcatfish_vietnam: { id: 'mekongcatfish_vietnam', emoji: '🐟', name: 'Mekong Catfish', rarity: 'common', minWeight: 5, maxWeight: 40, fight: 60, value: 80, xp: 70, location: 'vietnam' },
+    giantcarp: { id: 'giantcarp', emoji: '🐡', name: 'Giant Carp', rarity: 'uncommon', minWeight: 10, maxWeight: 60, fight: 70, value: 150, xp: 120, location: 'vietnam' },
+    stripedcatfish_vietnam: { id: 'stripedcatfish_vietnam', emoji: '🐠', name: 'Striped Catfish', rarity: 'uncommon', minWeight: 2, maxWeight: 20, fight: 50, value: 100, xp: 85, location: 'vietnam' },
+    snakehead: { id: 'snakehead', emoji: '🐍', name: 'Snakehead', rarity: 'rare', minWeight: 3, maxWeight: 18, fight: 65, value: 200, xp: 150, location: 'vietnam' },
+    giantgourami_vietnam: { id: 'giantgourami_vietnam', emoji: '🐠', name: 'Giant Gourami', rarity: 'rare', minWeight: 5, maxWeight: 25, fight: 55, value: 180, xp: 140, location: 'vietnam' },
+    tigerfish: { id: 'tigerfish', emoji: '🐅', name: 'Tiger Catfish', rarity: 'epic', minWeight: 15, maxWeight: 80, fight: 85, value: 550, xp: 380, location: 'vietnam' },
+    mekongdragon: { id: 'mekongdragon', emoji: '🐉', name: 'Mekong Dragon', rarity: 'legendary', minWeight: 100, maxWeight: 400, fight: 100, value: 7500, xp: 1000, location: 'vietnam', description: 'Ancient spirit of the river' },
+
+    // Cape Point, South Africa
+    yellowfintuna: { id: 'yellowfintuna', emoji: '🐟', name: 'Yellowfin Tuna', rarity: 'common', minWeight: 10, maxWeight: 80, fight: 75, value: 100, xp: 90, location: 'southafrica' },
+    snoek: { id: 'snoek', emoji: '🐠', name: 'Snoek', rarity: 'common', minWeight: 2, maxWeight: 10, fight: 50, value: 60, xp: 50, location: 'southafrica' },
+    kabeljou: { id: 'kabeljou', emoji: '🐟', name: 'Kabeljou', rarity: 'uncommon', minWeight: 5, maxWeight: 35, fight: 65, value: 150, xp: 120, location: 'southafrica' },
+    kingfish: { id: 'kingfish', emoji: '👑', name: 'Kingfish', rarity: 'uncommon', minWeight: 8, maxWeight: 50, fight: 80, value: 200, xp: 160, location: 'southafrica' },
+    steenbras: { id: 'steenbras', emoji: '🐡', name: 'Steenbras', rarity: 'rare', minWeight: 3, maxWeight: 20, fight: 60, value: 220, xp: 170, location: 'southafrica' },
+    bonito: { id: 'bonito', emoji: '🐠', name: 'Bonito', rarity: 'rare', minWeight: 5, maxWeight: 25, fight: 70, value: 250, xp: 190, location: 'southafrica' },
+    greatwhite: { id: 'greatwhite', emoji: '🦈', name: 'Great White Shark', rarity: 'epic', minWeight: 200, maxWeight: 800, fight: 98, value: 900, xp: 600, location: 'southafrica' },
+    capeleviathan: { id: 'capeleviathan', emoji: '🐋', name: 'Cape Leviathan', rarity: 'legendary', minWeight: 500, maxWeight: 1500, fight: 100, value: 12000, xp: 1100, location: 'southafrica', description: 'Where oceans collide' },
+
+    // Blue Lagoon, Iceland
+    atlanticsalmon_iceland: { id: 'atlanticsalmon_iceland', emoji: '🐟', name: 'Atlantic Salmon', rarity: 'common', minWeight: 3, maxWeight: 20, fight: 65, value: 90, xp: 75, location: 'iceland' },
+    arcticchar_iceland: { id: 'arcticchar_iceland', emoji: '❄️', name: 'Arctic Char', rarity: 'uncommon', minWeight: 1, maxWeight: 12, fight: 55, value: 130, xp: 100, location: 'iceland' },
+    browntrout_iceland: { id: 'browntrout_iceland', emoji: '🐠', name: 'Brown Trout', rarity: 'uncommon', minWeight: 0.8, maxWeight: 10, fight: 50, value: 110, xp: 90, location: 'iceland' },
+    seabass: { id: 'seabass', emoji: '🐡', name: 'Sea Bass', rarity: 'rare', minWeight: 2, maxWeight: 15, fight: 60, value: 200, xp: 150, location: 'iceland' },
+    wolffish_iceland: { id: 'wolffish_iceland', emoji: '🐺', name: 'Wolffish', rarity: 'epic', minWeight: 8, maxWeight: 35, fight: 80, value: 500, xp: 350, location: 'iceland' },
+    icelandictreasure: { id: 'icelandictreasure', emoji: '💎', name: 'Icelandic Treasure', rarity: 'legendary', minWeight: 40, maxWeight: 100, fight: 95, value: 9500, xp: 1050, location: 'iceland', description: 'Gem of the glaciers' }
+  };
+
+  // Equipment Data
+  const RODS = {
+    starter: { id: 'starter', name: 'Starter Rod', castPower: 60, maxLine: '10lb', price: 0, unlockLevel: 1 },
+    carbon: { id: 'carbon', name: 'Carbon Light', castPower: 70, maxLine: '20lb', price: 500, unlockLevel: 5 },
+    pro: { id: 'pro', name: 'Pro Caster', castPower: 80, maxLine: '40lb', price: 1500, unlockLevel: 15 }
+  };
+
+  const REELS = {
+    basic: { id: 'basic', name: 'Basic Reel', reelSpeed: 1.0, dragPower: 1.0, price: 0, unlockLevel: 1 },
+    smooth: { id: 'smooth', name: 'Smooth Drag', reelSpeed: 1.2, dragPower: 1.3, price: 300, unlockLevel: 8 },
+    speed: { id: 'speed', name: 'Speed Reel', reelSpeed: 1.5, dragPower: 1.2, price: 1000, unlockLevel: 20 }
+  };
+
+  const LINES = {
+    lb4: { id: 'lb4', name: '4lb Test', maxWeight: 4, price: 0, unlockLevel: 1 },
+    lb8: { id: 'lb8', name: '8lb Test', maxWeight: 8, price: 200, unlockLevel: 10 },
+    lb15: { id: 'lb15', name: '15lb Mono', maxWeight: 20, price: 600, unlockLevel: 20 }
+  };
+
+  const BAITS = {
+    worm: { id: 'worm', name: 'Earthworm', rareBonus: 0, price: 0 },
+    spinner: { id: 'spinner', name: 'Spinner', rareBonus: 5, price: 50 },
+    fly: { id: 'fly', name: 'Fly Lure', rareBonus: 8, price: 100 },
+    live: { id: 'live', name: 'Live Bait', rareBonus: 12, price: 200 },
+    legendary: { id: 'legendary', name: 'Legendary Lure', rareBonus: 20, price: 500 }
+  };
+
+  // Fishing Game State
+  const [fishingGame, setFishingGame] = useLocalStorage('richsFishingAdventure', {
+    level: 1,
+    xp: 0,
+    coins: 100,
+    currentLocation: 'bath',
+    unlockedLocations: ['bath'],
+    maxRods: 1,
+    equipment: { rod: 'starter', reel: 'basic', line: 'lb4', bait: 'worm' },
+    inventory: {
+      rods: ['starter'],
+      reels: ['basic'],
+      lines: ['lb4'],
+      baits: { worm: 999, spinner: 0, fly: 0, live: 0, legendary: 0 }
+    },
+    fishCollection: {},
+    personalBests: {},
+    stats: {
+      totalCaught: 0,
+      totalWeight: 0,
+      biggestCatch: 0,
+      totalCoins: 0,
+      speciesDiscovered: 0,
+      commonCaught: 0,
+      uncommonCaught: 0,
+      rareCaught: 0,
+      epicCaught: 0,
+      legendaryCaught: 0,
+      locationsVisited: 1,
+      locationsUnlocked: 1,
+      maxRodsUsed: 1
+    },
+    achievements: []
+  });
+
+  // Fishing UI State
+  const [fishingScreen, setFishingScreen] = useState('title'); // title, game, worldmap, collection, shop, stats
+  const [activeRodIndex, setActiveRodIndex] = useState(0);
+  const [rodStates, setRodStates] = useState([
+    { state: 'idle', power: 0, waitTime: 0, fish: null, tension: 0, progress: 0 }
+  ]);
+  const [castingPower, setCastingPower] = useState(0);
+  const [isCasting, setIsCasting] = useState(false);
+  const [catchModal, setCatchModal] = useState(null);
+  const [shopCategory, setShopCategory] = useState('rods');
+  const [collectionFilter, setCollectionFilter] = useState('all');
+  const [notification, setNotification] = useState(null);
+
+  // Weather and Time State
+  const [currentWeather, setCurrentWeather] = useState('clear');
+  const [currentTimeOfDay, setCurrentTimeOfDay] = useState('day');
+  const lastWeatherChange = useRef(Date.now());
+  const lastTimeChange = useRef(Date.now());
+
+  // Fishing animation frame
+  const fishingAnimationFrame = useRef(null);
+  const lastFrameTime = useRef(Date.now());
+
+  // Weather Data
+  const WEATHER_CONDITIONS = {
+    clear: { emoji: '☀️', name: 'Clear', fishActivity: 1.0, rareBonus: 0, description: 'Standard conditions' },
+    cloudy: { emoji: '⛅', name: 'Cloudy', fishActivity: 1.2, rareBonus: 5, description: 'Fish feed more actively' },
+    rainy: { emoji: '🌧️', name: 'Rainy', fishActivity: 1.4, rareBonus: 10, description: 'Fish love the rain!' },
+    stormy: { emoji: '⛈️', name: 'Stormy', fishActivity: 0.8, rareBonus: 20, description: 'Risky but rare fish appear' },
+    foggy: { emoji: '🌫️', name: 'Foggy', fishActivity: 1.1, rareBonus: 15, description: 'Strange things in the mist' }
+  };
+
+  // Time of Day Data
+  const TIME_OF_DAY = {
+    dawn: { emoji: '🌅', name: 'Dawn', hours: '5-8am', fishBonus: 1.3, description: 'Tench and bass love dawn' },
+    day: { emoji: '☀️', name: 'Day', hours: '8am-5pm', fishBonus: 1.0, description: 'Standard fishing' },
+    dusk: { emoji: '🌇', name: 'Dusk', hours: '5-8pm', fishBonus: 1.4, description: 'Predators hunt at dusk' },
+    night: { emoji: '🌙', name: 'Night', hours: '8pm-5am', fishBonus: 0.9, description: 'Catfish and eels more common' }
+  };
+
+  // ==================== FISHING GAME HELPER FUNCTIONS ====================
+
+  // Get rarity badge styling
+  const getRarityStyle = (rarity) => {
+    const styles = {
+      common: 'bg-gray-400 text-white',
+      uncommon: 'bg-green-500 text-white',
+      rare: 'bg-blue-500 text-white',
+      epic: 'bg-purple-500 text-white',
+      legendary: 'bg-gradient-to-r from-yellow-400 to-amber-500 text-white'
+    };
+    return styles[rarity] || styles.common;
+  };
+
+  // Select random fish based on rarity probabilities
+  const selectRandomFish = () => {
+    const location = FISHING_LOCATIONS[fishingGame.currentLocation];
+    const availableFish = location.fish.map(id => FISH_DATA[id]);
+    const baitBonus = BAITS[fishingGame.equipment.bait].rareBonus;
+    const weatherBonus = WEATHER_CONDITIONS[currentWeather].rareBonus;
+
+    const totalBonus = baitBonus + weatherBonus;
+    const rand = Math.random() * 100;
+    let targetRarity = 'common';
+
+    if (rand < 1 + (totalBonus * 0.05)) targetRarity = 'legendary';
+    else if (rand < 5 + (totalBonus * 0.2)) targetRarity = 'epic';
+    else if (rand < 15 + (totalBonus * 0.5)) targetRarity = 'rare';
+    else if (rand < 40) targetRarity = 'uncommon';
+
+    const rarityFish = availableFish.filter(f => f.rarity === targetRarity);
+    if (rarityFish.length > 0) {
+      return rarityFish[Math.floor(Math.random() * rarityFish.length)];
+    }
+    return availableFish[Math.floor(Math.random() * availableFish.length)];
+  };
+
+  // Generate fish weight
+  const generateFishWeight = (fish) => {
+    const weight = fish.minWeight + Math.random() * (fish.maxWeight - fish.minWeight);
+    return Math.round(weight * 100) / 100;
+  };
+
+  // Calculate XP required for level
+  const getXPForLevel = (level) => {
+    if (level <= 5) return 100;
+    if (level <= 10) return 250;
+    if (level <= 15) return 500;
+    if (level <= 20) return 750;
+    if (level <= 30) return 1000;
+    return 1500;
+  };
+
+  // Add XP and handle level ups
+  const addXP = (amount) => {
+    setFishingGame(prev => {
+      const newXP = prev.xp + amount;
+      const xpNeeded = getXPForLevel(prev.level);
+
+      if (newXP >= xpNeeded) {
+        const newLevel = prev.level + 1;
+        showNotification(`🎉 Level ${newLevel}!`, 'success');
+
+        // Unlock locations
+        const newUnlocked = [...prev.unlockedLocations];
+        Object.values(FISHING_LOCATIONS).forEach(loc => {
+          if (loc.unlockLevel === newLevel && !newUnlocked.includes(loc.id)) {
+            newUnlocked.push(loc.id);
+            showNotification(`🗺️ ${loc.name} unlocked!`, 'success');
+          }
+        });
+
+        // Unlock rod slots
+        let newMaxRods = prev.maxRods;
+        if (newLevel === 5) newMaxRods = 2;
+        if (newLevel === 15) newMaxRods = 3;
+
+        return {
+          ...prev,
+          level: newLevel,
+          xp: newXP - xpNeeded,
+          unlockedLocations: newUnlocked,
+          maxRods: newMaxRods,
+          stats: { ...prev.stats, locationsUnlocked: newUnlocked.length, maxRodsUsed: Math.max(prev.stats.maxRodsUsed, newMaxRods) }
+        };
+      }
+
+      return { ...prev, xp: newXP };
+    });
+  };
+
+  // Show notification
+  const showNotification = (message, type = 'info') => {
+    setNotification({ message, type });
+    setTimeout(() => setNotification(null), 3000);
+  };
+
+  // ==================== FISHING MECHANICS ====================
+
+  // Start casting (hold button)
+  const handleCastStart = (rodIndex) => {
+    const newRodStates = [...rodStates];
+    if (newRodStates[rodIndex].state !== 'idle') return;
+
+    newRodStates[rodIndex] = { ...newRodStates[rodIndex], state: 'charging', power: 0 };
+    setRodStates(newRodStates);
+    setIsCasting(true);
+  };
+
+  // Release cast button
+  const handleCastRelease = (rodIndex) => {
+    const newRodStates = [...rodStates];
+    if (newRodStates[rodIndex].state !== 'charging') return;
+
+    const power = newRodStates[rodIndex].power;
+    if (power < 20) {
+      // Too weak, cancel cast
+      newRodStates[rodIndex] = { state: 'idle', power: 0, waitTime: 0, fish: null, tension: 0, progress: 0 };
+    } else {
+      // Cast successful, enter waiting state with weather/time modifiers
+      const weatherActivity = WEATHER_CONDITIONS[currentWeather].fishActivity;
+      const timeBonus = TIME_OF_DAY[currentTimeOfDay].fishBonus;
+      const activityMultiplier = weatherActivity * timeBonus;
+
+      const baseWaitTime = 3000 + Math.random() * 5000; // 3-8 seconds base
+      const waitTime = baseWaitTime / activityMultiplier; // Higher activity = shorter wait
+
+      newRodStates[rodIndex] = {
+        ...newRodStates[rodIndex],
+        state: 'waiting',
+        waitTime: waitTime,
+        waitStart: Date.now()
+      };
+    }
+    setRodStates(newRodStates);
+    setIsCasting(false);
+  };
+
+  // Hook fish during bite
+  const handleHookFish = (rodIndex) => {
+    const newRodStates = [...rodStates];
+    const rod = newRodStates[rodIndex];
+    if (rod.state !== 'bite') return;
+
+    // Calculate hook timing quality
+    const elapsed = Date.now() - rod.biteStart;
+    let hookQuality = 'ok';
+    let progressBonus = 0;
+    let xpBonus = 0;
+
+    if (elapsed < 500) {
+      // PERFECT (under 0.5s)
+      hookQuality = 'perfect';
+      progressBonus = 20;
+      xpBonus = 25;
+      showNotification('⭐ PERFECT HOOK!', 'success');
+    } else if (elapsed < 1000) {
+      // GOOD (under 1s)
+      hookQuality = 'good';
+      progressBonus = 10;
+      xpBonus = 10;
+      showNotification('✨ GOOD HOOK!', 'success');
+    }
+
+    const fish = selectRandomFish();
+    newRodStates[rodIndex] = {
+      ...newRodStates[rodIndex],
+      state: 'fighting',
+      fish: fish,
+      tension: 30,
+      progress: 10 + progressBonus,
+      fishPullDirection: (Math.random() - 0.5) * 2, // -1 to 1
+      hookQuality: hookQuality,
+      bonusXP: xpBonus
+    };
+    setRodStates(newRodStates);
+  };
+
+  // Reel during fight
+  const handleReel = (rodIndex) => {
+    const newRodStates = [...rodStates];
+    const rod = newRodStates[rodIndex];
+    if (rod.state !== 'fighting') return;
+
+    // Reeling increases progress but also tension
+    rod.progress = Math.min(100, rod.progress + 5);
+    rod.tension = Math.min(100, rod.tension + 8);
+
+    // Check if won
+    if (rod.progress >= 100) {
+      handleCatchFish(rodIndex, rod.fish);
+      return;
+    }
+
+    // Check if lost
+    if (rod.tension >= 100) {
+      handleLoseFish(rodIndex);
+      return;
+    }
+
+    setRodStates(newRodStates);
+  };
+
+  // Drag (let line out) during fight
+  const handleDrag = (rodIndex) => {
+    const newRodStates = [...rodStates];
+    const rod = newRodStates[rodIndex];
+    if (rod.state !== 'fighting') return;
+
+    // Dragging reduces tension but also progress slightly
+    rod.tension = Math.max(0, rod.tension - 10);
+    rod.progress = Math.max(0, rod.progress - 2);
+
+    setRodStates(newRodStates);
+  };
+
+  // Counter fish pulling left
+  const handleCounterLeft = (rodIndex) => {
+    const newRodStates = [...rodStates];
+    const rod = newRodStates[rodIndex];
+    if (rod.state !== 'fighting') return;
+
+    if (rod.fishPullDirection < 0) {
+      // Correct counter!
+      rod.tension = Math.max(0, rod.tension - 15);
+      rod.progress = Math.min(100, rod.progress + 3);
+    } else {
+      // Wrong direction!
+      rod.tension = Math.min(100, rod.tension + 5);
+    }
+
+    setRodStates(newRodStates);
+  };
+
+  // Counter fish pulling right
+  const handleCounterRight = (rodIndex) => {
+    const newRodStates = [...rodStates];
+    const rod = newRodStates[rodIndex];
+    if (rod.state !== 'fighting') return;
+
+    if (rod.fishPullDirection > 0) {
+      // Correct counter!
+      rod.tension = Math.max(0, rod.tension - 15);
+      rod.progress = Math.min(100, rod.progress + 3);
+    } else {
+      // Wrong direction!
+      rod.tension = Math.min(100, rod.tension + 5);
+    }
+
+    setRodStates(newRodStates);
+  };
+
+  // Catch fish successfully
+  const handleCatchFish = (rodIndex, fish) => {
+    const rod = rodStates[rodIndex];
+    const weight = generateFishWeight(fish);
+    const variant = Math.random() < 0.05 ? ['golden', 'albino', 'giant'][Math.floor(Math.random() * 3)] : null;
+    let finalWeight = weight;
+    if (variant === 'giant') finalWeight = weight * 1.5;
+
+    // Calculate XP with bonuses
+    let baseXP = fish.xp;
+    if (variant === 'albino') baseXP *= 1.5;
+    const bonusXP = rod.bonusXP || 0;
+    const totalXP = Math.floor(baseXP + bonusXP);
+
+    // Update game state
+    setFishingGame(prev => {
+      const newCollection = { ...prev.fishCollection };
+      newCollection[fish.id] = (newCollection[fish.id] || 0) + 1;
+
+      const newPBs = { ...prev.personalBests };
+      if (!newPBs[fish.id] || finalWeight > newPBs[fish.id]) {
+        newPBs[fish.id] = finalWeight;
+      }
+
+      const coinValue = variant === 'golden' ? fish.value * 2 : fish.value;
+
+      const newStats = { ...prev.stats };
+      newStats.totalCaught += 1;
+      newStats.totalWeight += finalWeight;
+      newStats.biggestCatch = Math.max(newStats.biggestCatch, finalWeight);
+      newStats.totalCoins += coinValue;
+      if (!prev.fishCollection[fish.id]) newStats.speciesDiscovered += 1;
+      newStats[`${fish.rarity}Caught`] = (newStats[`${fish.rarity}Caught`] || 0) + 1;
+
+      return {
+        ...prev,
+        coins: prev.coins + coinValue,
+        fishCollection: newCollection,
+        personalBests: newPBs,
+        stats: newStats
+      };
+    });
+
+    addXP(totalXP);
+
+    // Show catch modal
+    setCatchModal({
+      fish,
+      weight: finalWeight,
+      variant,
+      isNewSpecies: !fishingGame.fishCollection[fish.id],
+      isNewPB: !fishingGame.personalBests[fish.id] || finalWeight > fishingGame.personalBests[fish.id]
+    });
+
+    // Reset rod
+    const newRodStates = [...rodStates];
+    newRodStates[rodIndex] = { state: 'idle', power: 0, waitTime: 0, fish: null, tension: 0, progress: 0 };
+    setRodStates(newRodStates);
+  };
+
+  // Lose fish (line snapped)
+  const handleLoseFish = (rodIndex) => {
+    showNotification('💔 Line snapped! Fish escaped!', 'error');
+    const newRodStates = [...rodStates];
+    newRodStates[rodIndex] = { state: 'idle', power: 0, waitTime: 0, fish: null, tension: 0, progress: 0 };
+    setRodStates(newRodStates);
+  };
+
+  // Fishing game loop
+  useEffect(() => {
+    if (fishingScreen !== 'game') return;
+
+    const gameLoop = () => {
+      const now = Date.now();
+      const deltaTime = now - lastFrameTime.current;
+      lastFrameTime.current = now;
+
+      // Weather change every 60-90 seconds
+      const weatherElapsed = now - lastWeatherChange.current;
+      const weatherChangeInterval = 60000 + Math.random() * 30000; // 60-90 seconds
+      if (weatherElapsed >= weatherChangeInterval) {
+        const weathers = Object.keys(WEATHER_CONDITIONS);
+        const newWeather = weathers[Math.floor(Math.random() * weathers.length)];
+        if (newWeather !== currentWeather) {
+          setCurrentWeather(newWeather);
+          const weatherData = WEATHER_CONDITIONS[newWeather];
+          showNotification(`${weatherData.emoji} Weather changed: ${weatherData.name} - ${weatherData.description}`, 'info');
+          lastWeatherChange.current = now;
+        }
+      }
+
+      // Time change every 2 minutes
+      const timeElapsed = now - lastTimeChange.current;
+      if (timeElapsed >= 120000) { // 2 minutes
+        const times = Object.keys(TIME_OF_DAY);
+        const currentIndex = times.indexOf(currentTimeOfDay);
+        const nextIndex = (currentIndex + 1) % times.length;
+        const newTime = times[nextIndex];
+        setCurrentTimeOfDay(newTime);
+        const timeData = TIME_OF_DAY[newTime];
+        showNotification(`${timeData.emoji} ${timeData.name} - ${timeData.description}`, 'info');
+        lastTimeChange.current = now;
+      }
+
+      setRodStates(prev => {
+        const newStates = [...prev];
+        let changed = false;
+
+        newStates.forEach((rod, i) => {
+          if (rod.state === 'charging') {
+            // Increase power while charging
+            rod.power = Math.min(100, rod.power + deltaTime / 15);
+            changed = true;
+          } else if (rod.state === 'waiting') {
+            // Check if bite should occur
+            const elapsed = now - rod.waitStart;
+            if (elapsed >= rod.waitTime) {
+              rod.state = 'bite';
+              rod.biteStart = now;
+              showNotification(`🎣 BITE! Tap to hook! (Rod ${i + 1})`, 'success');
+              changed = true;
+            }
+          } else if (rod.state === 'bite') {
+            // Auto-miss after 2.5 seconds
+            const elapsed = now - rod.biteStart;
+            if (elapsed >= 2500) {
+              rod.state = 'idle';
+              rod.power = 0;
+              rod.waitTime = 0;
+              showNotification('😞 Missed the bite!', 'error');
+              changed = true;
+            }
+          } else if (rod.state === 'fighting') {
+            // Fish fights back over time
+            rod.tension = Math.min(100, rod.tension + deltaTime / 200);
+            changed = true;
+
+            // Fish changes pull direction every 2-4 seconds
+            if (!rod.lastDirectionChange) rod.lastDirectionChange = now;
+            const directionElapsed = now - rod.lastDirectionChange;
+            if (directionElapsed >= 2000 + Math.random() * 2000) {
+              rod.fishPullDirection = Math.random() < 0.5 ? -1 : 1; // -1 = left, 1 = right
+              rod.lastDirectionChange = now;
+              changed = true;
+            }
+
+            // Check if lost
+            if (rod.tension >= 100) {
+              handleLoseFish(i);
+              changed = true;
+            }
+          }
+        });
+
+        return changed ? newStates : prev;
+      });
+
+      fishingAnimationFrame.current = requestAnimationFrame(gameLoop);
+    };
+
+    lastFrameTime.current = Date.now();
+    fishingAnimationFrame.current = requestAnimationFrame(gameLoop);
+
+    return () => {
+      if (fishingAnimationFrame.current) {
+        cancelAnimationFrame(fishingAnimationFrame.current);
+      }
+    };
+  }, [fishingScreen, rodStates, currentWeather, currentTimeOfDay]);
 
   // Work condition assessments
   const getWorkConditions = (temp, rain, wind, condition) => {
@@ -938,6 +1716,740 @@ export default function RichsToolkit() {
         )}
       </div>
     );
+  };
+
+  // ==================== FISHING GAME SCREENS ====================
+
+  // Fishing Title Screen
+  const renderFishingTitle = () => {
+    const location = FISHING_LOCATIONS[fishingGame.currentLocation];
+
+    return (
+      <div className={`min-h-screen bg-gradient-to-b ${location.skyGradient} relative overflow-hidden`}>
+        {/* Animated background particles */}
+        <div className="absolute inset-0 pointer-events-none">
+          {Array.from({ length: 15 }).map((_, i) => (
+            <div
+              key={i}
+              className="absolute text-4xl"
+              style={{
+                left: `${Math.random() * 100}%`,
+                top: `${Math.random() * 100}%`,
+                animation: `float ${3 + Math.random() * 3}s ease-in-out infinite`,
+                animationDelay: `${Math.random() * 3}s`,
+                opacity: 0.3
+              }}
+            >
+              {location.particles[Math.floor(Math.random() * location.particles.length)]}
+            </div>
+          ))}
+        </div>
+
+        <div className="relative z-10 p-6 flex flex-col items-center justify-center min-h-screen">
+          {/* Title */}
+          <div className="text-center mb-12">
+            <div className="text-8xl mb-4 animate-bounce">🎣</div>
+            <h1 className="text-5xl font-bold text-white mb-2 drop-shadow-lg">Rich's</h1>
+            <h2 className="text-6xl font-bold text-white drop-shadow-lg">Fishing Adventure</h2>
+          </div>
+
+          {/* Player Stats Summary */}
+          <div className="bg-white/90 backdrop-blur rounded-2xl p-6 mb-8 w-full max-w-md">
+            <div className="grid grid-cols-3 gap-4 text-center">
+              <div>
+                <div className="text-3xl font-bold text-blue-600">{fishingGame.level}</div>
+                <div className="text-sm text-gray-600">Level</div>
+              </div>
+              <div>
+                <div className="text-3xl font-bold text-amber-600">{fishingGame.coins}</div>
+                <div className="text-sm text-gray-600">Coins</div>
+              </div>
+              <div>
+                <div className="text-3xl font-bold text-green-600">{fishingGame.stats.totalCaught}</div>
+                <div className="text-sm text-gray-600">Fish Caught</div>
+              </div>
+            </div>
+            <div className="mt-4 bg-gray-200 rounded-full h-3 overflow-hidden">
+              <div
+                className="bg-green-500 h-full transition-all duration-300"
+                style={{ width: `${(fishingGame.xp / getXPForLevel(fishingGame.level)) * 100}%` }}
+              />
+            </div>
+            <div className="text-xs text-center text-gray-500 mt-1">
+              {fishingGame.xp} / {getXPForLevel(fishingGame.level)} XP
+            </div>
+          </div>
+
+          {/* Navigation Buttons */}
+          <div className="grid grid-cols-2 gap-3 w-full max-w-md mb-6">
+            <button
+              onClick={() => setFishingScreen('game')}
+              className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-4 px-6 rounded-xl shadow-lg active:scale-95 transition flex flex-col items-center gap-2"
+            >
+              <Fish size={32} />
+              <span>Start Fishing</span>
+            </button>
+            <button
+              onClick={() => setFishingScreen('worldmap')}
+              className="bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-4 px-6 rounded-xl shadow-lg active:scale-95 transition flex flex-col items-center gap-2"
+            >
+              <Map size={32} />
+              <span>World Map</span>
+            </button>
+            <button
+              onClick={() => setFishingScreen('collection')}
+              className="bg-purple-500 hover:bg-purple-600 text-white font-bold py-4 px-6 rounded-xl shadow-lg active:scale-95 transition flex flex-col items-center gap-2"
+            >
+              <BookOpen size={32} />
+              <span>Collection</span>
+            </button>
+            <button
+              onClick={() => setFishingScreen('shop')}
+              className="bg-amber-500 hover:bg-amber-600 text-white font-bold py-4 px-6 rounded-xl shadow-lg active:scale-95 transition flex flex-col items-center gap-2"
+            >
+              <ShoppingCart size={32} />
+              <span>Shop</span>
+            </button>
+          </div>
+
+          <button
+            onClick={() => setFishingScreen('stats')}
+            className="bg-white/80 hover:bg-white text-gray-800 font-semibold py-3 px-6 rounded-xl shadow-lg active:scale-95 transition flex items-center gap-2"
+          >
+            <Trophy size={24} />
+            <span>Statistics</span>
+          </button>
+
+          {/* Back Button */}
+          <button
+            onClick={() => setCurrentScreen('home')}
+            className="mt-8 text-white font-semibold flex items-center gap-2 hover:opacity-80"
+          >
+            <ChevronLeft size={20} />
+            <span>Back to Toolkit</span>
+          </button>
+        </div>
+      </div>
+    );
+  };
+
+  // Fishing Game Screen (with multi-rod mechanics)
+  const renderFishingGame = () => {
+    const location = FISHING_LOCATIONS[fishingGame.currentLocation];
+    const activeRod = rodStates[activeRodIndex] || rodStates[0];
+
+    return (
+      <div className={`min-h-screen bg-gradient-to-b ${location.skyGradient} relative overflow-hidden pb-24`}>
+        {/* Background */}
+        <div className="absolute inset-0 pointer-events-none">
+          {Array.from({ length: 8 }).map((_, i) => (
+            <div
+              key={i}
+              className="absolute text-2xl opacity-20"
+              style={{
+                left: `${Math.random() * 100}%`,
+                top: `${Math.random() * 100}%`,
+                animation: `float ${4 + Math.random() * 3}s ease-in-out infinite`,
+                animationDelay: `${Math.random() * 3}s`
+              }}
+            >
+              {location.particles[i % location.particles.length]}
+            </div>
+          ))}
+        </div>
+
+        {/* Header */}
+        <div className="relative z-10 p-4">
+          <div className="flex items-center justify-between mb-4">
+            <button onClick={() => setFishingScreen('title')} className="text-white flex items-center gap-2">
+              <ChevronLeft size={20} />
+              Menu
+            </button>
+            <div className="text-white text-center">
+              <div className="font-bold">{location.name} {location.country}</div>
+              <div className="text-sm opacity-80">Level {fishingGame.level} • {fishingGame.coins} coins</div>
+            </div>
+            <div className="w-16" />
+          </div>
+
+          {/* Weather and Time Display */}
+          <div className="flex gap-2 justify-center mb-2">
+            <div className="bg-black/30 backdrop-blur-sm px-3 py-1 rounded-lg text-white text-sm flex items-center gap-2">
+              <span className="text-lg">{WEATHER_CONDITIONS[currentWeather].emoji}</span>
+              <span>{WEATHER_CONDITIONS[currentWeather].name}</span>
+            </div>
+            <div className="bg-black/30 backdrop-blur-sm px-3 py-1 rounded-lg text-white text-sm flex items-center gap-2">
+              <span className="text-lg">{TIME_OF_DAY[currentTimeOfDay].emoji}</span>
+              <span>{TIME_OF_DAY[currentTimeOfDay].name}</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Water Area */}
+        <div className={`relative mx-4 h-64 bg-gradient-to-b ${location.waterGradient} rounded-2xl shadow-2xl mb-6 overflow-hidden`}>
+          {/* Bobber Animation */}
+          {activeRod.state === 'waiting' && (
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="text-6xl animate-bounce">🎣</div>
+            </div>
+          )}
+          {activeRod.state === 'bite' && (
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="text-6xl animate-pulse">
+                <div className="text-red-500 font-bold text-3xl mb-2">BITE!</div>
+                <div>🐟</div>
+              </div>
+            </div>
+          )}
+          {activeRod.state === 'fighting' && activeRod.fish && (
+            <div className="absolute inset-0 p-4">
+              <div className="text-center text-white mb-4">
+                <div className="text-4xl mb-2">{FISH_DATA[activeRod.fish.id].emoji}</div>
+                <div className="font-bold">{FISH_DATA[activeRod.fish.id].name}</div>
+              </div>
+              {/* Tension Bar */}
+              <div className="mb-3">
+                <div className="flex justify-between text-xs text-white mb-1">
+                  <span>Tension</span>
+                  <span>{Math.round(activeRod.tension)}%</span>
+                </div>
+                <div className="h-3 bg-black/30 rounded-full overflow-hidden">
+                  <div
+                    className={`h-full transition-all ${
+                      activeRod.tension > 75 ? 'bg-red-500' :
+                      activeRod.tension > 50 ? 'bg-yellow-500' : 'bg-green-500'
+                    }`}
+                    style={{ width: `${activeRod.tension}%` }}
+                  />
+                </div>
+              </div>
+              {/* Progress Bar */}
+              <div>
+                <div className="flex justify-between text-xs text-white mb-1">
+                  <span>Progress</span>
+                  <span>{Math.round(activeRod.progress)}%</span>
+                </div>
+                <div className="h-3 bg-black/30 rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-blue-500 transition-all"
+                    style={{ width: `${activeRod.progress}%` }}
+                  />
+                </div>
+              </div>
+            </div>
+          )}
+          {activeRod.state === 'idle' && (
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="text-4xl opacity-50">🌊</div>
+            </div>
+          )}
+        </div>
+
+        {/* Control Panel */}
+        <div className="relative z-10 px-4">
+          <div className="bg-gradient-to-br from-amber-700 to-amber-900 rounded-2xl p-6 shadow-2xl">
+            {/* Rod Tabs */}
+            <div className="flex gap-2 mb-4">
+              {Array.from({ length: fishingGame.maxRods }).map((_, i) => {
+                const rod = rodStates[i] || { state: 'idle' };
+                const stateEmoji = {
+                  idle: '⚪',
+                  charging: '🔵',
+                  waiting: '🟡',
+                  bite: '🔴',
+                  fighting: '🟣'
+                };
+                return (
+                  <button
+                    key={i}
+                    onClick={() => setActiveRodIndex(i)}
+                    className={`flex-1 py-2 px-4 rounded-lg font-semibold transition ${
+                      activeRodIndex === i
+                        ? 'bg-blue-500 text-white'
+                        : 'bg-amber-800/50 text-amber-200'
+                    }`}
+                  >
+                    {stateEmoji[rod.state] || '⚪'} Rod {i + 1}
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Controls based on rod state */}
+            {activeRod.state === 'idle' && (
+              <div>
+                <button
+                  onMouseDown={() => handleCastStart(activeRodIndex)}
+                  onMouseUp={() => handleCastRelease(activeRodIndex)}
+                  onTouchStart={() => handleCastStart(activeRodIndex)}
+                  onTouchEnd={() => handleCastRelease(activeRodIndex)}
+                  className="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-4 rounded-xl shadow-lg active:scale-95 transition"
+                >
+                  🎣 HOLD TO CAST
+                </button>
+              </div>
+            )}
+
+            {activeRod.state === 'charging' && (
+              <div>
+                <div className="mb-3">
+                  <div className="flex justify-between text-xs text-amber-100 mb-1">
+                    <span>Cast Power</span>
+                    <span>{Math.round(activeRod.power)}%</span>
+                  </div>
+                  <div className="h-4 bg-black/30 rounded-full overflow-hidden">
+                    <div
+                      className={`h-full transition-all ${
+                        activeRod.power > 80 ? 'bg-green-500' :
+                        activeRod.power > 50 ? 'bg-yellow-500' : 'bg-red-500'
+                      }`}
+                      style={{ width: `${activeRod.power}%` }}
+                    />
+                  </div>
+                </div>
+                <button
+                  onMouseUp={() => handleCastRelease(activeRodIndex)}
+                  onTouchEnd={() => handleCastRelease(activeRodIndex)}
+                  className="w-full bg-green-500 text-white font-bold py-4 rounded-xl shadow-lg"
+                >
+                  ⬆️ RELEASE TO CAST
+                </button>
+              </div>
+            )}
+
+            {activeRod.state === 'waiting' && (
+              <div className="text-center text-amber-100">
+                <p className="text-lg font-bold mb-2">⏳ Waiting for a bite...</p>
+                <p className="text-sm opacity-80">Watch the bobber!</p>
+              </div>
+            )}
+
+            {activeRod.state === 'bite' && (
+              <button
+                onClick={() => handleHookFish(activeRodIndex)}
+                className="w-full bg-red-500 hover:bg-red-600 text-white font-bold py-6 rounded-xl shadow-lg animate-pulse text-xl"
+              >
+                🪝 TAP TO HOOK!
+              </button>
+            )}
+
+            {activeRod.state === 'fighting' && (
+              <div>
+                {/* Fish Pull Direction Indicator */}
+                <div className="mb-4 flex items-center justify-center gap-2 text-amber-100">
+                  <span className={`text-3xl ${activeRod.fishPullDirection < 0 ? 'text-red-400 animate-pulse' : 'opacity-30'}`}>⬅️</span>
+                  <span className="text-2xl">🐟</span>
+                  <span className={`text-3xl ${activeRod.fishPullDirection > 0 ? 'text-red-400 animate-pulse' : 'opacity-30'}`}>➡️</span>
+                </div>
+
+                {/* 4-Button Layout */}
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    onClick={() => handleCounterLeft(activeRodIndex)}
+                    className={`font-bold py-3 rounded-xl shadow-lg active:scale-95 transition ${
+                      activeRod.fishPullDirection < 0
+                        ? 'bg-red-500 hover:bg-red-600 text-white'
+                        : 'bg-gray-600 hover:bg-gray-700 text-gray-300'
+                    }`}
+                  >
+                    ⬅️ LEFT
+                  </button>
+                  <button
+                    onClick={() => handleCounterRight(activeRodIndex)}
+                    className={`font-bold py-3 rounded-xl shadow-lg active:scale-95 transition ${
+                      activeRod.fishPullDirection > 0
+                        ? 'bg-red-500 hover:bg-red-600 text-white'
+                        : 'bg-gray-600 hover:bg-gray-700 text-gray-300'
+                    }`}
+                  >
+                    RIGHT ➡️
+                  </button>
+                  <button
+                    onClick={() => handleDrag(activeRodIndex)}
+                    className="bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-3 rounded-xl shadow-lg active:scale-95 transition"
+                  >
+                    🔄 DRAG
+                  </button>
+                  <button
+                    onClick={() => handleReel(activeRodIndex)}
+                    className="bg-green-500 hover:bg-green-600 text-white font-bold py-3 rounded-xl shadow-lg active:scale-95 transition"
+                  >
+                    ⚡ REEL
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Quick Nav */}
+        <div className="fixed bottom-0 left-0 right-0 bg-gradient-to-t from-black/50 to-transparent p-4 flex justify-around">
+          <button onClick={() => setFishingScreen('worldmap')} className="text-white flex flex-col items-center gap-1">
+            <Map size={24} />
+            <span className="text-xs">Map</span>
+          </button>
+          <button onClick={() => setFishingScreen('collection')} className="text-white flex flex-col items-center gap-1">
+            <BookOpen size={24} />
+            <span className="text-xs">Collection</span>
+          </button>
+          <button onClick={() => setFishingScreen('shop')} className="text-white flex flex-col items-center gap-1">
+            <ShoppingCart size={24} />
+            <span className="text-xs">Shop</span>
+          </button>
+        </div>
+
+        {/* Notification */}
+        {notification && (
+          <div className="fixed top-20 left-1/2 transform -translate-x-1/2 z-50 animate-bounce">
+            <div className={`px-6 py-3 rounded-xl shadow-2xl font-bold text-white ${
+              notification.type === 'success' ? 'bg-green-500' :
+              notification.type === 'error' ? 'bg-red-500' : 'bg-blue-500'
+            }`}>
+              {notification.message}
+            </div>
+          </div>
+        )}
+
+        {/* Catch Modal */}
+        {catchModal && (
+          <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
+            <div className="bg-gradient-to-br from-amber-100 to-amber-50 rounded-3xl p-8 max-w-md w-full shadow-2xl">
+              <div className="text-center mb-6">
+                <div className="text-8xl mb-4">{catchModal.fish.emoji}</div>
+                <h2 className="text-3xl font-bold text-gray-800 mb-2">{catchModal.fish.name}</h2>
+                <div className={`inline-block px-4 py-1 rounded-full text-sm font-bold ${getRarityStyle(catchModal.fish.rarity)}`}>
+                  {catchModal.fish.rarity.toUpperCase()}
+                </div>
+                {catchModal.variant && (
+                  <div className="mt-2">
+                    <span className="inline-block px-4 py-1 rounded-full text-sm font-bold bg-gradient-to-r from-yellow-400 to-orange-400 text-white">
+                      {catchModal.variant === 'golden' && '✨ GOLDEN VARIANT!'}
+                      {catchModal.variant === 'albino' && '🤍 ALBINO VARIANT!'}
+                      {catchModal.variant === 'giant' && '🔷 GIANT VARIANT!'}
+                    </span>
+                  </div>
+                )}
+              </div>
+
+              <div className="bg-white rounded-2xl p-6 mb-6">
+                <div className="grid grid-cols-2 gap-4 text-center">
+                  <div>
+                    <div className="text-3xl font-bold text-blue-600">{catchModal.weight}kg</div>
+                    <div className="text-sm text-gray-600">Weight</div>
+                  </div>
+                  <div>
+                    <div className="text-3xl font-bold text-amber-600">{catchModal.variant === 'golden' ? catchModal.fish.value * 2 : catchModal.fish.value}</div>
+                    <div className="text-sm text-gray-600">Coins</div>
+                  </div>
+                </div>
+                {catchModal.isNewSpecies && (
+                  <div className="mt-4 bg-green-100 text-green-800 px-4 py-2 rounded-lg font-bold text-center">
+                    🆕 NEW SPECIES!
+                  </div>
+                )}
+                {catchModal.isNewPB && (
+                  <div className="mt-4 bg-blue-100 text-blue-800 px-4 py-2 rounded-lg font-bold text-center">
+                    🏆 NEW PERSONAL BEST!
+                  </div>
+                )}
+              </div>
+
+              <button
+                onClick={() => setCatchModal(null)}
+                className="w-full bg-gradient-to-r from-blue-500 to-blue-600 text-white font-bold py-4 rounded-xl shadow-lg hover:from-blue-600 hover:to-blue-700 active:scale-95 transition"
+              >
+                Continue Fishing
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  // World Map Screen
+  const renderFishingWorldMap = () => {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-sky-400 to-blue-600 p-4 pb-24">
+        <button onClick={() => setFishingScreen('title')} className="text-white flex items-center gap-2 mb-4">
+          <ChevronLeft size={20} />
+          Back
+        </button>
+
+        <h1 className="text-3xl font-bold text-white mb-6 text-center">🗺️ World Map</h1>
+
+        <div className="space-y-3">
+          {Object.values(FISHING_LOCATIONS).map(loc => {
+            const isUnlocked = fishingGame.unlockedLocations.includes(loc.id);
+            const isCurrent = fishingGame.currentLocation === loc.id;
+            const fishCaught = loc.fish.filter(fid => fishingGame.fishCollection[fid]).length;
+
+            return (
+              <div
+                key={loc.id}
+                className={`rounded-2xl p-5 ${
+                  isUnlocked ? 'bg-white' : 'bg-gray-800 opacity-60'
+                }`}
+              >
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-3">
+                    <div className="text-3xl">{isUnlocked ? <Unlock /> : <Lock />}</div>
+                    <div>
+                      <div className="font-bold text-lg flex items-center gap-2">
+                        {loc.name} {loc.country}
+                        {isCurrent && <span className="text-xs bg-blue-500 text-white px-2 py-1 rounded">Current</span>}
+                      </div>
+                      <div className="text-sm text-gray-600">
+                        {isUnlocked ? `${fishCaught}/${loc.fish.length} species` : `Unlock at Level ${loc.unlockLevel}`}
+                      </div>
+                    </div>
+                  </div>
+                  {isUnlocked && !isCurrent && (
+                    <button
+                      onClick={() => {
+                        setFishingGame(prev => ({ ...prev, currentLocation: loc.id }));
+                        setFishingScreen('game');
+                      }}
+                      className="bg-blue-500 text-white px-4 py-2 rounded-lg font-semibold"
+                    >
+                      Travel
+                    </button>
+                  )}
+                </div>
+                <p className="text-sm text-gray-700 italic">{loc.description}</p>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    );
+  };
+
+  // Collection Screen
+  const renderFishingCollection = () => {
+    const allFish = Object.values(FISH_DATA);
+    const filteredFish = collectionFilter === 'all'
+      ? allFish
+      : allFish.filter(f => f.location === collectionFilter);
+
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-blue-400 to-blue-600 p-4 pb-24">
+        <button onClick={() => setFishingScreen('title')} className="text-white flex items-center gap-2 mb-4">
+          <ChevronLeft size={20} />
+          Back
+        </button>
+
+        <h1 className="text-3xl font-bold text-white mb-4 text-center">📖 Fish Collection</h1>
+
+        {/* Filter */}
+        <div className="flex gap-2 mb-4 overflow-x-auto pb-2">
+          <button
+            onClick={() => setCollectionFilter('all')}
+            className={`px-4 py-2 rounded-lg font-semibold whitespace-nowrap ${
+              collectionFilter === 'all' ? 'bg-white text-blue-600' : 'bg-blue-500 text-white'
+            }`}
+          >
+            All ({allFish.length})
+          </button>
+          {Object.values(FISHING_LOCATIONS).map(loc => (
+            <button
+              key={loc.id}
+              onClick={() => setCollectionFilter(loc.id)}
+              className={`px-4 py-2 rounded-lg font-semibold whitespace-nowrap ${
+                collectionFilter === loc.id ? 'bg-white text-blue-600' : 'bg-blue-500 text-white'
+              }`}
+            >
+              {loc.country} ({loc.fish.length})
+            </button>
+          ))}
+        </div>
+
+        {/* Fish Grid */}
+        <div className="grid grid-cols-2 gap-3">
+          {filteredFish.map(fish => {
+            const caught = fishingGame.fishCollection[fish.id];
+            const pb = fishingGame.personalBests[fish.id];
+
+            return (
+              <div key={fish.id} className="bg-white rounded-xl p-4 shadow-lg">
+                <div className="text-5xl mb-2 text-center">{caught ? fish.emoji : '❓'}</div>
+                <div className={`text-center font-bold mb-1 ${caught ? '' : 'blur-sm'}`}>
+                  {caught ? fish.name : '???'}
+                </div>
+                <div className={`text-center text-xs px-2 py-1 rounded ${getRarityStyle(fish.rarity)} mb-2`}>
+                  {caught ? fish.rarity.toUpperCase() : '???'}
+                </div>
+                {caught && (
+                  <>
+                    <div className="text-xs text-gray-600 text-center">
+                      Caught: {caught.count}x
+                    </div>
+                    {pb && (
+                      <div className="text-xs text-center font-semibold text-amber-600 mt-1">
+                        PB: {pb}kg
+                      </div>
+                    )}
+                  </>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    );
+  };
+
+  // Shop Screen
+  const renderFishingShop = () => {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-amber-400 to-orange-600 p-4 pb-24">
+        <button onClick={() => setFishingScreen('title')} className="text-white flex items-center gap-2 mb-4">
+          <ChevronLeft size={20} />
+          Back
+        </button>
+
+        <div className="flex items-center justify-between mb-6">
+          <h1 className="text-3xl font-bold text-white">🛒 Shop</h1>
+          <div className="bg-white rounded-lg px-4 py-2 font-bold text-amber-600">
+            {fishingGame.coins} coins
+          </div>
+        </div>
+
+        {/* Category Tabs */}
+        <div className="flex gap-2 mb-4 overflow-x-auto pb-2">
+          {['rods', 'reels', 'lines', 'baits'].map(cat => (
+            <button
+              key={cat}
+              onClick={() => setShopCategory(cat)}
+              className={`px-4 py-2 rounded-lg font-semibold whitespace-nowrap ${
+                shopCategory === cat ? 'bg-white text-amber-600' : 'bg-amber-500 text-white'
+              }`}
+            >
+              {cat.charAt(0).toUpperCase() + cat.slice(1)}
+            </button>
+          ))}
+        </div>
+
+        {/* Items */}
+        <div className="space-y-3">
+          {shopCategory === 'rods' && Object.values(RODS).map(rod => {
+            const owned = fishingGame.inventory.rods.includes(rod.id);
+            const equipped = fishingGame.equipment.rod === rod.id;
+            const canBuy = fishingGame.level >= rod.unlockLevel && fishingGame.coins >= rod.price;
+
+            return (
+              <div key={rod.id} className="bg-white rounded-xl p-4">
+                <div className="flex justify-between items-start mb-2">
+                  <div>
+                    <div className="font-bold text-lg">{rod.name}</div>
+                    <div className="text-sm text-gray-600">Cast: {rod.castPower} • Max: {rod.maxLine}</div>
+                  </div>
+                  <div className="text-right">
+                    {equipped && <div className="text-xs bg-green-500 text-white px-2 py-1 rounded mb-1">Equipped</div>}
+                    {owned && !equipped && <div className="text-xs bg-blue-500 text-white px-2 py-1 rounded mb-1">Owned</div>}
+                    {!owned && <div className="font-bold text-amber-600">{rod.price} coins</div>}
+                  </div>
+                </div>
+                {!owned && fishingGame.level < rod.unlockLevel && (
+                  <div className="text-sm text-gray-500">🔒 Unlock at Level {rod.unlockLevel}</div>
+                )}
+                {!owned && canBuy && (
+                  <button className="w-full mt-2 bg-amber-500 text-white py-2 rounded-lg font-semibold">
+                    Buy
+                  </button>
+                )}
+                {owned && !equipped && (
+                  <button className="w-full mt-2 bg-blue-500 text-white py-2 rounded-lg font-semibold">
+                    Equip
+                  </button>
+                )}
+              </div>
+            );
+          })}
+          {/* Similar for other categories - keeping simple for now */}
+        </div>
+      </div>
+    );
+  };
+
+  // Stats Screen
+  const renderFishingStats = () => {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-purple-400 to-purple-700 p-4 pb-24">
+        <button onClick={() => setFishingScreen('title')} className="text-white flex items-center gap-2 mb-4">
+          <ChevronLeft size={20} />
+          Back
+        </button>
+
+        <h1 className="text-3xl font-bold text-white mb-6 text-center">📊 Statistics</h1>
+
+        <div className="space-y-4">
+          {/* Career Stats */}
+          <div className="bg-white rounded-xl p-5">
+            <h3 className="font-bold text-lg mb-3 flex items-center gap-2">
+              <Trophy className="text-amber-500" />
+              Career Stats
+            </h3>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="text-center">
+                <div className="text-3xl font-bold text-blue-600">{fishingGame.stats.totalCaught}</div>
+                <div className="text-sm text-gray-600">Total Fish</div>
+              </div>
+              <div className="text-center">
+                <div className="text-3xl font-bold text-purple-600">{fishingGame.stats.speciesDiscovered}</div>
+                <div className="text-sm text-gray-600">Species</div>
+              </div>
+              <div className="text-center">
+                <div className="text-3xl font-bold text-green-600">{fishingGame.stats.totalWeight.toFixed(1)}kg</div>
+                <div className="text-sm text-gray-600">Total Weight</div>
+              </div>
+              <div className="text-center">
+                <div className="text-3xl font-bold text-amber-600">{fishingGame.stats.biggestCatch}kg</div>
+                <div className="text-sm text-gray-600">Biggest Catch</div>
+              </div>
+            </div>
+          </div>
+
+          {/* Rarity Breakdown */}
+          <div className="bg-white rounded-xl p-5">
+            <h3 className="font-bold text-lg mb-3">By Rarity</h3>
+            <div className="space-y-2">
+              <div className="flex justify-between items-center">
+                <span className="text-gray-700">Common</span>
+                <span className="font-bold">{fishingGame.stats.commonCaught}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-green-600">Uncommon</span>
+                <span className="font-bold">{fishingGame.stats.uncommonCaught}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-blue-600">Rare</span>
+                <span className="font-bold">{fishingGame.stats.rareCaught}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-purple-600">Epic</span>
+                <span className="font-bold">{fishingGame.stats.epicCaught}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-amber-600">Legendary</span>
+                <span className="font-bold">{fishingGame.stats.legendaryCaught}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  // Main Fishing Render
+  const renderFishing = () => {
+    if (fishingScreen === 'title') return renderFishingTitle();
+    if (fishingScreen === 'game') return renderFishingGame();
+    if (fishingScreen === 'worldmap') return renderFishingWorldMap();
+    if (fishingScreen === 'collection') return renderFishingCollection();
+    if (fishingScreen === 'shop') return renderFishingShop();
+    if (fishingScreen === 'stats') return renderFishingStats();
+    return renderFishingTitle();
   };
 
   // Gallery Screen
@@ -1786,6 +3298,7 @@ export default function RichsToolkit() {
             { id: 'weather', title: 'Weather', icon: Cloud, color: 'bg-sky-500', desc: '7-day forecast' },
             { id: 'gallery', title: 'Gallery', icon: Camera, color: 'bg-purple-500', desc: 'Photos & notes' },
             { id: 'conversions', title: 'Conversions', icon: ArrowLeftRight, color: 'bg-indigo-500', desc: 'Imperial ↔ Metric' },
+            { id: 'fishing', title: 'Fishing', icon: Fish, color: 'bg-blue-600', desc: 'Fishing adventure' },
           ].map((feature) => {
             const IconComponent = feature.icon;
             return <button key={feature.id} onClick={() => setCurrentScreen(feature.id)} className={`${theme.cardBg} rounded-2xl p-4 text-left shadow-sm border ${theme.border} active:scale-95 transition-all duration-500`}><div className={`${feature.color} w-12 h-12 rounded-xl flex items-center justify-center mb-3`}><IconComponent size={24} className="text-white" /></div><h3 className={`font-semibold ${theme.text}`}>{feature.title}</h3><p className={`text-sm ${theme.textSecondary}`}>{feature.desc}</p></button>;
@@ -2008,6 +3521,7 @@ export default function RichsToolkit() {
     if (currentScreen === 'suppliers') return renderSuppliers();
     if (currentScreen === 'weather') return renderWeather();
     if (currentScreen === 'gallery') return renderGallery();
+    if (currentScreen === 'fishing') return renderFishing();
     if (currentScreen === 'snagging') {
       if (selectedRoom) return renderRoomDetail();
       if (selectedSnaggingProject) return renderProjectSnagging();
