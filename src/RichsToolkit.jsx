@@ -728,6 +728,42 @@ export default function RichsToolkit() {
     setRodStates(newRodStates);
   };
 
+  // Counter fish pulling left
+  const handleCounterLeft = (rodIndex) => {
+    const newRodStates = [...rodStates];
+    const rod = newRodStates[rodIndex];
+    if (rod.state !== 'fighting') return;
+
+    if (rod.fishPullDirection < 0) {
+      // Correct counter!
+      rod.tension = Math.max(0, rod.tension - 15);
+      rod.progress = Math.min(100, rod.progress + 3);
+    } else {
+      // Wrong direction!
+      rod.tension = Math.min(100, rod.tension + 5);
+    }
+
+    setRodStates(newRodStates);
+  };
+
+  // Counter fish pulling right
+  const handleCounterRight = (rodIndex) => {
+    const newRodStates = [...rodStates];
+    const rod = newRodStates[rodIndex];
+    if (rod.state !== 'fighting') return;
+
+    if (rod.fishPullDirection > 0) {
+      // Correct counter!
+      rod.tension = Math.max(0, rod.tension - 15);
+      rod.progress = Math.min(100, rod.progress + 3);
+    } else {
+      // Wrong direction!
+      rod.tension = Math.min(100, rod.tension + 5);
+    }
+
+    setRodStates(newRodStates);
+  };
+
   // Catch fish successfully
   const handleCatchFish = (rodIndex, fish) => {
     const rod = rodStates[rodIndex];
@@ -864,6 +900,15 @@ export default function RichsToolkit() {
             // Fish fights back over time
             rod.tension = Math.min(100, rod.tension + deltaTime / 200);
             changed = true;
+
+            // Fish changes pull direction every 2-4 seconds
+            if (!rod.lastDirectionChange) rod.lastDirectionChange = now;
+            const directionElapsed = now - rod.lastDirectionChange;
+            if (directionElapsed >= 2000 + Math.random() * 2000) {
+              rod.fishPullDirection = Math.random() < 0.5 ? -1 : 1; // -1 = left, 1 = right
+              rod.lastDirectionChange = now;
+              changed = true;
+            }
 
             // Check if lost
             if (rod.tension >= 100) {
@@ -1989,19 +2034,49 @@ export default function RichsToolkit() {
             )}
 
             {activeRod.state === 'fighting' && (
-              <div className="grid grid-cols-2 gap-3">
-                <button
-                  onClick={() => handleDrag(activeRodIndex)}
-                  className="bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-4 rounded-xl shadow-lg active:scale-95 transition"
-                >
-                  🔄 DRAG
-                </button>
-                <button
-                  onClick={() => handleReel(activeRodIndex)}
-                  className="bg-green-500 hover:bg-green-600 text-white font-bold py-4 rounded-xl shadow-lg active:scale-95 transition"
-                >
-                  ⚡ REEL
-                </button>
+              <div>
+                {/* Fish Pull Direction Indicator */}
+                <div className="mb-4 flex items-center justify-center gap-2 text-amber-100">
+                  <span className={`text-3xl ${activeRod.fishPullDirection < 0 ? 'text-red-400 animate-pulse' : 'opacity-30'}`}>⬅️</span>
+                  <span className="text-2xl">🐟</span>
+                  <span className={`text-3xl ${activeRod.fishPullDirection > 0 ? 'text-red-400 animate-pulse' : 'opacity-30'}`}>➡️</span>
+                </div>
+
+                {/* 4-Button Layout */}
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    onClick={() => handleCounterLeft(activeRodIndex)}
+                    className={`font-bold py-3 rounded-xl shadow-lg active:scale-95 transition ${
+                      activeRod.fishPullDirection < 0
+                        ? 'bg-red-500 hover:bg-red-600 text-white'
+                        : 'bg-gray-600 hover:bg-gray-700 text-gray-300'
+                    }`}
+                  >
+                    ⬅️ LEFT
+                  </button>
+                  <button
+                    onClick={() => handleCounterRight(activeRodIndex)}
+                    className={`font-bold py-3 rounded-xl shadow-lg active:scale-95 transition ${
+                      activeRod.fishPullDirection > 0
+                        ? 'bg-red-500 hover:bg-red-600 text-white'
+                        : 'bg-gray-600 hover:bg-gray-700 text-gray-300'
+                    }`}
+                  >
+                    RIGHT ➡️
+                  </button>
+                  <button
+                    onClick={() => handleDrag(activeRodIndex)}
+                    className="bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-3 rounded-xl shadow-lg active:scale-95 transition"
+                  >
+                    🔄 DRAG
+                  </button>
+                  <button
+                    onClick={() => handleReel(activeRodIndex)}
+                    className="bg-green-500 hover:bg-green-600 text-white font-bold py-3 rounded-xl shadow-lg active:scale-95 transition"
+                  >
+                    ⚡ REEL
+                  </button>
+                </div>
               </div>
             )}
           </div>
