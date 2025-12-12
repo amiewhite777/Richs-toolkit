@@ -1584,7 +1584,7 @@ export default function RichsToolkit() {
         <div className="grid grid-cols-2 gap-3 relative z-10">
           {[
             { id: 'calculators', title: 'Calculators', icon: Calculator, color: 'bg-green-500', desc: 'Materials & quantities' },
-            { id: 'snagging', title: 'Snagging', icon: ClipboardList, color: 'bg-amber-500', desc: 'Punch lists' },
+            { id: 'snagging', title: 'Snagging', icon: ClipboardList, color: 'bg-amber-500', desc: 'Snag lists' },
             { id: 'time', title: 'Time & Expenses', icon: Clock, color: 'bg-rose-500', desc: 'Hours & receipts' },
             { id: 'invoices', title: 'Invoices', icon: FileText, color: 'bg-emerald-500', desc: 'Generate & track' },
             { id: 'budget', title: 'Budget', icon: PiggyBank, color: 'bg-pink-500', desc: 'Track spending' },
