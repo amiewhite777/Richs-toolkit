@@ -485,9 +485,32 @@ export default function RichsToolkit() {
   const [collectionFilter, setCollectionFilter] = useState('all');
   const [notification, setNotification] = useState(null);
 
+  // Weather and Time State
+  const [currentWeather, setCurrentWeather] = useState('clear');
+  const [currentTimeOfDay, setCurrentTimeOfDay] = useState('day');
+  const lastWeatherChange = useRef(Date.now());
+  const lastTimeChange = useRef(Date.now());
+
   // Fishing animation frame
   const fishingAnimationFrame = useRef(null);
   const lastFrameTime = useRef(Date.now());
+
+  // Weather Data
+  const WEATHER_CONDITIONS = {
+    clear: { emoji: '☀️', name: 'Clear', fishActivity: 1.0, rareBonus: 0, description: 'Standard conditions' },
+    cloudy: { emoji: '⛅', name: 'Cloudy', fishActivity: 1.2, rareBonus: 5, description: 'Fish feed more actively' },
+    rainy: { emoji: '🌧️', name: 'Rainy', fishActivity: 1.4, rareBonus: 10, description: 'Fish love the rain!' },
+    stormy: { emoji: '⛈️', name: 'Stormy', fishActivity: 0.8, rareBonus: 20, description: 'Risky but rare fish appear' },
+    foggy: { emoji: '🌫️', name: 'Foggy', fishActivity: 1.1, rareBonus: 15, description: 'Strange things in the mist' }
+  };
+
+  // Time of Day Data
+  const TIME_OF_DAY = {
+    dawn: { emoji: '🌅', name: 'Dawn', hours: '5-8am', fishBonus: 1.3, description: 'Tench and bass love dawn' },
+    day: { emoji: '☀️', name: 'Day', hours: '8am-5pm', fishBonus: 1.0, description: 'Standard fishing' },
+    dusk: { emoji: '🌇', name: 'Dusk', hours: '5-8pm', fishBonus: 1.4, description: 'Predators hunt at dusk' },
+    night: { emoji: '🌙', name: 'Night', hours: '8pm-5am', fishBonus: 0.9, description: 'Catfish and eels more common' }
+  };
 
   // ==================== FISHING GAME HELPER FUNCTIONS ====================
 
@@ -508,13 +531,15 @@ export default function RichsToolkit() {
     const location = FISHING_LOCATIONS[fishingGame.currentLocation];
     const availableFish = location.fish.map(id => FISH_DATA[id]);
     const baitBonus = BAITS[fishingGame.equipment.bait].rareBonus;
+    const weatherBonus = WEATHER_CONDITIONS[currentWeather].rareBonus;
 
+    const totalBonus = baitBonus + weatherBonus;
     const rand = Math.random() * 100;
     let targetRarity = 'common';
 
-    if (rand < 1 + (baitBonus * 0.05)) targetRarity = 'legendary';
-    else if (rand < 5 + (baitBonus * 0.2)) targetRarity = 'epic';
-    else if (rand < 15 + (baitBonus * 0.5)) targetRarity = 'rare';
+    if (rand < 1 + (totalBonus * 0.05)) targetRarity = 'legendary';
+    else if (rand < 5 + (totalBonus * 0.2)) targetRarity = 'epic';
+    else if (rand < 15 + (totalBonus * 0.5)) targetRarity = 'rare';
     else if (rand < 40) targetRarity = 'uncommon';
 
     const rarityFish = availableFish.filter(f => f.rarity === targetRarity);
@@ -606,8 +631,14 @@ export default function RichsToolkit() {
       // Too weak, cancel cast
       newRodStates[rodIndex] = { state: 'idle', power: 0, waitTime: 0, fish: null, tension: 0, progress: 0 };
     } else {
-      // Cast successful, enter waiting state
-      const waitTime = 3000 + Math.random() * 5000; // 3-8 seconds wait
+      // Cast successful, enter waiting state with weather/time modifiers
+      const weatherActivity = WEATHER_CONDITIONS[currentWeather].fishActivity;
+      const timeBonus = TIME_OF_DAY[currentTimeOfDay].fishBonus;
+      const activityMultiplier = weatherActivity * timeBonus;
+
+      const baseWaitTime = 3000 + Math.random() * 5000; // 3-8 seconds base
+      const waitTime = baseWaitTime / activityMultiplier; // Higher activity = shorter wait
+
       newRodStates[rodIndex] = {
         ...newRodStates[rodIndex],
         state: 'waiting',
@@ -622,7 +653,28 @@ export default function RichsToolkit() {
   // Hook fish during bite
   const handleHookFish = (rodIndex) => {
     const newRodStates = [...rodStates];
-    if (newRodStates[rodIndex].state !== 'bite') return;
+    const rod = newRodStates[rodIndex];
+    if (rod.state !== 'bite') return;
+
+    // Calculate hook timing quality
+    const elapsed = Date.now() - rod.biteStart;
+    let hookQuality = 'ok';
+    let progressBonus = 0;
+    let xpBonus = 0;
+
+    if (elapsed < 500) {
+      // PERFECT (under 0.5s)
+      hookQuality = 'perfect';
+      progressBonus = 20;
+      xpBonus = 25;
+      showNotification('⭐ PERFECT HOOK!', 'success');
+    } else if (elapsed < 1000) {
+      // GOOD (under 1s)
+      hookQuality = 'good';
+      progressBonus = 10;
+      xpBonus = 10;
+      showNotification('✨ GOOD HOOK!', 'success');
+    }
 
     const fish = selectRandomFish();
     newRodStates[rodIndex] = {
@@ -630,8 +682,10 @@ export default function RichsToolkit() {
       state: 'fighting',
       fish: fish,
       tension: 30,
-      progress: 10,
-      fishPullDirection: (Math.random() - 0.5) * 2 // -1 to 1
+      progress: 10 + progressBonus,
+      fishPullDirection: (Math.random() - 0.5) * 2, // -1 to 1
+      hookQuality: hookQuality,
+      bonusXP: xpBonus
     };
     setRodStates(newRodStates);
   };
@@ -676,10 +730,17 @@ export default function RichsToolkit() {
 
   // Catch fish successfully
   const handleCatchFish = (rodIndex, fish) => {
+    const rod = rodStates[rodIndex];
     const weight = generateFishWeight(fish);
     const variant = Math.random() < 0.05 ? ['golden', 'albino', 'giant'][Math.floor(Math.random() * 3)] : null;
     let finalWeight = weight;
     if (variant === 'giant') finalWeight = weight * 1.5;
+
+    // Calculate XP with bonuses
+    let baseXP = fish.xp;
+    if (variant === 'albino') baseXP *= 1.5;
+    const bonusXP = rod.bonusXP || 0;
+    const totalXP = Math.floor(baseXP + bonusXP);
 
     // Update game state
     setFishingGame(prev => {
@@ -692,7 +753,6 @@ export default function RichsToolkit() {
       }
 
       const coinValue = variant === 'golden' ? fish.value * 2 : fish.value;
-      const xpValue = variant === 'albino' ? fish.xp * 1.5 : fish.xp;
 
       const newStats = { ...prev.stats };
       newStats.totalCaught += 1;
@@ -711,7 +771,7 @@ export default function RichsToolkit() {
       };
     });
 
-    addXP(fish.xp);
+    addXP(totalXP);
 
     // Show catch modal
     setCatchModal({
@@ -744,6 +804,33 @@ export default function RichsToolkit() {
       const now = Date.now();
       const deltaTime = now - lastFrameTime.current;
       lastFrameTime.current = now;
+
+      // Weather change every 60-90 seconds
+      const weatherElapsed = now - lastWeatherChange.current;
+      const weatherChangeInterval = 60000 + Math.random() * 30000; // 60-90 seconds
+      if (weatherElapsed >= weatherChangeInterval) {
+        const weathers = Object.keys(WEATHER_CONDITIONS);
+        const newWeather = weathers[Math.floor(Math.random() * weathers.length)];
+        if (newWeather !== currentWeather) {
+          setCurrentWeather(newWeather);
+          const weatherData = WEATHER_CONDITIONS[newWeather];
+          showNotification(`${weatherData.emoji} Weather changed: ${weatherData.name} - ${weatherData.description}`, 'info');
+          lastWeatherChange.current = now;
+        }
+      }
+
+      // Time change every 2 minutes
+      const timeElapsed = now - lastTimeChange.current;
+      if (timeElapsed >= 120000) { // 2 minutes
+        const times = Object.keys(TIME_OF_DAY);
+        const currentIndex = times.indexOf(currentTimeOfDay);
+        const nextIndex = (currentIndex + 1) % times.length;
+        const newTime = times[nextIndex];
+        setCurrentTimeOfDay(newTime);
+        const timeData = TIME_OF_DAY[newTime];
+        showNotification(`${timeData.emoji} ${timeData.name} - ${timeData.description}`, 'info');
+        lastTimeChange.current = now;
+      }
 
       setRodStates(prev => {
         const newStates = [...prev];
@@ -800,7 +887,7 @@ export default function RichsToolkit() {
         cancelAnimationFrame(fishingAnimationFrame.current);
       }
     };
-  }, [fishingScreen, rodStates]);
+  }, [fishingScreen, rodStates, currentWeather, currentTimeOfDay]);
 
   // Work condition assessments
   const getWorkConditions = (temp, rain, wind, condition) => {
@@ -1738,6 +1825,18 @@ export default function RichsToolkit() {
               <div className="text-sm opacity-80">Level {fishingGame.level} • {fishingGame.coins} coins</div>
             </div>
             <div className="w-16" />
+          </div>
+
+          {/* Weather and Time Display */}
+          <div className="flex gap-2 justify-center mb-2">
+            <div className="bg-black/30 backdrop-blur-sm px-3 py-1 rounded-lg text-white text-sm flex items-center gap-2">
+              <span className="text-lg">{WEATHER_CONDITIONS[currentWeather].emoji}</span>
+              <span>{WEATHER_CONDITIONS[currentWeather].name}</span>
+            </div>
+            <div className="bg-black/30 backdrop-blur-sm px-3 py-1 rounded-lg text-white text-sm flex items-center gap-2">
+              <span className="text-lg">{TIME_OF_DAY[currentTimeOfDay].emoji}</span>
+              <span>{TIME_OF_DAY[currentTimeOfDay].name}</span>
+            </div>
           </div>
         </div>
 
