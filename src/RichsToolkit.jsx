@@ -211,31 +211,16 @@ export default function RichsToolkit() {
   ]);
 
   const [newSupplier, setNewSupplier] = useState({ name: '', category: 'merchants', phone: '', address: '', notes: '' });
-  
-  const [timeEntries, setTimeEntries] = useLocalStorage('richs-toolkit-time-entries', [
-    { id: 1, project: 'The Circus - No. 14', date: '2024-03-15', hours: 8, minutes: 30, notes: 'Plastering drawing room', break: 30 },
-  ]);
 
-  const [receipts, setReceipts] = useLocalStorage('richs-toolkit-receipts', [
-    { id: 1, date: '2024-03-15', supplier: 'Travis Perkins', amount: 147.50, category: 'Materials', project: 'The Circus - No. 14', description: 'Plaster, PVA', photo: true },
-  ]);
-
-  const [mileageEntries, setMileageEntries] = useLocalStorage('richs-toolkit-mileage', [
-    { id: 1, date: '2024-03-15', from: 'Home', to: 'The Circus', miles: 12, project: 'The Circus - No. 14', return: true },
-  ]);
+  const [timeEntries, setTimeEntries] = useLocalStorage('richs-toolkit-time-entries', []);
+  const [receipts, setReceipts] = useLocalStorage('richs-toolkit-receipts', []);
+  const [mileageEntries, setMileageEntries] = useLocalStorage('richs-toolkit-mileage', []);
 
   const [newTimeEntry, setNewTimeEntry] = useState({ project: '', hours: '', minutes: '', notes: '', break: '30' });
   const [newReceipt, setNewReceipt] = useState({ supplier: '', amount: '', category: 'Materials', project: '', description: '' });
   const [newMileage, setNewMileage] = useState({ from: 'Home', to: '', miles: '', project: '', return: true });
-  
-  const [projects, setProjects] = useLocalStorage('richs-toolkit-projects', [
-    { id: 1, name: 'The Circus - No. 14', grade: 'Grade II*', address: '14 The Circus, Bath BA1 2ET', startDate: '2024-01-15', photos: [], snagging: [
-      { id: 'room1', name: 'Drawing Room', items: [
-        { id: 1, description: 'Touch up cornice paint', priority: 'low', complete: true, notes: '', date: '2024-03-01', photo: false },
-        { id: 2, description: 'Fill crack above doorway', priority: 'medium', complete: false, notes: '', date: '2024-03-01', photo: false },
-      ]},
-    ]},
-  ]);
+
+  const [projects, setProjects] = useLocalStorage('richs-toolkit-projects', []);
 
   const [plasterInputs, setPlasterInputs] = useState({ length: '', width: '', height: '', type: 'multifinish' });
   const [paintInputs, setPaintInputs] = useState({ length: '', width: '', height: '', coats: '2' });
@@ -1819,13 +1804,117 @@ export default function RichsToolkit() {
     return `${hours}:${minutes}`;
   };
 
+  // Format current date
+  const formatCurrentDate = () => {
+    const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const dayName = days[currentTime.getDay()];
+    const day = currentTime.getDate();
+    const month = months[currentTime.getMonth()];
+    return `${dayName} ${day} ${month}`;
+  };
+
+  // Check for special events
+  const getSpecialEvent = () => {
+    const month = currentTime.getMonth(); // 0-11
+    const date = currentTime.getDate();
+
+    // New Year's Day (Jan 1)
+    if (month === 0 && date === 1) return 'newyear';
+
+    // Birthday month (July)
+    if (month === 6) return 'birthday';
+
+    // Christmas season (December)
+    if (month === 11) return 'christmas';
+
+    return null;
+  };
+
+  const specialEvent = getSpecialEvent();
+
   return (
     <div className={`min-h-screen ${theme.bg} transition-colors duration-500`}>
       <div className={`max-w-sm mx-auto ${theme.bg} min-h-screen relative transition-colors duration-500`}>
-        {/* Time display - top right corner */}
-        <div className={`fixed top-4 right-4 ${theme.cardBg} px-3 py-1.5 rounded-lg shadow-sm border ${theme.border} transition-all duration-500 z-50`}>
-          <span className={`text-sm font-semibold ${theme.text} transition-colors duration-500`}>{formatCurrentTime()}</span>
+        {/* Time and date display - top right corner */}
+        <div className={`fixed top-4 right-4 ${theme.cardBg} px-3 py-2 rounded-lg shadow-sm border ${theme.border} transition-all duration-500 z-50 text-right`}>
+          <div className={`text-sm font-semibold ${theme.text} transition-colors duration-500`}>{formatCurrentTime()}</div>
+          <div className={`text-xs ${theme.textSecondary} transition-colors duration-500`}>{formatCurrentDate()}</div>
         </div>
+
+        {/* Special event animations */}
+        {specialEvent && (
+          <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
+            {specialEvent === 'christmas' && (
+              <>
+                {/* Falling snowflakes for Christmas */}
+                {Array.from({ length: 20 }).map((_, i) => (
+                  <div
+                    key={`snow-${i}`}
+                    className="absolute animate-pulse"
+                    style={{
+                      left: `${Math.random() * 100}%`,
+                      top: `-${Math.random() * 20}%`,
+                      animation: `fall-snow ${4 + Math.random() * 3}s linear infinite`,
+                      animationDelay: `${Math.random() * 4}s`,
+                      fontSize: `${12 + Math.random() * 8}px`,
+                    }}
+                  >
+                    ❄️
+                  </div>
+                ))}
+              </>
+            )}
+
+            {specialEvent === 'newyear' && (
+              <>
+                {/* Confetti for New Year */}
+                {Array.from({ length: 30 }).map((_, i) => {
+                  const colors = ['🎉', '🎊', '✨', '🎆', '🎇'];
+                  return (
+                    <div
+                      key={`confetti-${i}`}
+                      className="absolute"
+                      style={{
+                        left: `${Math.random() * 100}%`,
+                        top: `-${Math.random() * 20}%`,
+                        animation: `fall-snow ${3 + Math.random() * 2}s linear infinite`,
+                        animationDelay: `${Math.random() * 3}s`,
+                        fontSize: '16px',
+                      }}
+                    >
+                      {colors[Math.floor(Math.random() * colors.length)]}
+                    </div>
+                  );
+                })}
+              </>
+            )}
+
+            {specialEvent === 'birthday' && (
+              <>
+                {/* Birthday balloons and confetti */}
+                {Array.from({ length: 15 }).map((_, i) => {
+                  const balloons = ['🎈', '🎂', '🎁', '🎉', '🎊'];
+                  return (
+                    <div
+                      key={`birthday-${i}`}
+                      className="absolute"
+                      style={{
+                        left: `${Math.random() * 100}%`,
+                        bottom: `-${Math.random() * 20}%`,
+                        animation: `float-balloon ${5 + Math.random() * 3}s ease-in-out infinite`,
+                        animationDelay: `${Math.random() * 5}s`,
+                        fontSize: '20px',
+                      }}
+                    >
+                      {balloons[Math.floor(Math.random() * balloons.length)]}
+                    </div>
+                  );
+                })}
+              </>
+            )}
+          </div>
+        )}
 
         {renderCurrentScreen()}
 
