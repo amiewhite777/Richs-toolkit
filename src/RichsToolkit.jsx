@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Calculator, ChevronRight, ChevronLeft, Home, Camera, ClipboardList, PaintBucket, Ruler, Grid3X3, Package, Layers, Plus, Building2, Sun, Landmark, Image, FileText, X, Clock, MapPin, Calendar, Phone, Square, AlertTriangle, CheckCircle, Check, Flag, Send, ArrowLeftRight, Receipt, Car, Trash2, Star, MessageSquare, Copy, PhoneCall, Search, Users, Cloud, CloudRain, CloudSnow, CloudDrizzle, CloudLightning, Wind, Droplets, Thermometer, Umbrella, AlertCircle, CloudSun, Moon, Sunrise, Sunset, Eye, Loader2, DollarSign, TrendingUp, PiggyBank, CreditCard, Download, Settings, Fish, Waves, Trophy, ShoppingCart, Map, BookOpen, Target, Zap, Lock, Unlock } from 'lucide-react';
+import { Calculator, ChevronRight, ChevronLeft, Home, Camera, ClipboardList, PaintBucket, Ruler, Grid3X3, Package, Layers, Plus, Building2, Sun, Landmark, Image, FileText, X, Clock, MapPin, Calendar, Phone, Square, AlertTriangle, CheckCircle, Check, Flag, Send, ArrowLeftRight, Receipt, Car, Trash2, Star, MessageSquare, Copy, PhoneCall, Search, Users, Cloud, CloudRain, CloudSnow, CloudDrizzle, CloudLightning, Wind, Droplets, Thermometer, Umbrella, AlertCircle, CloudSun, Moon, Sunrise, Sunset, Eye, Loader2, DollarSign, TrendingUp, PiggyBank, CreditCard, Download, Settings, Fish, Waves, Trophy, ShoppingCart, Map, BookOpen, Target, Zap, Lock, Unlock, Mail } from 'lucide-react';
 import { useWeather } from './useWeather';
 import { useLocalStorage } from './useLocalStorage';
+import { jsPDF } from 'jspdf';
 
 export default function RichsToolkit() {
   const [currentScreen, setCurrentScreen] = useState('home');
@@ -155,6 +156,8 @@ export default function RichsToolkit() {
   const [showCamera, setShowCamera] = useState(false);
   const [capturedPhoto, setCapturedPhoto] = useState(null);
   const [showAnnotation, setShowAnnotation] = useState(false);
+  const [pairingMode, setPairingMode] = useState(false);
+  const [selectedForPairing, setSelectedForPairing] = useState(null);
 
   // ==================== FISHING GAME DATA ====================
 
@@ -491,6 +494,12 @@ export default function RichsToolkit() {
   const lastWeatherChange = useRef(Date.now());
   const lastTimeChange = useRef(Date.now());
 
+  // Audio State
+  const [sfxEnabled, setSfxEnabled] = useState(true);
+  const [musicEnabled, setMusicEnabled] = useState(true);
+  const audioContext = useRef(null);
+  const ambientLoop = useRef(null);
+
   // Fishing animation frame
   const fishingAnimationFrame = useRef(null);
   const lastFrameTime = useRef(Date.now());
@@ -511,6 +520,274 @@ export default function RichsToolkit() {
     dusk: { emoji: '🌇', name: 'Dusk', hours: '5-8pm', fishBonus: 1.4, description: 'Predators hunt at dusk' },
     night: { emoji: '🌙', name: 'Night', hours: '8pm-5am', fishBonus: 0.9, description: 'Catfish and eels more common' }
   };
+
+  // ==================== AUDIO SYSTEM ====================
+
+  // Initialize audio context
+  const initAudio = () => {
+    if (!audioContext.current) {
+      audioContext.current = new (window.AudioContext || window.webkitAudioContext)();
+    }
+    return audioContext.current;
+  };
+
+  // Procedural Sound Generator using Web Audio API
+  const playSound = (type) => {
+    if (!sfxEnabled) return;
+
+    const ctx = initAudio();
+    const now = ctx.currentTime;
+
+    switch (type) {
+      case 'cast': {
+        // Whoosh + splash
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+
+        osc.frequency.setValueAtTime(800, now);
+        osc.frequency.exponentialRampToValueAtTime(200, now + 0.3);
+        gain.gain.setValueAtTime(0.3, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+
+        osc.start(now);
+        osc.stop(now + 0.3);
+        break;
+      }
+
+      case 'bite': {
+        // Sharp alert tone
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+
+        osc.frequency.setValueAtTime(880, now);
+        gain.gain.setValueAtTime(0.4, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.15);
+
+        osc.start(now);
+        osc.stop(now + 0.15);
+        break;
+      }
+
+      case 'reel': {
+        // Mechanical click
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+
+        osc.type = 'square';
+        osc.frequency.setValueAtTime(150, now);
+        gain.gain.setValueAtTime(0.15, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.05);
+
+        osc.start(now);
+        osc.stop(now + 0.05);
+        break;
+      }
+
+      case 'tension': {
+        // Creaking warning
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(100, now);
+        osc.frequency.linearRampToValueAtTime(120, now + 0.2);
+        gain.gain.setValueAtTime(0.2, now);
+        gain.gain.linearRampToValueAtTime(0.01, now + 0.2);
+
+        osc.start(now);
+        osc.stop(now + 0.2);
+        break;
+      }
+
+      case 'snap': {
+        // Line break
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(200, now);
+        osc.frequency.exponentialRampToValueAtTime(50, now + 0.3);
+        gain.gain.setValueAtTime(0.5, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+
+        osc.start(now);
+        osc.stop(now + 0.3);
+        break;
+      }
+
+      case 'catch': {
+        // Big splash
+        const noise = ctx.createBufferSource();
+        const buffer = ctx.createBuffer(1, ctx.sampleRate * 0.5, ctx.sampleRate);
+        const data = buffer.getChannelData(0);
+        for (let i = 0; i < buffer.length; i++) {
+          data[i] = Math.random() * 2 - 1;
+        }
+        noise.buffer = buffer;
+
+        const filter = ctx.createBiquadFilter();
+        filter.type = 'lowpass';
+        filter.frequency.setValueAtTime(800, now);
+        filter.frequency.exponentialRampToValueAtTime(200, now + 0.5);
+
+        const gain = ctx.createGain();
+        gain.gain.setValueAtTime(0.3, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.5);
+
+        noise.connect(filter);
+        filter.connect(gain);
+        gain.connect(ctx.destination);
+
+        noise.start(now);
+        noise.stop(now + 0.5);
+        break;
+      }
+
+      case 'coins': {
+        // Cha-ching!
+        const osc1 = ctx.createOscillator();
+        const osc2 = ctx.createOscillator();
+        const gain = ctx.createGain();
+
+        osc1.connect(gain);
+        osc2.connect(gain);
+        gain.connect(ctx.destination);
+
+        osc1.frequency.setValueAtTime(880, now);
+        osc2.frequency.setValueAtTime(1320, now);
+        gain.gain.setValueAtTime(0.3, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+
+        osc1.start(now);
+        osc2.start(now);
+        osc1.stop(now + 0.3);
+        osc2.stop(now + 0.3);
+        break;
+      }
+
+      case 'levelup': {
+        // Fanfare
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+
+        osc.frequency.setValueAtTime(523, now);      // C
+        osc.frequency.setValueAtTime(659, now + 0.1); // E
+        osc.frequency.setValueAtTime(784, now + 0.2); // G
+        osc.frequency.setValueAtTime(1047, now + 0.3); // C
+
+        gain.gain.setValueAtTime(0.4, now);
+        gain.gain.setValueAtTime(0.4, now + 0.3);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.6);
+
+        osc.start(now);
+        osc.stop(now + 0.6);
+        break;
+      }
+
+      case 'ui': {
+        // Soft click
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+
+        osc.frequency.setValueAtTime(800, now);
+        gain.gain.setValueAtTime(0.1, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.05);
+
+        osc.start(now);
+        osc.stop(now + 0.05);
+        break;
+      }
+    }
+  };
+
+  // Ambient sound loops (simplified - using oscillators to simulate nature sounds)
+  const startAmbient = (location) => {
+    if (!musicEnabled) return;
+    stopAmbient();
+
+    const ctx = initAudio();
+    const now = ctx.currentTime;
+
+    // Create simple ambient loop based on location
+    const osc1 = ctx.createOscillator();
+    const osc2 = ctx.createOscillator();
+    const gain = ctx.createGain();
+
+    osc1.connect(gain);
+    osc2.connect(gain);
+    gain.connect(ctx.destination);
+
+    // Different frequencies for different locations
+    const ambientSettings = {
+      bath: { f1: 100, f2: 150, vol: 0.03 },
+      thailand: { f1: 200, f2: 300, vol: 0.04 },
+      lochness: { f1: 80, f2: 120, vol: 0.02 },
+      bulgaria: { f1: 110, f2: 165, vol: 0.03 },
+      norway: { f1: 60, f2: 90, vol: 0.025 },
+      florida: { f1: 180, f2: 270, vol: 0.035 },
+      amazon: { f1: 220, f2: 330, vol: 0.045 },
+      australia: { f1: 190, f2: 285, vol: 0.04 },
+      japan: { f1: 250, f2: 375, vol: 0.035 },
+      vietnam: { f1: 210, f2: 315, vol: 0.04 },
+      southafrica: { f1: 140, f2: 210, vol: 0.035 },
+      iceland: { f1: 70, f2: 105, vol: 0.025 }
+    };
+
+    const settings = ambientSettings[location] || ambientSettings.bath;
+
+    osc1.type = 'sine';
+    osc2.type = 'sine';
+    osc1.frequency.setValueAtTime(settings.f1, now);
+    osc2.frequency.setValueAtTime(settings.f2, now);
+
+    // Gentle LFO effect
+    osc1.frequency.linearRampToValueAtTime(settings.f1 * 1.1, now + 5);
+    osc2.frequency.linearRampToValueAtTime(settings.f2 * 0.9, now + 5);
+
+    gain.gain.setValueAtTime(settings.vol, now);
+
+    osc1.start(now);
+    osc2.start(now);
+
+    ambientLoop.current = { osc1, osc2, gain };
+  };
+
+  const stopAmbient = () => {
+    if (ambientLoop.current) {
+      try {
+        ambientLoop.current.osc1.stop();
+        ambientLoop.current.osc2.stop();
+      } catch (e) {
+        // Already stopped
+      }
+      ambientLoop.current = null;
+    }
+  };
+
+  // Start/stop ambient when changing locations or entering/leaving game
+  useEffect(() => {
+    if (fishingScreen === 'game') {
+      startAmbient(fishingGame.currentLocation);
+    } else {
+      stopAmbient();
+    }
+
+    return () => stopAmbient();
+  }, [fishingScreen, fishingGame.currentLocation, musicEnabled]);
 
   // ==================== FISHING GAME HELPER FUNCTIONS ====================
 
@@ -1015,40 +1292,40 @@ export default function RichsToolkit() {
 
   const [suppliers, setSuppliers] = useLocalStorage('richs-toolkit-suppliers', [
     // Merchants - Builders Merchants
-    { id: 1, name: 'Travis Perkins Bath', category: 'merchants', phone: '01225 444555', address: 'Lower Bristol Road, Bath', website: 'travisperkins.co.uk', favorite: true, notes: 'Ask for trade discount - account #TP4421' },
-    { id: 2, name: 'Jewson Bath', category: 'merchants', phone: '01225 333666', address: 'Locksbrook Road, Bath', website: 'jewson.co.uk', favorite: true, notes: 'Good for timber, delivers before 7am' },
-    { id: 3, name: 'Selco Builders Warehouse', category: 'merchants', phone: '01225 789456', address: 'Brassmill Lane, Bath', website: 'selcobw.com', favorite: false, notes: 'Cash & carry, competitive prices' },
-    { id: 4, name: 'Buildbase Bath', category: 'merchants', phone: '01225 424242', address: 'Midland Road, Bath', website: 'buildbase.co.uk', favorite: false, notes: 'Plumbing and heavy materials' },
+    { id: 1, name: 'Travis Perkins Bath', category: 'merchants', phone: '01225 446110', email: '', address: 'Sydenham Wharf, Lower Bristol Road, Bath', website: 'travisperkins.co.uk/contact', favorite: true, notes: 'Ask for trade discount - account #TP4421. Use website contact form' },
+    { id: 2, name: 'Jewson Bath', category: 'merchants', phone: '01225 338744', email: 'branch3629@jewson.co.uk', address: 'Station Road, Bath', website: 'jewson.co.uk', favorite: true, notes: 'Good for timber, delivers before 7am' },
+    { id: 3, name: 'Selco Builders Warehouse', category: 'merchants', phone: '01564 821000', email: 'customerservices@selcobw.com', address: 'Brassmill Lane, Bath', website: 'selcobw.com/contact-us', favorite: false, notes: 'Cash & carry, competitive prices' },
+    { id: 4, name: 'Buildbase Bath', category: 'merchants', phone: '01248 719208', email: 'online@huwsgray.co.uk', address: 'Midland Road, Bath', website: 'huwsgray.co.uk/contact', favorite: false, notes: 'Plumbing and heavy materials. Now part of Huws Gray' },
 
     // Bath Stone & Masonry
-    { id: 5, name: 'Hartham Park Quarry', category: 'stone', phone: '01225 811083', address: 'Corsham, Wiltshire', website: '', favorite: true, notes: 'Best for new Bath stone' },
-    { id: 6, name: 'Bath & Portland Stone', category: 'stone', phone: '01225 858555', address: 'Corsham', website: 'bathandportlandstone.co.uk', favorite: true, notes: 'Ashlar, mouldings, restoration stone' },
-    { id: 7, name: 'Stoke Ground Stone', category: 'stone', phone: '01225 742488', address: 'Box, Corsham', website: '', favorite: false, notes: 'Premium Bath stone, slow delivery' },
-    { id: 8, name: 'Stone Projects', category: 'stone', phone: '01225 315315', address: 'Bath', website: '', favorite: false, notes: 'Stone cutting and bespoke work' },
+    { id: 5, name: 'Hartham Park Quarry', category: 'stone', phone: '01929 439255', email: 'j.hart@lovellstone.com', address: 'Park Lane, Corsham, Wiltshire', website: 'lovellstonegroup.com', favorite: true, notes: 'Best for new Bath stone. Contact James Hart' },
+    { id: 6, name: 'Bath & Portland Stone', category: 'stone', phone: '01225 811154', email: '', address: 'Corsham', website: 'heidelbergmaterials.co.uk', favorite: true, notes: 'Ashlar, mouldings, restoration stone. Part of Heidelberg Materials - call for orders' },
+    { id: 7, name: 'Stoke Ground Stone', category: 'stone', phone: '01225 742488', email: '', address: 'Box, Corsham', website: '', favorite: false, notes: 'Premium Bath stone, slow delivery. Phone orders only' },
+    { id: 8, name: 'Stone Projects', category: 'stone', phone: '01225 315315', email: '', address: 'Bath', website: '', favorite: false, notes: 'Stone cutting and bespoke work. Phone orders only' },
 
     // Heritage & Lime Specialists
-    { id: 9, name: 'Mike Wye Associates', category: 'heritage', phone: '01409 281644', address: 'Devon (delivers)', website: 'mikewye.co.uk', favorite: true, notes: 'Lime putty, NHL, traditional paints' },
-    { id: 10, name: 'Lime Technology', category: 'heritage', phone: '01952 728611', address: 'Shropshire (delivers)', website: 'limetechnology.co.uk', favorite: true, notes: 'Hemp lime, insulation, breathable systems' },
-    { id: 11, name: 'Ty-Mawr Lime', category: 'heritage', phone: '01874 658249', address: 'Wales (delivers)', website: 'lime.org.uk', favorite: false, notes: 'Natural hydraulic lime, plasters' },
-    { id: 12, name: 'The Bath Stone Company', category: 'heritage', phone: '01225 858444', address: 'Corsham', website: '', favorite: false, notes: 'Conservation and restoration advice' },
+    { id: 9, name: 'Mike Wye Associates', category: 'heritage', phone: '01409 281644', email: 'sales@mikewye.co.uk', address: 'Devon (delivers)', website: 'mikewye.co.uk', favorite: true, notes: 'Lime putty, NHL, traditional paints' },
+    { id: 10, name: 'Lime Green Products', category: 'heritage', phone: '01952 728611', email: 'enquire@lime-green.co.uk', address: 'Much Wenlock, Shropshire (delivers)', website: 'lime-green.co.uk', favorite: true, notes: 'Hemp lime, insulation, breathable systems' },
+    { id: 11, name: 'Ty-Mawr Lime', category: 'heritage', phone: '01874 611350', email: 'tymawr@lime.org.uk', address: 'Brecon, Wales (delivers)', website: 'lime.org.uk', favorite: false, notes: 'Natural hydraulic lime, plasters' },
+    { id: 12, name: 'The Bath Stone Company', category: 'heritage', phone: '01225 858444', email: '', address: 'Corsham', website: '', favorite: false, notes: 'Conservation and restoration advice. Phone for enquiries' },
 
     // Tool Hire & Plant
-    { id: 13, name: 'Speedy Hire Bath', category: 'hire', phone: '01225 555111', address: 'Lower Bristol Road, Bath', website: 'speedyservices.com', favorite: true, notes: 'Scaffolding, heavy plant' },
-    { id: 14, name: 'HSS Hire Bath', category: 'hire', phone: '01225 463636', address: 'Lower Bristol Road, Bath', website: 'hss.com', favorite: false, notes: 'Tools, access equipment' },
-    { id: 15, name: 'Brandon Hire Station', category: 'hire', phone: '01225 789000', address: 'Bath', website: 'brandon-hire.co.uk', favorite: false, notes: 'Specialist lifting and access' },
+    { id: 13, name: 'Speedy Hire Bath', category: 'hire', phone: '01225 442900', email: '', address: 'Locksbrook Road, Bath', website: 'speedyhire.com/contact-us', favorite: true, notes: 'Scaffolding, heavy plant. Use website contact form' },
+    { id: 14, name: 'HSS Hire Bath', category: 'hire', phone: '01225 421344', email: 'bath@thehireservicecompany.com', address: 'Lower Bristol Road, Bath', website: 'hss.com', favorite: false, notes: 'Tools, access equipment' },
+    { id: 15, name: 'Brandon Hire Station', category: 'hire', phone: '01225 445884', email: '', address: 'Westmoreland Station Road, Bath', website: 'brandonhirestation.com/contact-us', favorite: false, notes: 'Specialist lifting and access. Use website contact' },
 
     // Specialists
-    { id: 16, name: 'Bath Sash Windows', category: 'specialist', phone: '01225 789123', address: 'Larkhall, Bath', website: '', favorite: true, notes: 'Sash window repairs and draught proofing' },
-    { id: 17, name: 'Georgian Joinery', category: 'specialist', phone: '01225 444789', address: 'Bath', website: '', favorite: true, notes: 'Period doors, shutters, panelling' },
-    { id: 18, name: 'Bath Architectural Salvage', category: 'specialist', phone: '01225 311174', address: 'Northgate Street, Bath', website: 'bathsalvage.com', favorite: false, notes: 'Period fixtures, fireplaces, doors' },
-    { id: 19, name: 'Traditional Ironmongery', category: 'specialist', phone: '01225 318181', address: 'Bath', website: '', favorite: false, notes: 'Georgian locks, handles, hinges' },
-    { id: 20, name: 'Heritage Decorative Finishes', category: 'specialist', phone: '01225 505050', address: 'Bath', website: '', favorite: false, notes: 'Specialist plastering and decorative work' },
-    { id: 21, name: 'Bath Plastering', category: 'specialist', phone: '01225 767676', address: 'Bath', website: '', favorite: false, notes: 'Lime plastering specialists' },
-    { id: 22, name: 'Farrow & Ball Bath', category: 'specialist', phone: '01225 469300', address: 'Walcot Street, Bath', website: 'farrow-ball.com', favorite: false, notes: 'Traditional paints and wallpapers' },
-    { id: 23, name: 'Bathroom City Bath', category: 'specialist', phone: '01225 421421', address: 'Lower Bristol Road, Bath', website: '', favorite: false, notes: 'Period-style bathrooms and fittings' },
+    { id: 16, name: 'Bath Sash Windows', category: 'specialist', phone: '01225 789123', email: '', address: 'Larkhall, Bath', website: '', favorite: true, notes: 'Sash window repairs and draught proofing. Phone for quotes' },
+    { id: 17, name: 'Georgian Joinery', category: 'specialist', phone: '01225 444789', email: '', address: 'Bath', website: '', favorite: true, notes: 'Period doors, shutters, panelling. Phone for quotes' },
+    { id: 18, name: 'Bath Architectural Salvage', category: 'specialist', phone: '07983 556757', email: '', address: 'Newton St Loe, Bath', website: 'bathreclamation.co.uk/contact', favorite: false, notes: 'Period fixtures, fireplaces, doors. By appointment - use website contact' },
+    { id: 19, name: 'Traditional Ironmongery', category: 'specialist', phone: '01225 318181', email: '', address: 'Bath', website: '', favorite: false, notes: 'Georgian locks, handles, hinges. Phone for orders' },
+    { id: 20, name: 'Heritage Decorative Finishes', category: 'specialist', phone: '01225 505050', email: '', address: 'Bath', website: '', favorite: false, notes: 'Specialist plastering and decorative work. Phone for quotes' },
+    { id: 21, name: 'Bath Plastering', category: 'specialist', phone: '01225 767676', email: '', address: 'Bath', website: '', favorite: false, notes: 'Lime plastering specialists. Phone for quotes' },
+    { id: 22, name: 'Farrow & Ball Bath', category: 'specialist', phone: '01225 469300', email: 'bath@farrow-ball.com', address: 'Walcot Street, Bath', website: 'farrow-ball.com', favorite: false, notes: 'Traditional paints and wallpapers' },
+    { id: 23, name: 'Bathroom City Bath', category: 'specialist', phone: '01225 421421', email: '', address: 'Lower Bristol Road, Bath', website: '', favorite: false, notes: 'Period-style bathrooms and fittings. Phone for quotes' },
   ]);
 
-  const [newSupplier, setNewSupplier] = useState({ name: '', category: 'merchants', phone: '', address: '', website: '', notes: '' });
+  const [newSupplier, setNewSupplier] = useState({ name: '', category: 'merchants', phone: '', email: '', address: '', website: '', notes: '' });
 
   const [timeEntries, setTimeEntries] = useLocalStorage('richs-toolkit-time-entries', []);
   const [receipts, setReceipts] = useLocalStorage('richs-toolkit-receipts', []);
@@ -1066,6 +1343,7 @@ export default function RichsToolkit() {
   const [tileInputs, setTileInputs] = useState({ length: '', width: '', tileLength: '300', tileWidth: '300' });
   const [concreteInputs, setConcreteInputs] = useState({ length: '', width: '', depth: '' });
   const [studInputs, setStudInputs] = useState({ length: '', height: '2400' });
+  const [vatInputs, setVatInputs] = useState({ amount: '', margin: '15' });
 
   const calculators = [
     { id: 'plaster', title: 'Plaster & Skim', icon: Layers, color: 'bg-amber-500', desc: 'Bonding, multi-finish, lime' },
@@ -1074,6 +1352,7 @@ export default function RichsToolkit() {
     { id: 'tiles', title: 'Tile Calculator', icon: Grid3X3, color: 'bg-purple-500', desc: 'Floor & wall with wastage' },
     { id: 'concrete', title: 'Concrete & Screed', icon: Package, color: 'bg-gray-600', desc: 'Volume calculations' },
     { id: 'stud', title: 'Stud Wall', icon: Building2, color: 'bg-red-500', desc: 'Timber, board, fixings' },
+    { id: 'vat', title: 'VAT & Margin', icon: DollarSign, color: 'bg-emerald-600', desc: 'Quick pricing calculations' },
   ];
 
   const supplierCategories = [
@@ -1216,7 +1495,7 @@ export default function RichsToolkit() {
   const addSupplier = () => {
     if (!newSupplier.name || !newSupplier.phone) return;
     setSuppliers([...suppliers, { id: Date.now(), ...newSupplier, favorite: false }]);
-    setNewSupplier({ name: '', category: 'merchants', phone: '', address: '', website: '', notes: '' });
+    setNewSupplier({ name: '', category: 'merchants', phone: '', email: '', address: '', website: '', notes: '' });
     setShowAddSupplier(false);
   };
 
@@ -1274,6 +1553,172 @@ export default function RichsToolkit() {
     const lengthM = (parseFloat(studInputs.length) || 0) / 1000, heightM = (parseFloat(studInputs.height) || 2400) / 1000;
     const studs = Math.ceil(lengthM / 0.4) + 1;
     return { studs, boardsNeeded: Math.ceil((lengthM * heightM) / 2.88 * 1.1) };
+  };
+
+  const calculateVAT = () => {
+    const amount = parseFloat(vatInputs.amount) || 0;
+    const margin = parseFloat(vatInputs.margin) || 15;
+    const withVAT = (amount * 1.20).toFixed(2);
+    const withoutVAT = (amount / 1.20).toFixed(2);
+    const vatAmount = (amount * 0.20).toFixed(2);
+    const sellPrice = (amount * (1 + margin / 100)).toFixed(2);
+    const costFromSell = (amount / (1 + margin / 100)).toFixed(2);
+    return { withVAT, withoutVAT, vatAmount, sellPrice, costFromSell, margin };
+  };
+
+  // Generate PDF for Before/After photo pair
+  const generateBeforeAfterPDF = (beforePhoto, afterPhoto) => {
+    const doc = new jsPDF();
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const pageHeight = doc.internal.pageSize.getHeight();
+
+    // Title
+    doc.setFontSize(20);
+    doc.text('Before & After', pageWidth / 2, 20, { align: 'center' });
+
+    // Project info
+    doc.setFontSize(10);
+    doc.text('Rich\'s Heritage Building Work', pageWidth / 2, 28, { align: 'center' });
+    doc.text(`Date: ${new Date().toLocaleDateString('en-GB')}`, pageWidth / 2, 34, { align: 'center' });
+
+    // Before image
+    const imgWidth = 80;
+    const imgHeight = 80;
+    const xBefore = 20;
+    const y = 50;
+
+    doc.setFontSize(14);
+    doc.setFont(undefined, 'bold');
+    doc.text('BEFORE', xBefore + imgWidth / 2, y - 5, { align: 'center' });
+
+    try {
+      doc.addImage(beforePhoto.dataUrl, 'JPEG', xBefore, y, imgWidth, imgHeight);
+    } catch (e) {
+      doc.text('Image unavailable', xBefore + imgWidth / 2, y + imgHeight / 2, { align: 'center' });
+    }
+
+    if (beforePhoto.note) {
+      doc.setFontSize(9);
+      doc.setFont(undefined, 'normal');
+      const noteLines = doc.splitTextToSize(beforePhoto.note, imgWidth);
+      doc.text(noteLines, xBefore, y + imgHeight + 8);
+    }
+
+    // After image
+    const xAfter = pageWidth - xBefore - imgWidth;
+    doc.setFontSize(14);
+    doc.setFont(undefined, 'bold');
+    doc.text('AFTER', xAfter + imgWidth / 2, y - 5, { align: 'center' });
+
+    try {
+      doc.addImage(afterPhoto.dataUrl, 'JPEG', xAfter, y, imgWidth, imgHeight);
+    } catch (e) {
+      doc.text('Image unavailable', xAfter + imgWidth / 2, y + imgHeight / 2, { align: 'center' });
+    }
+
+    if (afterPhoto.note) {
+      doc.setFontSize(9);
+      doc.setFont(undefined, 'normal');
+      const noteLines = doc.splitTextToSize(afterPhoto.note, imgWidth);
+      doc.text(noteLines, xAfter, y + imgHeight + 8);
+    }
+
+    // Footer
+    doc.setFontSize(8);
+    doc.setFont(undefined, 'italic');
+    doc.text('Generated by Rich\'s Toolkit', pageWidth / 2, pageHeight - 10, { align: 'center' });
+
+    // Save
+    doc.save(`before-after-${Date.now()}.pdf`);
+  };
+
+  // Generate PDF for invoice
+  const generateInvoicePDF = (invoice) => {
+    const doc = new jsPDF();
+    const pageWidth = doc.internal.pageSize.getWidth();
+    let yPos = 20;
+
+    // Header
+    doc.setFontSize(24);
+    doc.setFont(undefined, 'bold');
+    doc.text('INVOICE', pageWidth / 2, yPos, { align: 'center' });
+    yPos += 10;
+
+    doc.setFontSize(10);
+    doc.setFont(undefined, 'normal');
+    doc.text('Rich\'s Heritage Building Services', pageWidth / 2, yPos, { align: 'center' });
+    yPos += 15;
+
+    // Invoice details
+    doc.setFontSize(11);
+    doc.setFont(undefined, 'bold');
+    doc.text(`Invoice #${invoice.id}`, 20, yPos);
+    doc.setFont(undefined, 'normal');
+    doc.text(`Date: ${new Date(invoice.date).toLocaleDateString('en-GB')}`, pageWidth - 60, yPos);
+    yPos += 10;
+
+    doc.text(`Project: ${invoice.project}`, 20, yPos);
+    yPos += 15;
+
+    // Line items table header
+    doc.setFillColor(240, 240, 240);
+    doc.rect(20, yPos, pageWidth - 40, 10, 'F');
+    doc.setFont(undefined, 'bold');
+    doc.text('Description', 25, yPos + 7);
+    doc.text('Amount', pageWidth - 45, yPos + 7);
+    yPos += 15;
+
+    // Line items
+    doc.setFont(undefined, 'normal');
+
+    if (invoice.timeHours > 0) {
+      doc.text(`Labour (${invoice.timeHours} hours @ £${invoice.hourlyRate}/hr)`, 25, yPos);
+      doc.text(`£${invoice.labourCost.toFixed(2)}`, pageWidth - 45, yPos);
+      yPos += 7;
+    }
+
+    if (invoice.materialsCost > 0) {
+      const markup = invoice.materialsMarkup || 0;
+      doc.text(`Materials (${markup}% markup)`, 25, yPos);
+      doc.text(`£${invoice.materialsCost.toFixed(2)}`, pageWidth - 45, yPos);
+      yPos += 7;
+    }
+
+    if (invoice.mileageCost > 0) {
+      doc.text(`Mileage (${invoice.mileageMiles} miles @ £0.45/mile)`, 25, yPos);
+      doc.text(`£${invoice.mileageCost.toFixed(2)}`, pageWidth - 45, yPos);
+      yPos += 7;
+    }
+
+    yPos += 5;
+
+    // Subtotal
+    doc.line(20, yPos, pageWidth - 20, yPos);
+    yPos += 7;
+    doc.setFont(undefined, 'bold');
+    doc.text('Subtotal:', pageWidth - 80, yPos);
+    doc.text(`£${invoice.subtotal.toFixed(2)}`, pageWidth - 45, yPos);
+    yPos += 7;
+
+    // VAT
+    doc.text('VAT (20%):', pageWidth - 80, yPos);
+    doc.text(`£${invoice.vat.toFixed(2)}`, pageWidth - 45, yPos);
+    yPos += 7;
+
+    // Total
+    doc.setFontSize(14);
+    doc.text('TOTAL:', pageWidth - 80, yPos);
+    doc.text(`£${invoice.total.toFixed(2)}`, pageWidth - 45, yPos);
+
+    // Footer
+    yPos = doc.internal.pageSize.getHeight() - 20;
+    doc.setFontSize(9);
+    doc.setFont(undefined, 'italic');
+    doc.text('Payment due within 30 days', pageWidth / 2, yPos, { align: 'center' });
+    doc.text('Thank you for your business', pageWidth / 2, yPos + 5, { align: 'center' });
+
+    // Save
+    doc.save(`invoice-${invoice.id}.pdf`);
   };
 
   const toggleSnagComplete = (projectId, roomId, itemId) => {
@@ -1469,7 +1914,7 @@ export default function RichsToolkit() {
     <div className="mb-4">
       <label className="block text-sm font-medium text-gray-600 mb-1">{label}</label>
       <div className="flex items-center gap-2">
-        <input type={type} inputMode={type === 'number' ? 'decimal' : 'text'} value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder || '0'}
+        <input type="text" inputMode={type === 'number' ? 'decimal' : 'text'} value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder || '0'}
           className="flex-1 p-3 bg-gray-100 rounded-xl text-lg font-medium focus:outline-none focus:ring-2 focus:ring-blue-500" />
         {unit && <span className="text-gray-500 font-medium w-12">{unit}</span>}
       </div>
@@ -1584,6 +2029,38 @@ export default function RichsToolkit() {
         {/* Today View */}
         {weatherView === 'today' && (
           <>
+            {/* Work Planning Alert */}
+            {daily[1] && (
+              <div className={`rounded-2xl p-4 mb-4 ${
+                daily[1].workScore >= 80 ? 'bg-green-50 border border-green-200' :
+                daily[1].workScore < 50 ? 'bg-red-50 border border-red-200' :
+                'bg-amber-50 border border-amber-200'
+              }`}>
+                <div className="flex items-start gap-3">
+                  <div className={`p-2 rounded-lg ${
+                    daily[1].workScore >= 80 ? 'bg-green-500' :
+                    daily[1].workScore < 50 ? 'bg-red-500' :
+                    'bg-amber-500'
+                  }`}>
+                    <Calendar size={20} className="text-white" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="font-semibold text-gray-900 mb-1">Tomorrow ({daily[1].day})</p>
+                    {daily[1].workScore >= 80 && (
+                      <p className="text-sm text-gray-700">✓ Excellent day for external work. Plan outdoor tasks like lime pointing, painting, or stonework.</p>
+                    )}
+                    {daily[1].workScore >= 50 && daily[1].workScore < 80 && daily[1].rain > 30 && (
+                      <p className="text-sm text-gray-700">⚠️ Rain expected. Good day for interior work, snagging, or covered tasks.</p>
+                    )}
+                    {daily[1].workScore < 50 && (
+                      <p className="text-sm text-gray-700">⛈️ Poor conditions expected. Focus on indoor work, admin, or material ordering.</p>
+                    )}
+                    <p className="text-xs text-gray-500 mt-1">{daily[1].high}°/{daily[1].low}° • Rain: {daily[1].rain}% • Wind: {daily[1].wind}</p>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* Work Conditions */}
             <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 mb-4">
               <h3 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
@@ -1722,10 +2199,8 @@ export default function RichsToolkit() {
 
   // Fishing Title Screen
   const renderFishingTitle = () => {
-    const location = FISHING_LOCATIONS[fishingGame.currentLocation];
-
     return (
-      <div className={`min-h-screen bg-gradient-to-b ${location.skyGradient} relative overflow-hidden`}>
+      <div className="min-h-screen bg-gradient-to-b from-blue-600 via-blue-500 to-cyan-400 relative overflow-hidden">
         {/* Animated background particles */}
         <div className="absolute inset-0 pointer-events-none">
           {Array.from({ length: 15 }).map((_, i) => (
@@ -1740,7 +2215,7 @@ export default function RichsToolkit() {
                 opacity: 0.3
               }}
             >
-              {location.particles[Math.floor(Math.random() * location.particles.length)]}
+              {['🐟', '🎣', '🌊'][Math.floor(Math.random() * 3)]}
             </div>
           ))}
         </div>
@@ -1750,80 +2225,25 @@ export default function RichsToolkit() {
           <div className="text-center mb-12">
             <div className="text-8xl mb-4 animate-bounce">🎣</div>
             <h1 className="text-5xl font-bold text-white mb-2 drop-shadow-lg">Rich's</h1>
-            <h2 className="text-6xl font-bold text-white drop-shadow-lg">Fishing Adventure</h2>
+            <h2 className="text-6xl font-bold text-white drop-shadow-lg mb-6">Fishing Adventure</h2>
           </div>
 
-          {/* Player Stats Summary */}
-          <div className="bg-white/90 backdrop-blur rounded-2xl p-6 mb-8 w-full max-w-md">
-            <div className="grid grid-cols-3 gap-4 text-center">
-              <div>
-                <div className="text-3xl font-bold text-blue-600">{fishingGame.level}</div>
-                <div className="text-sm text-gray-600">Level</div>
-              </div>
-              <div>
-                <div className="text-3xl font-bold text-amber-600">{fishingGame.coins}</div>
-                <div className="text-sm text-gray-600">Coins</div>
-              </div>
-              <div>
-                <div className="text-3xl font-bold text-green-600">{fishingGame.stats.totalCaught}</div>
-                <div className="text-sm text-gray-600">Fish Caught</div>
-              </div>
-            </div>
-            <div className="mt-4 bg-gray-200 rounded-full h-3 overflow-hidden">
-              <div
-                className="bg-green-500 h-full transition-all duration-300"
-                style={{ width: `${(fishingGame.xp / getXPForLevel(fishingGame.level)) * 100}%` }}
-              />
-            </div>
-            <div className="text-xs text-center text-gray-500 mt-1">
-              {fishingGame.xp} / {getXPForLevel(fishingGame.level)} XP
-            </div>
+          {/* Under Construction Message */}
+          <div className="bg-white/90 backdrop-blur rounded-2xl p-8 mb-8 w-full max-w-md text-center">
+            <div className="text-6xl mb-4">🚧</div>
+            <h3 className="text-2xl font-bold text-gray-800 mb-3">Under Construction</h3>
+            <p className="text-gray-600 mb-4">
+              This fishing game is currently being developed and is not yet ready to play.
+            </p>
+            <p className="text-sm text-gray-500">
+              Check back soon for an amazing fishing adventure!
+            </p>
           </div>
-
-          {/* Navigation Buttons */}
-          <div className="grid grid-cols-2 gap-3 w-full max-w-md mb-6">
-            <button
-              onClick={() => setFishingScreen('game')}
-              className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-4 px-6 rounded-xl shadow-lg active:scale-95 transition flex flex-col items-center gap-2"
-            >
-              <Fish size={32} />
-              <span>Start Fishing</span>
-            </button>
-            <button
-              onClick={() => setFishingScreen('worldmap')}
-              className="bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-4 px-6 rounded-xl shadow-lg active:scale-95 transition flex flex-col items-center gap-2"
-            >
-              <Map size={32} />
-              <span>World Map</span>
-            </button>
-            <button
-              onClick={() => setFishingScreen('collection')}
-              className="bg-purple-500 hover:bg-purple-600 text-white font-bold py-4 px-6 rounded-xl shadow-lg active:scale-95 transition flex flex-col items-center gap-2"
-            >
-              <BookOpen size={32} />
-              <span>Collection</span>
-            </button>
-            <button
-              onClick={() => setFishingScreen('shop')}
-              className="bg-amber-500 hover:bg-amber-600 text-white font-bold py-4 px-6 rounded-xl shadow-lg active:scale-95 transition flex flex-col items-center gap-2"
-            >
-              <ShoppingCart size={32} />
-              <span>Shop</span>
-            </button>
-          </div>
-
-          <button
-            onClick={() => setFishingScreen('stats')}
-            className="bg-white/80 hover:bg-white text-gray-800 font-semibold py-3 px-6 rounded-xl shadow-lg active:scale-95 transition flex items-center gap-2"
-          >
-            <Trophy size={24} />
-            <span>Statistics</span>
-          </button>
 
           {/* Back Button */}
           <button
             onClick={() => setCurrentScreen('home')}
-            className="mt-8 text-white font-semibold flex items-center gap-2 hover:opacity-80"
+            className="mt-8 text-white font-semibold flex items-center gap-2 hover:opacity-80 bg-white/20 backdrop-blur px-6 py-3 rounded-xl"
           >
             <ChevronLeft size={20} />
             <span>Back to Toolkit</span>
@@ -2467,14 +2887,31 @@ export default function RichsToolkit() {
           <p className={`${theme.textSecondary}`}>Capture and annotate site photos</p>
         </div>
 
-        {/* Camera button */}
-        <button
-          onClick={() => setShowCamera(true)}
-          className="w-full bg-blue-500 text-white py-4 px-6 rounded-xl font-semibold mb-6 flex items-center justify-center gap-2 active:scale-95 transition"
-        >
-          <Camera size={24} />
-          Take Photo
-        </button>
+        {/* Camera and Pairing buttons */}
+        <div className="grid grid-cols-2 gap-3 mb-6">
+          <button
+            onClick={() => setShowCamera(true)}
+            className="bg-blue-500 text-white py-4 px-6 rounded-xl font-semibold flex items-center justify-center gap-2 active:scale-95 transition"
+          >
+            <Camera size={24} />
+            Take Photo
+          </button>
+          <button
+            onClick={() => { setPairingMode(!pairingMode); setSelectedForPairing(null); }}
+            className={`${pairingMode ? 'bg-purple-500' : 'bg-gray-200 text-gray-700'} text-white py-4 px-6 rounded-xl font-semibold flex items-center justify-center gap-2 active:scale-95 transition`}
+          >
+            <ArrowLeftRight size={24} />
+            {pairingMode ? 'Cancel' : 'Pair B/A'}
+          </button>
+        </div>
+
+        {pairingMode && (
+          <div className="bg-purple-50 border border-purple-200 rounded-xl p-4 mb-4">
+            <p className="text-sm text-purple-900 font-semibold">
+              {selectedForPairing ? '📷 Now select the AFTER photo' : '📷 Select the BEFORE photo'}
+            </p>
+          </div>
+        )}
 
         {/* Photos grid */}
         {photos.length === 0 ? (
@@ -2493,6 +2930,11 @@ export default function RichsToolkit() {
                     alt={photo.note || 'Site photo'}
                     className="w-full h-full object-cover"
                   />
+                  {photo.pairedWith && (
+                    <div className={`absolute top-2 right-2 px-2 py-1 rounded-lg text-xs font-bold text-white ${photo.pairType === 'before' ? 'bg-orange-500' : 'bg-green-500'}`}>
+                      {photo.pairType === 'before' ? 'BEFORE' : 'AFTER'}
+                    </div>
+                  )}
                 </div>
                 {photo.note && (
                   <div className="p-2">
@@ -2500,25 +2942,81 @@ export default function RichsToolkit() {
                   </div>
                 )}
                 <div className="p-2 flex gap-2">
-                  <button
-                    onClick={() => {
-                      setCapturedPhoto(photo.dataUrl);
-                      setShowAnnotation(true);
-                    }}
-                    className="flex-1 text-xs py-2 bg-blue-500 text-white rounded-lg"
-                  >
-                    Annotate
-                  </button>
-                  <button
-                    onClick={() => {
-                      if (confirm('Delete this photo?')) {
-                        setPhotos(photos.filter(p => p.id !== photo.id));
-                      }
-                    }}
-                    className="flex-1 text-xs py-2 bg-red-500 text-white rounded-lg"
-                  >
-                    Delete
-                  </button>
+                  {pairingMode ? (
+                    <button
+                      onClick={() => {
+                        if (!selectedForPairing) {
+                          setSelectedForPairing(photo.id);
+                        } else {
+                          // Pair the photos
+                          setPhotos(photos.map(p => {
+                            if (p.id === selectedForPairing) return { ...p, pairedWith: photo.id, pairType: 'before' };
+                            if (p.id === photo.id) return { ...p, pairedWith: selectedForPairing, pairType: 'after' };
+                            return p;
+                          }));
+                          setPairingMode(false);
+                          setSelectedForPairing(null);
+                        }
+                      }}
+                      className={`flex-1 text-xs py-2 rounded-lg ${selectedForPairing === photo.id ? 'bg-purple-600 text-white' : 'bg-purple-500 text-white'}`}
+                    >
+                      {selectedForPairing === photo.id ? '✓ Selected' : 'Select'}
+                    </button>
+                  ) : (
+                    <>
+                      <button
+                        onClick={() => {
+                          setCapturedPhoto(photo.dataUrl);
+                          setShowAnnotation(true);
+                        }}
+                        className="flex-1 text-xs py-2 bg-blue-500 text-white rounded-lg"
+                      >
+                        Annotate
+                      </button>
+                      {photo.pairedWith && (
+                        <>
+                          {photo.pairType === 'before' && (
+                            <button
+                              onClick={() => {
+                                const afterPhoto = photos.find(p => p.id === photo.pairedWith);
+                                if (afterPhoto) {
+                                  generateBeforeAfterPDF(photo, afterPhoto);
+                                }
+                              }}
+                              className="flex-1 text-xs py-2 bg-green-500 text-white rounded-lg flex items-center justify-center gap-1"
+                            >
+                              <Download size={14} /> PDF
+                            </button>
+                          )}
+                          <button
+                            onClick={() => {
+                              // Unpair
+                              setPhotos(photos.map(p => {
+                                if (p.id === photo.id || p.id === photo.pairedWith) {
+                                  const { pairedWith, pairType, ...rest } = p;
+                                  return rest;
+                                }
+                                return p;
+                              }));
+                            }}
+                            className="flex-1 text-xs py-2 bg-purple-500 text-white rounded-lg"
+                          >
+                            Unpair
+                          </button>
+                        </>
+                      )}
+                      <button
+                        onClick={() => {
+                          if (confirm('Delete this photo?')) {
+                            setPhotos(photos.filter(p => p.id !== photo.id));
+                          }
+                        }}
+                        className="flex-1 text-xs py-2 bg-red-500 text-white rounded-lg"
+                      >
+                        Delete
+                      </button>
+                    </>
+                  )}
                 </div>
               </div>
             ))}
@@ -2644,8 +3142,10 @@ export default function RichsToolkit() {
               )}
               {supplier.notes && <p className="text-xs text-teal-600 bg-teal-50 px-2 py-1 rounded-lg inline-block mb-2">{supplier.notes}</p>}
               <div className="flex gap-2">
-                <a href={`tel:${supplier.phone}`} className="flex-1 p-2 bg-teal-500 text-white rounded-lg font-medium flex items-center justify-center gap-2"><PhoneCall size={16} /> Call</a>
-                <a href={`sms:${supplier.phone}`} className="flex-1 p-2 bg-gray-100 text-gray-700 rounded-lg font-medium flex items-center justify-center gap-2"><MessageSquare size={16} /> Text</a>
+                <a href={`tel:${supplier.phone}`} className={`p-2 bg-teal-500 text-white rounded-lg font-medium flex items-center justify-center gap-2 ${supplier.email ? 'flex-1' : 'flex-1'}`}><PhoneCall size={16} /> Call</a>
+                {supplier.email && (
+                  <a href={`mailto:${supplier.email}`} className="flex-1 p-2 bg-gray-100 text-gray-700 rounded-lg font-medium flex items-center justify-center gap-2"><Mail size={16} /> Email</a>
+                )}
               </div>
             </div>
           ))}
@@ -2662,6 +3162,7 @@ export default function RichsToolkit() {
         <div className="space-y-4">
           <input type="text" value={newSupplier.name} onChange={(e) => setNewSupplier({ ...newSupplier, name: e.target.value })} placeholder="Supplier name" className="w-full p-3 bg-gray-100 rounded-xl" />
           <input type="tel" value={newSupplier.phone} onChange={(e) => setNewSupplier({ ...newSupplier, phone: e.target.value })} placeholder="Phone number" className="w-full p-3 bg-gray-100 rounded-xl" />
+          <input type="email" value={newSupplier.email} onChange={(e) => setNewSupplier({ ...newSupplier, email: e.target.value })} placeholder="Email address" className="w-full p-3 bg-gray-100 rounded-xl" />
           <input type="text" value={newSupplier.address} onChange={(e) => setNewSupplier({ ...newSupplier, address: e.target.value })} placeholder="Address" className="w-full p-3 bg-gray-100 rounded-xl" />
           <input type="text" value={newSupplier.website} onChange={(e) => setNewSupplier({ ...newSupplier, website: e.target.value })} placeholder="Website (e.g., example.co.uk)" className="w-full p-3 bg-gray-100 rounded-xl" />
           <textarea value={newSupplier.notes} onChange={(e) => setNewSupplier({ ...newSupplier, notes: e.target.value })} placeholder="Notes (optional)" className="w-full p-3 bg-gray-100 rounded-xl" rows="2" />
@@ -2671,24 +3172,57 @@ export default function RichsToolkit() {
     </div>
   );
 
-  const renderMaterialListModal = () => (
-    <div className="fixed inset-0 bg-black/50 z-50 flex items-end">
-      <div className="bg-white rounded-t-3xl w-full p-6 max-h-[90vh] overflow-auto">
-        <div className="flex items-center justify-between mb-4"><h2 className="text-xl font-bold">Material List</h2><button onClick={() => { setShowMaterialList(false); setSelectedSupplier(null); }} className="p-2"><X size={24} /></button></div>
-        <div className="space-y-3 mb-4">
-          {materialListItems.map((item) => (
-            <div key={item.id} className="flex gap-2">
-              <input type="text" value={item.item} onChange={(e) => updateMaterialListItem(item.id, 'item', e.target.value)} placeholder="Item" className="flex-1 p-3 bg-gray-100 rounded-xl text-sm" />
-              <input type="number" value={item.qty} onChange={(e) => updateMaterialListItem(item.id, 'qty', e.target.value)} placeholder="Qty" className="w-16 p-3 bg-gray-100 rounded-xl text-sm" />
-              {materialListItems.length > 1 && <button onClick={() => removeMaterialListItem(item.id)} className="p-3 text-gray-400"><Trash2 size={18} /></button>}
+  const renderMaterialListModal = () => {
+    // Group items by supplier
+    const groupedItems = materialListItems.reduce((acc, item) => {
+      const supplier = item.supplier || 'Unassigned';
+      if (!acc[supplier]) acc[supplier] = [];
+      acc[supplier].push(item);
+      return acc;
+    }, {});
+
+    return (
+      <div className="fixed inset-0 bg-black/50 z-50 flex items-end">
+        <div className="bg-white rounded-t-3xl w-full p-6 max-h-[90vh] overflow-auto">
+          <div className="flex items-center justify-between mb-4"><h2 className="text-xl font-bold">Material List</h2><button onClick={() => { setShowMaterialList(false); setSelectedSupplier(null); }} className="p-2"><X size={24} /></button></div>
+
+          {/* Grouped by Supplier View */}
+          {materialListItems.some(item => item.supplier) && (
+            <div className="mb-4 space-y-4">
+              <p className="text-sm font-semibold text-gray-600">📦 Grouped by Supplier</p>
+              {Object.entries(groupedItems).map(([supplier, items]) => (
+                <div key={supplier} className="bg-gray-50 rounded-xl p-3">
+                  <p className="font-semibold text-sm text-teal-600 mb-2">{supplier}</p>
+                  {items.map(item => (
+                    <p key={item.id} className="text-xs text-gray-700 ml-2">• {item.qty} {item.unit} - {item.item}</p>
+                  ))}
+                </div>
+              ))}
             </div>
-          ))}
+          )}
+
+          <p className="text-sm font-semibold text-gray-600 mb-2">All Items</p>
+          <div className="space-y-3 mb-4">
+            {materialListItems.map((item) => (
+              <div key={item.id} className="space-y-2">
+                <div className="flex gap-2">
+                  <input type="text" value={item.item} onChange={(e) => updateMaterialListItem(item.id, 'item', e.target.value)} placeholder="Item" className="flex-1 p-3 bg-gray-100 rounded-xl text-sm" />
+                  <input type="text" value={item.qty} onChange={(e) => updateMaterialListItem(item.id, 'qty', e.target.value)} placeholder="Qty" className="w-16 p-3 bg-gray-100 rounded-xl text-sm" />
+                  {materialListItems.length > 1 && <button onClick={() => removeMaterialListItem(item.id)} className="p-3 text-gray-400"><Trash2 size={18} /></button>}
+                </div>
+                <select value={item.supplier || ''} onChange={(e) => updateMaterialListItem(item.id, 'supplier', e.target.value)} className="w-full p-2 bg-gray-50 rounded-lg text-xs">
+                  <option value="">Select supplier...</option>
+                  {suppliers.filter(s => s.favorite).map(s => <option key={s.id} value={s.name}>{s.name}</option>)}
+                </select>
+              </div>
+            ))}
+          </div>
+          <button onClick={addMaterialListItem} className="w-full p-3 bg-gray-100 text-gray-600 rounded-xl mb-4 flex items-center justify-center gap-2"><Plus size={18} /> Add Item</button>
+          <button onClick={() => navigator.clipboard?.writeText(generateMaterialListText())} className="w-full p-4 bg-teal-500 text-white rounded-xl font-semibold flex items-center justify-center gap-2"><Copy size={20} /> Copy List</button>
         </div>
-        <button onClick={addMaterialListItem} className="w-full p-3 bg-gray-100 text-gray-600 rounded-xl mb-4 flex items-center justify-center gap-2"><Plus size={18} /> Add Item</button>
-        <button onClick={() => navigator.clipboard?.writeText(generateMaterialListText())} className="w-full p-4 bg-teal-500 text-white rounded-xl font-semibold flex items-center justify-center gap-2"><Copy size={20} /> Copy List</button>
       </div>
-    </div>
-  );
+    );
+  };
 
   const renderAddTimeModal = () => (
     <div className="fixed inset-0 bg-black/50 z-50 flex items-end">
@@ -3068,6 +3602,7 @@ export default function RichsToolkit() {
     else if (selectedCalc === 'timber') { results = calculateTimber(); content = (<><InputField label="Perimeter" value={timberInputs.perimeter} onChange={(v) => setTimberInputs({...timberInputs, perimeter: v})} unit="m" /><InputField label="Doors" value={timberInputs.doors} onChange={(e) => setTimberInputs({...timberInputs, doors: e})} /><div className="pt-4 border-t grid grid-cols-2 gap-3"><ResultCard label="Length" value={results.withWastage} unit="m" /><ResultCard label="3m pcs" value={results.lengths3m} unit="pcs" highlight /></div></>); }
     else if (selectedCalc === 'tiles') { results = calculateTiles(); content = (<><div className="grid grid-cols-2 gap-3"><InputField label="Length" value={tileInputs.length} onChange={(v) => setTileInputs({...tileInputs, length: v})} unit="cm" /><InputField label="Width" value={tileInputs.width} onChange={(v) => setTileInputs({...tileInputs, width: v})} unit="cm" /></div><div className="pt-4 border-t grid grid-cols-2 gap-3"><ResultCard label="Area" value={results.area} unit="m²" /><ResultCard label="Tiles" value={results.tilesWithWastage} unit="pcs" highlight /></div></>); }
     else if (selectedCalc === 'concrete') { results = calculateConcrete(); content = (<><div className="grid grid-cols-2 gap-3"><InputField label="Length" value={concreteInputs.length} onChange={(v) => setConcreteInputs({...concreteInputs, length: v})} unit="mm" /><InputField label="Width" value={concreteInputs.width} onChange={(v) => setConcreteInputs({...concreteInputs, width: v})} unit="mm" /></div><InputField label="Depth" value={concreteInputs.depth} onChange={(v) => setConcreteInputs({...concreteInputs, depth: v})} unit="mm" /><div className="pt-4 border-t grid grid-cols-2 gap-3"><ResultCard label="Volume" value={results.volume} unit="m³" /><ResultCard label="Bags" value={results.bags25kg} unit="25kg" highlight /></div></>); }
+    else if (selectedCalc === 'vat') { results = calculateVAT(); content = (<><InputField label="Amount" value={vatInputs.amount} onChange={(v) => setVatInputs({...vatInputs, amount: v})} unit="£" placeholder="Enter price" /><InputField label="Margin %" value={vatInputs.margin} onChange={(v) => setVatInputs({...vatInputs, margin: v})} unit="%" placeholder="15" /><div className="pt-4 border-t space-y-2"><p className="text-sm font-semibold text-gray-600 mb-2">VAT Calculations (20%)</p><div className="grid grid-cols-2 gap-3"><ResultCard label="+ VAT" value={`£${results.withVAT}`} /><ResultCard label="- VAT" value={`£${results.withoutVAT}`} /></div><div className="grid grid-cols-2 gap-3 mt-2"><ResultCard label="VAT Amount" value={`£${results.vatAmount}`} /></div><p className="text-sm font-semibold text-gray-600 mt-4 mb-2">Margin Calculations</p><div className="grid grid-cols-2 gap-3"><ResultCard label={`Sell (+${results.margin}%)`} value={`£${results.sellPrice}`} highlight /><ResultCard label="Cost Price" value={`£${results.costFromSell}`} /></div></div></>); }
     else { results = calculateStud(); content = (<><InputField label="Length" value={studInputs.length} onChange={(v) => setStudInputs({...studInputs, length: v})} unit="mm" /><InputField label="Height" value={studInputs.height} onChange={(v) => setStudInputs({...studInputs, height: v})} unit="mm" /><div className="pt-4 border-t grid grid-cols-2 gap-3"><ResultCard label="Studs" value={results.studs} unit="pcs" /><ResultCard label="Boards" value={results.boardsNeeded} unit="sheets" highlight /></div></>); }
     return (
       <div className="p-4 pb-24">
@@ -3331,7 +3866,10 @@ export default function RichsToolkit() {
           <div key={inv.id} className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
             <div className="flex justify-between items-start mb-2">
               <div><p className="font-semibold">{inv.invoiceNumber}</p><p className="text-sm text-gray-500">{inv.project}</p></div>
-              <button onClick={() => toggleInvoiceStatus(inv.id)} className={`px-3 py-1 rounded-lg text-xs font-semibold ${inv.status === 'paid' ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'}`}>{inv.status === 'paid' ? 'Paid' : 'Unpaid'}</button>
+              <div className="flex gap-2">
+                <button onClick={() => generateInvoicePDF(inv)} className="px-3 py-1 rounded-lg text-xs font-semibold bg-blue-100 text-blue-700 flex items-center gap-1"><Download size={12} /> PDF</button>
+                <button onClick={() => toggleInvoiceStatus(inv.id)} className={`px-3 py-1 rounded-lg text-xs font-semibold ${inv.status === 'paid' ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'}`}>{inv.status === 'paid' ? 'Paid' : 'Unpaid'}</button>
+              </div>
             </div>
             <div className="flex justify-between text-sm"><span className="text-gray-600">{new Date(inv.date).toLocaleDateString()}</span><span className="font-bold text-emerald-600">£{inv.total.toFixed(2)}</span></div>
           </div>
