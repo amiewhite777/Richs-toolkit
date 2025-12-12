@@ -158,7 +158,7 @@ export default function RichsToolkit() {
 
   // ==================== FISHING GAME DATA ====================
 
-  // Fishing Game Locations (Phase 1: 3 locations)
+  // Fishing Game Locations (All 12 locations)
   const FISHING_LOCATIONS = {
     bath: {
       id: 'bath',
@@ -192,6 +192,105 @@ export default function RichsToolkit() {
       waterGradient: 'from-slate-700/90 to-slate-900/95',
       particles: ['🌧️', '🦅'],
       fish: ['browntrout', 'rainbowtrout', 'atlanticsalmon', 'arcticchar', 'feroxtrout', 'thelaird']
+    },
+    bulgaria: {
+      id: 'bulgaria',
+      name: 'River Danube, Bulgaria',
+      country: '🇧🇬',
+      unlockLevel: 15,
+      description: 'Second-longest river in Europe. Ancient waters flowing through green valleys.',
+      skyGradient: 'from-green-700 via-green-500 to-sky-300',
+      waterGradient: 'from-green-800/70 to-green-950/85',
+      particles: ['🌿', '🦢'],
+      fish: ['europeanperch', 'zander', 'wels', 'danubecarp', 'danubesalmon', 'sterlet', 'beluga']
+    },
+    norway: {
+      id: 'norway',
+      name: 'Lofoten Islands, Norway',
+      country: '🇳🇴',
+      unlockLevel: 20,
+      description: 'Arctic waters beneath dramatic peaks. Northern lights dance above frigid seas.',
+      skyGradient: 'from-indigo-900 via-blue-700 to-cyan-500',
+      waterGradient: 'from-blue-900/90 to-slate-950/95',
+      particles: ['❄️', '🌌'],
+      fish: ['cod', 'haddock', 'halibut', 'wolffish', 'redfish', 'coalfish', 'skrei', 'arcticchar_norway']
+    },
+    florida: {
+      id: 'florida',
+      name: 'Everglades, Florida',
+      country: '🇺🇸',
+      unlockLevel: 25,
+      description: 'Swamps teeming with prehistoric predators. Sun-scorched waters hide monsters.',
+      skyGradient: 'from-orange-600 via-yellow-500 to-blue-400',
+      waterGradient: 'from-green-700/60 to-green-900/80',
+      particles: ['🐊', '🦩'],
+      fish: ['largemouthbass', 'snook', 'tarpon', 'redfish_florida', 'garfish', 'peacockbass', 'floridagator', 'bullshark']
+    },
+    amazon: {
+      id: 'amazon',
+      name: 'Amazon River, Brazil',
+      country: '🇧🇷',
+      unlockLevel: 30,
+      description: 'The lungs of Earth. Dense jungle conceals the most biodiverse waters on the planet.',
+      skyGradient: 'from-green-800 via-lime-600 to-yellow-400',
+      waterGradient: 'from-amber-800/60 to-amber-950/75',
+      particles: ['🦜', '🌺'],
+      fish: ['piranha', 'peacockbass_amazon', 'payara', 'arapaima', 'redtailcatfish', 'tambaqui', 'electriceel', 'pirarucu']
+    },
+    australia: {
+      id: 'australia',
+      name: 'Great Barrier Reef, Australia',
+      country: '🇦🇺',
+      unlockLevel: 35,
+      description: 'Crystal-clear coral reefs. Vibrant fish dance through underwater rainbows.',
+      skyGradient: 'from-cyan-400 via-blue-400 to-teal-300',
+      waterGradient: 'from-cyan-600/50 to-blue-800/70',
+      particles: ['🐠', '🪸'],
+      fish: ['barramundi', 'queenfish', 'giantrevally', 'goldentrevally', 'coraltrout', 'mackerel', 'blackmarlin', 'greatwhiteshark']
+    },
+    japan: {
+      id: 'japan',
+      name: 'Lake Biwa, Japan',
+      country: '🇯🇵',
+      unlockLevel: 40,
+      description: 'Ancient lake of Japan. Cherry blossoms fall on sacred waters holding legendary fish.',
+      skyGradient: 'from-pink-400 via-purple-300 to-blue-400',
+      waterGradient: 'from-purple-700/60 to-indigo-900/80',
+      particles: ['🌸', '🎋'],
+      fish: ['biwasalmon', 'blackbass', 'bluegill', 'crucian', 'ayufish', 'biwatrout', 'catfish_japan', 'masteroi']
+    },
+    vietnam: {
+      id: 'vietnam',
+      name: 'Mekong Delta, Vietnam',
+      country: '🇻🇳',
+      unlockLevel: 45,
+      description: 'Muddy waters flow past floating markets. The Mekong bounty feeds millions.',
+      skyGradient: 'from-amber-600 via-yellow-500 to-orange-400',
+      waterGradient: 'from-yellow-800/65 to-amber-950/80',
+      particles: ['🍜', '⛵'],
+      fish: ['mekongcatfish_vietnam', 'giantcarp', 'stripedcatfish_vietnam', 'snakehead', 'giantgourami_vietnam', 'tigerfish', 'mekongdragon']
+    },
+    southafrica: {
+      id: 'southafrica',
+      name: 'Cape Point, South Africa',
+      country: '🇿🇦',
+      unlockLevel: 50,
+      description: 'Where two oceans meet. Wild Atlantic waves crash against African shores.',
+      skyGradient: 'from-orange-700 via-red-500 to-yellow-400',
+      waterGradient: 'from-blue-700/70 to-blue-950/90',
+      particles: ['🦭', '🐳'],
+      fish: ['yellowfintuna', 'snoek', 'kabeljou', 'kingfish', 'steenbras', 'bonito', 'greatwhite', 'capeleviathan']
+    },
+    iceland: {
+      id: 'iceland',
+      name: 'Blue Lagoon, Iceland',
+      country: '🇮🇸',
+      unlockLevel: 55,
+      description: 'Geothermal pools beneath glaciers. Steam rises from waters warmed by the core of Earth.',
+      skyGradient: 'from-blue-300 via-cyan-200 to-white',
+      waterGradient: 'from-cyan-400/40 to-blue-600/60',
+      particles: ['💎', '🌊'],
+      fish: ['atlanticsalmon_iceland', 'arcticchar_iceland', 'browntrout_iceland', 'seabass', 'wolffish_iceland', 'icelandictreasure']
     }
   };
 
@@ -222,7 +321,93 @@ export default function RichsToolkit() {
     atlanticsalmon: { id: 'atlanticsalmon', emoji: '🐠', name: 'Atlantic Salmon', rarity: 'uncommon', minWeight: 3, maxWeight: 25, fight: 70, value: 150, xp: 100, location: 'lochness' },
     arcticchar: { id: 'arcticchar', emoji: '❄️', name: 'Arctic Char', rarity: 'rare', minWeight: 1, maxWeight: 10, fight: 55, value: 120, xp: 90, location: 'lochness' },
     feroxtrout: { id: 'feroxtrout', emoji: '🦈', name: 'Ferox Trout', rarity: 'epic', minWeight: 5, maxWeight: 15, fight: 75, value: 250, xp: 150, location: 'lochness' },
-    thelaird: { id: 'thelaird', emoji: '👑', name: 'The Laird', rarity: 'legendary', minWeight: 30, maxWeight: 50, fight: 98, value: 2500, xp: 700, location: 'lochness', description: 'Ancient salmon, older than the castle' }
+    thelaird: { id: 'thelaird', emoji: '👑', name: 'The Laird', rarity: 'legendary', minWeight: 30, maxWeight: 50, fight: 98, value: 2500, xp: 700, location: 'lochness', description: 'Ancient salmon, older than the castle' },
+
+    // River Danube, Bulgaria
+    europeanperch: { id: 'europeanperch', emoji: '🐠', name: 'European Perch', rarity: 'common', minWeight: 0.4, maxWeight: 3, fight: 35, value: 20, xp: 25, location: 'bulgaria' },
+    zander: { id: 'zander', emoji: '🐟', name: 'Zander', rarity: 'common', minWeight: 1, maxWeight: 12, fight: 50, value: 45, xp: 40, location: 'bulgaria' },
+    wels: { id: 'wels', emoji: '🐋', name: 'Wels Catfish', rarity: 'uncommon', minWeight: 10, maxWeight: 80, fight: 75, value: 150, xp: 120, location: 'bulgaria' },
+    danubecarp: { id: 'danubecarp', emoji: '🐡', name: 'Danube Carp', rarity: 'rare', minWeight: 5, maxWeight: 30, fight: 65, value: 180, xp: 140, location: 'bulgaria' },
+    danubesalmon: { id: 'danubesalmon', emoji: '🐟', name: 'Danube Salmon', rarity: 'epic', minWeight: 8, maxWeight: 40, fight: 85, value: 350, xp: 200, location: 'bulgaria' },
+    sterlet: { id: 'sterlet', emoji: '🐠', name: 'Sterlet Sturgeon', rarity: 'epic', minWeight: 5, maxWeight: 15, fight: 70, value: 400, xp: 250, location: 'bulgaria' },
+    beluga: { id: 'beluga', emoji: '🐋', name: 'Beluga Sturgeon', rarity: 'legendary', minWeight: 50, maxWeight: 300, fight: 100, value: 5000, xp: 800, location: 'bulgaria', description: 'Ancient giant of the deep' },
+
+    // Lofoten Islands, Norway
+    cod: { id: 'cod', emoji: '🐟', name: 'Atlantic Cod', rarity: 'common', minWeight: 1, maxWeight: 15, fight: 40, value: 35, xp: 30, location: 'norway' },
+    haddock: { id: 'haddock', emoji: '🐠', name: 'Haddock', rarity: 'common', minWeight: 0.8, maxWeight: 10, fight: 35, value: 30, xp: 25, location: 'norway' },
+    halibut: { id: 'halibut', emoji: '🐡', name: 'Halibut', rarity: 'uncommon', minWeight: 10, maxWeight: 100, fight: 80, value: 200, xp: 150, location: 'norway' },
+    wolffish: { id: 'wolffish', emoji: '🦈', name: 'Atlantic Wolffish', rarity: 'uncommon', minWeight: 5, maxWeight: 25, fight: 70, value: 150, xp: 120, location: 'norway' },
+    redfish: { id: 'redfish', emoji: '🐟', name: 'Redfish', rarity: 'rare', minWeight: 3, maxWeight: 20, fight: 60, value: 180, xp: 140, location: 'norway' },
+    coalfish: { id: 'coalfish', emoji: '🐠', name: 'Coalfish', rarity: 'rare', minWeight: 2, maxWeight: 15, fight: 55, value: 140, xp: 110, location: 'norway' },
+    skrei: { id: 'skrei', emoji: '👑', name: 'Skrei Cod', rarity: 'epic', minWeight: 10, maxWeight: 30, fight: 75, value: 450, xp: 280, location: 'norway' },
+    arcticchar_norway: { id: 'arcticchar_norway', emoji: '❄️', name: 'Arctic Char', rarity: 'legendary', minWeight: 15, maxWeight: 40, fight: 90, value: 3000, xp: 750, location: 'norway', description: 'Northern lights guardian' },
+
+    // Everglades, Florida
+    largemouthbass: { id: 'largemouthbass', emoji: '🐟', name: 'Largemouth Bass', rarity: 'common', minWeight: 1, maxWeight: 8, fight: 50, value: 40, xp: 35, location: 'florida' },
+    snook: { id: 'snook', emoji: '🐠', name: 'Snook', rarity: 'common', minWeight: 2, maxWeight: 15, fight: 60, value: 60, xp: 50, location: 'florida' },
+    tarpon: { id: 'tarpon', emoji: '🐡', name: 'Tarpon', rarity: 'uncommon', minWeight: 10, maxWeight: 100, fight: 90, value: 250, xp: 180, location: 'florida' },
+    redfish_florida: { id: 'redfish_florida', emoji: '🐠', name: 'Redfish', rarity: 'uncommon', minWeight: 3, maxWeight: 20, fight: 55, value: 120, xp: 100, location: 'florida' },
+    garfish: { id: 'garfish', emoji: '🦈', name: 'Alligator Gar', rarity: 'rare', minWeight: 20, maxWeight: 120, fight: 85, value: 300, xp: 220, location: 'florida' },
+    peacockbass: { id: 'peacockbass', emoji: '🦚', name: 'Peacock Bass', rarity: 'epic', minWeight: 3, maxWeight: 12, fight: 70, value: 350, xp: 250, location: 'florida' },
+    floridagator: { id: 'floridagator', emoji: '🐊', name: 'Florida Gator', rarity: 'epic', minWeight: 50, maxWeight: 200, fight: 95, value: 600, xp: 400, location: 'florida' },
+    bullshark: { id: 'bullshark', emoji: '🦈', name: 'Bull Shark', rarity: 'legendary', minWeight: 80, maxWeight: 250, fight: 100, value: 4000, xp: 850, location: 'florida', description: 'Apex predator of the swamps' },
+
+    // Amazon River, Brazil
+    piranha: { id: 'piranha', emoji: '🐟', name: 'Red Piranha', rarity: 'common', minWeight: 0.5, maxWeight: 3, fight: 40, value: 25, xp: 20, location: 'amazon' },
+    peacockbass_amazon: { id: 'peacockbass_amazon', emoji: '🦚', name: 'Peacock Bass', rarity: 'common', minWeight: 2, maxWeight: 10, fight: 55, value: 50, xp: 45, location: 'amazon' },
+    payara: { id: 'payara', emoji: '🦷', name: 'Payara', rarity: 'uncommon', minWeight: 3, maxWeight: 15, fight: 70, value: 120, xp: 100, location: 'amazon' },
+    arapaima: { id: 'arapaima', emoji: '🐋', name: 'Arapaima', rarity: 'rare', minWeight: 50, maxWeight: 200, fight: 90, value: 450, xp: 300, location: 'amazon' },
+    redtailcatfish: { id: 'redtailcatfish', emoji: '🐠', name: 'Redtail Catfish', rarity: 'rare', minWeight: 10, maxWeight: 60, fight: 75, value: 280, xp: 200, location: 'amazon' },
+    tambaqui: { id: 'tambaqui', emoji: '🐡', name: 'Tambaqui', rarity: 'epic', minWeight: 15, maxWeight: 40, fight: 65, value: 400, xp: 280, location: 'amazon' },
+    electriceel: { id: 'electriceel', emoji: '⚡', name: 'Electric Eel', rarity: 'epic', minWeight: 5, maxWeight: 20, fight: 80, value: 500, xp: 350, location: 'amazon' },
+    pirarucu: { id: 'pirarucu', emoji: '🐉', name: 'Pirarucu', rarity: 'legendary', minWeight: 100, maxWeight: 300, fight: 100, value: 6000, xp: 900, location: 'amazon', description: 'Living fossil of the Amazon' },
+
+    // Great Barrier Reef, Australia
+    barramundi: { id: 'barramundi', emoji: '🐟', name: 'Barramundi', rarity: 'common', minWeight: 2, maxWeight: 20, fight: 60, value: 70, xp: 60, location: 'australia' },
+    queenfish: { id: 'queenfish', emoji: '🐠', name: 'Queenfish', rarity: 'common', minWeight: 1, maxWeight: 12, fight: 55, value: 50, xp: 45, location: 'australia' },
+    giantrevally: { id: 'giantrevally', emoji: '💎', name: 'Giant Trevally', rarity: 'uncommon', minWeight: 5, maxWeight: 50, fight: 85, value: 200, xp: 150, location: 'australia' },
+    goldentrevally: { id: 'goldentrevally', emoji: '✨', name: 'Golden Trevally', rarity: 'rare', minWeight: 3, maxWeight: 15, fight: 65, value: 250, xp: 180, location: 'australia' },
+    coraltrout: { id: 'coraltrout', emoji: '🐡', name: 'Coral Trout', rarity: 'rare', minWeight: 2, maxWeight: 10, fight: 60, value: 220, xp: 160, location: 'australia' },
+    mackerel: { id: 'mackerel', emoji: '🐟', name: 'Spanish Mackerel', rarity: 'epic', minWeight: 5, maxWeight: 25, fight: 75, value: 400, xp: 280, location: 'australia' },
+    blackmarlin: { id: 'blackmarlin', emoji: '🗡️', name: 'Black Marlin', rarity: 'epic', minWeight: 100, maxWeight: 500, fight: 95, value: 800, xp: 500, location: 'australia' },
+    greatwhiteshark: { id: 'greatwhiteshark', emoji: '🦈', name: 'Great White Shark', rarity: 'legendary', minWeight: 200, maxWeight: 1000, fight: 100, value: 10000, xp: 1000, location: 'australia', description: 'King of the reef' },
+
+    // Lake Biwa, Japan
+    biwasalmon: { id: 'biwasalmon', emoji: '🐟', name: 'Biwa Salmon', rarity: 'common', minWeight: 0.8, maxWeight: 6, fight: 45, value: 50, xp: 40, location: 'japan' },
+    blackbass: { id: 'blackbass', emoji: '🐠', name: 'Black Bass', rarity: 'common', minWeight: 1, maxWeight: 8, fight: 50, value: 55, xp: 45, location: 'japan' },
+    bluegill: { id: 'bluegill', emoji: '🐟', name: 'Bluegill', rarity: 'uncommon', minWeight: 0.3, maxWeight: 2, fight: 30, value: 40, xp: 35, location: 'japan' },
+    crucian: { id: 'crucian', emoji: '🐡', name: 'Crucian Carp', rarity: 'uncommon', minWeight: 0.5, maxWeight: 4, fight: 35, value: 60, xp: 50, location: 'japan' },
+    ayufish: { id: 'ayufish', emoji: '✨', name: 'Ayu Fish', rarity: 'rare', minWeight: 0.2, maxWeight: 0.5, fight: 40, value: 180, xp: 120, location: 'japan' },
+    biwatrout: { id: 'biwatrout', emoji: '🌸', name: 'Biwa Trout', rarity: 'epic', minWeight: 3, maxWeight: 15, fight: 70, value: 450, xp: 300, location: 'japan' },
+    catfish_japan: { id: 'catfish_japan', emoji: '😺', name: 'Japanese Catfish', rarity: 'epic', minWeight: 5, maxWeight: 25, fight: 65, value: 400, xp: 280, location: 'japan' },
+    masteroi: { id: 'masteroi', emoji: '🎌', name: 'Master Koi', rarity: 'legendary', minWeight: 20, maxWeight: 50, fight: 85, value: 8000, xp: 950, location: 'japan', description: 'Sacred guardian of Lake Biwa' },
+
+    // Mekong Delta, Vietnam
+    mekongcatfish_vietnam: { id: 'mekongcatfish_vietnam', emoji: '🐟', name: 'Mekong Catfish', rarity: 'common', minWeight: 5, maxWeight: 40, fight: 60, value: 80, xp: 70, location: 'vietnam' },
+    giantcarp: { id: 'giantcarp', emoji: '🐡', name: 'Giant Carp', rarity: 'uncommon', minWeight: 10, maxWeight: 60, fight: 70, value: 150, xp: 120, location: 'vietnam' },
+    stripedcatfish_vietnam: { id: 'stripedcatfish_vietnam', emoji: '🐠', name: 'Striped Catfish', rarity: 'uncommon', minWeight: 2, maxWeight: 20, fight: 50, value: 100, xp: 85, location: 'vietnam' },
+    snakehead: { id: 'snakehead', emoji: '🐍', name: 'Snakehead', rarity: 'rare', minWeight: 3, maxWeight: 18, fight: 65, value: 200, xp: 150, location: 'vietnam' },
+    giantgourami_vietnam: { id: 'giantgourami_vietnam', emoji: '🐠', name: 'Giant Gourami', rarity: 'rare', minWeight: 5, maxWeight: 25, fight: 55, value: 180, xp: 140, location: 'vietnam' },
+    tigerfish: { id: 'tigerfish', emoji: '🐅', name: 'Tiger Catfish', rarity: 'epic', minWeight: 15, maxWeight: 80, fight: 85, value: 550, xp: 380, location: 'vietnam' },
+    mekongdragon: { id: 'mekongdragon', emoji: '🐉', name: 'Mekong Dragon', rarity: 'legendary', minWeight: 100, maxWeight: 400, fight: 100, value: 7500, xp: 1000, location: 'vietnam', description: 'Ancient spirit of the river' },
+
+    // Cape Point, South Africa
+    yellowfintuna: { id: 'yellowfintuna', emoji: '🐟', name: 'Yellowfin Tuna', rarity: 'common', minWeight: 10, maxWeight: 80, fight: 75, value: 100, xp: 90, location: 'southafrica' },
+    snoek: { id: 'snoek', emoji: '🐠', name: 'Snoek', rarity: 'common', minWeight: 2, maxWeight: 10, fight: 50, value: 60, xp: 50, location: 'southafrica' },
+    kabeljou: { id: 'kabeljou', emoji: '🐟', name: 'Kabeljou', rarity: 'uncommon', minWeight: 5, maxWeight: 35, fight: 65, value: 150, xp: 120, location: 'southafrica' },
+    kingfish: { id: 'kingfish', emoji: '👑', name: 'Kingfish', rarity: 'uncommon', minWeight: 8, maxWeight: 50, fight: 80, value: 200, xp: 160, location: 'southafrica' },
+    steenbras: { id: 'steenbras', emoji: '🐡', name: 'Steenbras', rarity: 'rare', minWeight: 3, maxWeight: 20, fight: 60, value: 220, xp: 170, location: 'southafrica' },
+    bonito: { id: 'bonito', emoji: '🐠', name: 'Bonito', rarity: 'rare', minWeight: 5, maxWeight: 25, fight: 70, value: 250, xp: 190, location: 'southafrica' },
+    greatwhite: { id: 'greatwhite', emoji: '🦈', name: 'Great White Shark', rarity: 'epic', minWeight: 200, maxWeight: 800, fight: 98, value: 900, xp: 600, location: 'southafrica' },
+    capeleviathan: { id: 'capeleviathan', emoji: '🐋', name: 'Cape Leviathan', rarity: 'legendary', minWeight: 500, maxWeight: 1500, fight: 100, value: 12000, xp: 1100, location: 'southafrica', description: 'Where oceans collide' },
+
+    // Blue Lagoon, Iceland
+    atlanticsalmon_iceland: { id: 'atlanticsalmon_iceland', emoji: '🐟', name: 'Atlantic Salmon', rarity: 'common', minWeight: 3, maxWeight: 20, fight: 65, value: 90, xp: 75, location: 'iceland' },
+    arcticchar_iceland: { id: 'arcticchar_iceland', emoji: '❄️', name: 'Arctic Char', rarity: 'uncommon', minWeight: 1, maxWeight: 12, fight: 55, value: 130, xp: 100, location: 'iceland' },
+    browntrout_iceland: { id: 'browntrout_iceland', emoji: '🐠', name: 'Brown Trout', rarity: 'uncommon', minWeight: 0.8, maxWeight: 10, fight: 50, value: 110, xp: 90, location: 'iceland' },
+    seabass: { id: 'seabass', emoji: '🐡', name: 'Sea Bass', rarity: 'rare', minWeight: 2, maxWeight: 15, fight: 60, value: 200, xp: 150, location: 'iceland' },
+    wolffish_iceland: { id: 'wolffish_iceland', emoji: '🐺', name: 'Wolffish', rarity: 'epic', minWeight: 8, maxWeight: 35, fight: 80, value: 500, xp: 350, location: 'iceland' },
+    icelandictreasure: { id: 'icelandictreasure', emoji: '💎', name: 'Icelandic Treasure', rarity: 'legendary', minWeight: 40, maxWeight: 100, fight: 95, value: 9500, xp: 1050, location: 'iceland', description: 'Gem of the glaciers' }
   };
 
   // Equipment Data
