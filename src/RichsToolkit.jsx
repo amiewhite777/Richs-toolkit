@@ -156,6 +156,154 @@ export default function RichsToolkit() {
   const [capturedPhoto, setCapturedPhoto] = useState(null);
   const [showAnnotation, setShowAnnotation] = useState(false);
 
+  // ==================== FISHING GAME DATA ====================
+
+  // Fishing Game Locations (Phase 1: 3 locations)
+  const FISHING_LOCATIONS = {
+    bath: {
+      id: 'bath',
+      name: 'River Avon, Bath',
+      country: '🇬🇧',
+      unlockLevel: 1,
+      description: 'Your home waters. Misty mornings and peaceful afternoons on the historic River Avon.',
+      skyGradient: 'from-emerald-800 via-emerald-600 to-sky-400',
+      waterGradient: 'from-emerald-700/80 to-emerald-900/90',
+      particles: ['🍃', '🦆'],
+      fish: ['roach', 'perch', 'bream', 'chub', 'pike', 'carp', 'tench', 'ghostpike']
+    },
+    thailand: {
+      id: 'thailand',
+      name: 'Chao Phraya River, Thailand',
+      country: '🇹🇭',
+      unlockLevel: 5,
+      description: 'Golden temples reflect on warm tropical waters. Giant fish lurk in the depths.',
+      skyGradient: 'from-amber-500 via-orange-400 to-yellow-300',
+      waterGradient: 'from-amber-700/70 to-amber-900/80',
+      particles: ['🪷', '✨'],
+      fish: ['tilapia', 'stripedcatfish', 'giantsnakehead', 'giantgourami', 'siamesecarp', 'mekongcatfish', 'nagaking']
+    },
+    lochness: {
+      id: 'lochness',
+      name: 'Loch Ness, Scottish Highlands',
+      country: '🏴󠁧󠁢󠁳󠁣󠁴󠁿',
+      unlockLevel: 10,
+      description: 'Ancient lochs shrouded in mist and legend. Something big lurks below.',
+      skyGradient: 'from-slate-700 via-slate-500 to-slate-400',
+      waterGradient: 'from-slate-700/90 to-slate-900/95',
+      particles: ['🌧️', '🦅'],
+      fish: ['browntrout', 'rainbowtrout', 'atlanticsalmon', 'arcticchar', 'feroxtrout', 'thelaird']
+    }
+  };
+
+  // Fish Database
+  const FISH_DATA = {
+    // River Avon, Bath
+    roach: { id: 'roach', emoji: '🐟', name: 'Roach', rarity: 'common', minWeight: 0.2, maxWeight: 1.5, fight: 20, value: 10, xp: 15, location: 'bath' },
+    perch: { id: 'perch', emoji: '🐠', name: 'Perch', rarity: 'common', minWeight: 0.3, maxWeight: 2.8, fight: 30, value: 15, xp: 20, location: 'bath' },
+    bream: { id: 'bream', emoji: '🐟', name: 'Bream', rarity: 'uncommon', minWeight: 0.8, maxWeight: 5, fight: 25, value: 25, xp: 30, location: 'bath' },
+    chub: { id: 'chub', emoji: '🐠', name: 'Chub', rarity: 'uncommon', minWeight: 1, maxWeight: 6, fight: 40, value: 35, xp: 40, location: 'bath' },
+    pike: { id: 'pike', emoji: '🦈', name: 'Pike', rarity: 'rare', minWeight: 2, maxWeight: 15, fight: 70, value: 100, xp: 80, location: 'bath' },
+    carp: { id: 'carp', emoji: '🐡', name: 'Common Carp', rarity: 'rare', minWeight: 3, maxWeight: 25, fight: 60, value: 120, xp: 100, location: 'bath' },
+    tench: { id: 'tench', emoji: '🐠', name: 'Tench', rarity: 'epic', minWeight: 1, maxWeight: 8, fight: 45, value: 150, xp: 120, location: 'bath' },
+    ghostpike: { id: 'ghostpike', emoji: '👻', name: 'Ghost Pike', rarity: 'legendary', minWeight: 15, maxWeight: 30, fight: 95, value: 1000, xp: 500, location: 'bath', description: 'The albino legend of the Avon' },
+
+    // Chao Phraya River, Thailand
+    tilapia: { id: 'tilapia', emoji: '🐟', name: 'Tilapia', rarity: 'common', minWeight: 0.3, maxWeight: 2, fight: 15, value: 8, xp: 12, location: 'thailand' },
+    stripedcatfish: { id: 'stripedcatfish', emoji: '🐠', name: 'Striped Catfish', rarity: 'common', minWeight: 1, maxWeight: 15, fight: 35, value: 30, xp: 35, location: 'thailand' },
+    giantsnakehead: { id: 'giantsnakehead', emoji: '🐍', name: 'Giant Snakehead', rarity: 'uncommon', minWeight: 2, maxWeight: 12, fight: 55, value: 60, xp: 50, location: 'thailand' },
+    giantgourami: { id: 'giantgourami', emoji: '🐠', name: 'Giant Gourami', rarity: 'uncommon', minWeight: 3, maxWeight: 20, fight: 40, value: 80, xp: 70, location: 'thailand' },
+    siamesecarp: { id: 'siamesecarp', emoji: '🐡', name: 'Siamese Carp', rarity: 'rare', minWeight: 10, maxWeight: 100, fight: 80, value: 200, xp: 150, location: 'thailand' },
+    mekongcatfish: { id: 'mekongcatfish', emoji: '🦈', name: 'Mekong Giant Catfish', rarity: 'epic', minWeight: 20, maxWeight: 150, fight: 90, value: 400, xp: 200, location: 'thailand' },
+    nagaking: { id: 'nagaking', emoji: '🐉', name: 'Naga King', rarity: 'legendary', minWeight: 80, maxWeight: 200, fight: 100, value: 2000, xp: 600, location: 'thailand', description: 'Serpent deity of the river' },
+
+    // Loch Ness, Scotland
+    browntrout: { id: 'browntrout', emoji: '🐟', name: 'Brown Trout', rarity: 'common', minWeight: 0.5, maxWeight: 8, fight: 45, value: 40, xp: 35, location: 'lochness' },
+    rainbowtrout: { id: 'rainbowtrout', emoji: '🌈', name: 'Rainbow Trout', rarity: 'common', minWeight: 0.4, maxWeight: 6, fight: 50, value: 35, xp: 30, location: 'lochness' },
+    atlanticsalmon: { id: 'atlanticsalmon', emoji: '🐠', name: 'Atlantic Salmon', rarity: 'uncommon', minWeight: 3, maxWeight: 25, fight: 70, value: 150, xp: 100, location: 'lochness' },
+    arcticchar: { id: 'arcticchar', emoji: '❄️', name: 'Arctic Char', rarity: 'rare', minWeight: 1, maxWeight: 10, fight: 55, value: 120, xp: 90, location: 'lochness' },
+    feroxtrout: { id: 'feroxtrout', emoji: '🦈', name: 'Ferox Trout', rarity: 'epic', minWeight: 5, maxWeight: 15, fight: 75, value: 250, xp: 150, location: 'lochness' },
+    thelaird: { id: 'thelaird', emoji: '👑', name: 'The Laird', rarity: 'legendary', minWeight: 30, maxWeight: 50, fight: 98, value: 2500, xp: 700, location: 'lochness', description: 'Ancient salmon, older than the castle' }
+  };
+
+  // Equipment Data
+  const RODS = {
+    starter: { id: 'starter', name: 'Starter Rod', castPower: 60, maxLine: '10lb', price: 0, unlockLevel: 1 },
+    carbon: { id: 'carbon', name: 'Carbon Light', castPower: 70, maxLine: '20lb', price: 500, unlockLevel: 5 },
+    pro: { id: 'pro', name: 'Pro Caster', castPower: 80, maxLine: '40lb', price: 1500, unlockLevel: 15 }
+  };
+
+  const REELS = {
+    basic: { id: 'basic', name: 'Basic Reel', reelSpeed: 1.0, dragPower: 1.0, price: 0, unlockLevel: 1 },
+    smooth: { id: 'smooth', name: 'Smooth Drag', reelSpeed: 1.2, dragPower: 1.3, price: 300, unlockLevel: 8 },
+    speed: { id: 'speed', name: 'Speed Reel', reelSpeed: 1.5, dragPower: 1.2, price: 1000, unlockLevel: 20 }
+  };
+
+  const LINES = {
+    lb4: { id: 'lb4', name: '4lb Test', maxWeight: 4, price: 0, unlockLevel: 1 },
+    lb8: { id: 'lb8', name: '8lb Test', maxWeight: 8, price: 200, unlockLevel: 10 },
+    lb15: { id: 'lb15', name: '15lb Mono', maxWeight: 20, price: 600, unlockLevel: 20 }
+  };
+
+  const BAITS = {
+    worm: { id: 'worm', name: 'Earthworm', rareBonus: 0, price: 0 },
+    spinner: { id: 'spinner', name: 'Spinner', rareBonus: 5, price: 50 },
+    fly: { id: 'fly', name: 'Fly Lure', rareBonus: 8, price: 100 },
+    live: { id: 'live', name: 'Live Bait', rareBonus: 12, price: 200 },
+    legendary: { id: 'legendary', name: 'Legendary Lure', rareBonus: 20, price: 500 }
+  };
+
+  // Fishing Game State
+  const [fishingGame, setFishingGame] = useLocalStorage('richsFishingAdventure', {
+    level: 1,
+    xp: 0,
+    coins: 100,
+    currentLocation: 'bath',
+    unlockedLocations: ['bath'],
+    maxRods: 1,
+    equipment: { rod: 'starter', reel: 'basic', line: 'lb4', bait: 'worm' },
+    inventory: {
+      rods: ['starter'],
+      reels: ['basic'],
+      lines: ['lb4'],
+      baits: { worm: 999, spinner: 0, fly: 0, live: 0, legendary: 0 }
+    },
+    fishCollection: {},
+    personalBests: {},
+    stats: {
+      totalCaught: 0,
+      totalWeight: 0,
+      biggestCatch: 0,
+      totalCoins: 0,
+      speciesDiscovered: 0,
+      commonCaught: 0,
+      uncommonCaught: 0,
+      rareCaught: 0,
+      epicCaught: 0,
+      legendaryCaught: 0,
+      locationsVisited: 1,
+      locationsUnlocked: 1,
+      maxRodsUsed: 1
+    },
+    achievements: []
+  });
+
+  // Fishing UI State
+  const [fishingScreen, setFishingScreen] = useState('title'); // title, game, worldmap, collection, shop, stats
+  const [activeRodIndex, setActiveRodIndex] = useState(0);
+  const [rodStates, setRodStates] = useState([
+    { state: 'idle', power: 0, waitTime: 0, fish: null, tension: 0, progress: 0 }
+  ]);
+  const [castingPower, setCastingPower] = useState(0);
+  const [isCasting, setIsCasting] = useState(false);
+  const [catchModal, setCatchModal] = useState(null);
+  const [shopCategory, setShopCategory] = useState('rods');
+  const [collectionFilter, setCollectionFilter] = useState('all');
+  const [notification, setNotification] = useState(null);
+
+  // Fishing animation frame
+  const fishingAnimationFrame = useRef(null);
+  const lastFrameTime = useRef(Date.now());
+
   // Work condition assessments
   const getWorkConditions = (temp, rain, wind, condition) => {
     const conditions = [];
