@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Calculator, ChevronRight, ChevronLeft, Home, Camera, ClipboardList, PaintBucket, Ruler, Grid3X3, Package, Layers, Plus, Building2, Sun, Landmark, Image, FileText, X, Clock, MapPin, Calendar, Phone, Square, AlertTriangle, CheckCircle, Check, Flag, Send, ArrowLeftRight, Receipt, Car, Trash2, Star, MessageSquare, Copy, PhoneCall, Search, Users, Cloud, CloudRain, CloudSnow, CloudDrizzle, CloudLightning, Wind, Droplets, Thermometer, Umbrella, AlertCircle, CloudSun, Moon, Sunrise, Sunset, Eye, Loader2, DollarSign, TrendingUp, PiggyBank, CreditCard, Download, Settings, Fish, Waves, Trophy, ShoppingCart, Map, BookOpen, Target, Zap, Lock, Unlock } from 'lucide-react';
+import { Calculator, ChevronRight, ChevronLeft, Home, Camera, ClipboardList, PaintBucket, Ruler, Grid3X3, Package, Layers, Plus, Building2, Sun, Landmark, Image, FileText, X, Clock, MapPin, Calendar, Phone, Square, AlertTriangle, CheckCircle, Check, Flag, Send, ArrowLeftRight, Receipt, Car, Trash2, Star, MessageSquare, Copy, PhoneCall, Search, Users, Cloud, CloudRain, CloudSnow, CloudDrizzle, CloudLightning, Wind, Droplets, Thermometer, Umbrella, AlertCircle, CloudSun, Moon, Sunrise, Sunset, Eye, Loader2, DollarSign, TrendingUp, PiggyBank, CreditCard, Download, Settings, Fish, Waves, Trophy, ShoppingCart, Map, BookOpen, Target, Zap, Lock, Unlock, Mail } from 'lucide-react';
 import { useWeather } from './useWeather';
 import { useLocalStorage } from './useLocalStorage';
 
@@ -1289,40 +1289,40 @@ export default function RichsToolkit() {
 
   const [suppliers, setSuppliers] = useLocalStorage('richs-toolkit-suppliers', [
     // Merchants - Builders Merchants
-    { id: 1, name: 'Travis Perkins Bath', category: 'merchants', phone: '01225 444555', address: 'Lower Bristol Road, Bath', website: 'travisperkins.co.uk', favorite: true, notes: 'Ask for trade discount - account #TP4421' },
-    { id: 2, name: 'Jewson Bath', category: 'merchants', phone: '01225 333666', address: 'Locksbrook Road, Bath', website: 'jewson.co.uk', favorite: true, notes: 'Good for timber, delivers before 7am' },
-    { id: 3, name: 'Selco Builders Warehouse', category: 'merchants', phone: '01225 789456', address: 'Brassmill Lane, Bath', website: 'selcobw.com', favorite: false, notes: 'Cash & carry, competitive prices' },
-    { id: 4, name: 'Buildbase Bath', category: 'merchants', phone: '01225 424242', address: 'Midland Road, Bath', website: 'buildbase.co.uk', favorite: false, notes: 'Plumbing and heavy materials' },
+    { id: 1, name: 'Travis Perkins Bath', category: 'merchants', phone: '01225 444555', email: 'bath@travisperkins.co.uk', address: 'Lower Bristol Road, Bath', website: 'travisperkins.co.uk', favorite: true, notes: 'Ask for trade discount - account #TP4421' },
+    { id: 2, name: 'Jewson Bath', category: 'merchants', phone: '01225 333666', email: 'bath@jewson.co.uk', address: 'Locksbrook Road, Bath', website: 'jewson.co.uk', favorite: true, notes: 'Good for timber, delivers before 7am' },
+    { id: 3, name: 'Selco Builders Warehouse', category: 'merchants', phone: '01225 789456', email: 'bath@selcobw.com', address: 'Brassmill Lane, Bath', website: 'selcobw.com', favorite: false, notes: 'Cash & carry, competitive prices' },
+    { id: 4, name: 'Buildbase Bath', category: 'merchants', phone: '01225 424242', email: 'bath@buildbase.co.uk', address: 'Midland Road, Bath', website: 'buildbase.co.uk', favorite: false, notes: 'Plumbing and heavy materials' },
 
     // Bath Stone & Masonry
-    { id: 5, name: 'Hartham Park Quarry', category: 'stone', phone: '01225 811083', address: 'Corsham, Wiltshire', website: '', favorite: true, notes: 'Best for new Bath stone' },
-    { id: 6, name: 'Bath & Portland Stone', category: 'stone', phone: '01225 858555', address: 'Corsham', website: 'bathandportlandstone.co.uk', favorite: true, notes: 'Ashlar, mouldings, restoration stone' },
-    { id: 7, name: 'Stoke Ground Stone', category: 'stone', phone: '01225 742488', address: 'Box, Corsham', website: '', favorite: false, notes: 'Premium Bath stone, slow delivery' },
-    { id: 8, name: 'Stone Projects', category: 'stone', phone: '01225 315315', address: 'Bath', website: '', favorite: false, notes: 'Stone cutting and bespoke work' },
+    { id: 5, name: 'Hartham Park Quarry', category: 'stone', phone: '01225 811083', email: 'info@harthamparkquarry.co.uk', address: 'Corsham, Wiltshire', website: '', favorite: true, notes: 'Best for new Bath stone' },
+    { id: 6, name: 'Bath & Portland Stone', category: 'stone', phone: '01225 858555', email: 'sales@bathandportlandstone.co.uk', address: 'Corsham', website: 'bathandportlandstone.co.uk', favorite: true, notes: 'Ashlar, mouldings, restoration stone' },
+    { id: 7, name: 'Stoke Ground Stone', category: 'stone', phone: '01225 742488', email: 'info@stokegroundstone.co.uk', address: 'Box, Corsham', website: '', favorite: false, notes: 'Premium Bath stone, slow delivery' },
+    { id: 8, name: 'Stone Projects', category: 'stone', phone: '01225 315315', email: 'info@stoneprojects-bath.co.uk', address: 'Bath', website: '', favorite: false, notes: 'Stone cutting and bespoke work' },
 
     // Heritage & Lime Specialists
-    { id: 9, name: 'Mike Wye Associates', category: 'heritage', phone: '01409 281644', address: 'Devon (delivers)', website: 'mikewye.co.uk', favorite: true, notes: 'Lime putty, NHL, traditional paints' },
-    { id: 10, name: 'Lime Technology', category: 'heritage', phone: '01952 728611', address: 'Shropshire (delivers)', website: 'limetechnology.co.uk', favorite: true, notes: 'Hemp lime, insulation, breathable systems' },
-    { id: 11, name: 'Ty-Mawr Lime', category: 'heritage', phone: '01874 658249', address: 'Wales (delivers)', website: 'lime.org.uk', favorite: false, notes: 'Natural hydraulic lime, plasters' },
-    { id: 12, name: 'The Bath Stone Company', category: 'heritage', phone: '01225 858444', address: 'Corsham', website: '', favorite: false, notes: 'Conservation and restoration advice' },
+    { id: 9, name: 'Mike Wye Associates', category: 'heritage', phone: '01409 281644', email: 'sales@mikewye.co.uk', address: 'Devon (delivers)', website: 'mikewye.co.uk', favorite: true, notes: 'Lime putty, NHL, traditional paints' },
+    { id: 10, name: 'Lime Technology', category: 'heritage', phone: '01952 728611', email: 'sales@limetechnology.co.uk', address: 'Shropshire (delivers)', website: 'limetechnology.co.uk', favorite: true, notes: 'Hemp lime, insulation, breathable systems' },
+    { id: 11, name: 'Ty-Mawr Lime', category: 'heritage', phone: '01874 658249', email: 'info@lime.org.uk', address: 'Wales (delivers)', website: 'lime.org.uk', favorite: false, notes: 'Natural hydraulic lime, plasters' },
+    { id: 12, name: 'The Bath Stone Company', category: 'heritage', phone: '01225 858444', email: 'info@bathstonecompany.co.uk', address: 'Corsham', website: '', favorite: false, notes: 'Conservation and restoration advice' },
 
     // Tool Hire & Plant
-    { id: 13, name: 'Speedy Hire Bath', category: 'hire', phone: '01225 555111', address: 'Lower Bristol Road, Bath', website: 'speedyservices.com', favorite: true, notes: 'Scaffolding, heavy plant' },
-    { id: 14, name: 'HSS Hire Bath', category: 'hire', phone: '01225 463636', address: 'Lower Bristol Road, Bath', website: 'hss.com', favorite: false, notes: 'Tools, access equipment' },
-    { id: 15, name: 'Brandon Hire Station', category: 'hire', phone: '01225 789000', address: 'Bath', website: 'brandon-hire.co.uk', favorite: false, notes: 'Specialist lifting and access' },
+    { id: 13, name: 'Speedy Hire Bath', category: 'hire', phone: '01225 555111', email: 'bath@speedyservices.com', address: 'Lower Bristol Road, Bath', website: 'speedyservices.com', favorite: true, notes: 'Scaffolding, heavy plant' },
+    { id: 14, name: 'HSS Hire Bath', category: 'hire', phone: '01225 463636', email: 'bath@hss.com', address: 'Lower Bristol Road, Bath', website: 'hss.com', favorite: false, notes: 'Tools, access equipment' },
+    { id: 15, name: 'Brandon Hire Station', category: 'hire', phone: '01225 789000', email: 'bath@brandon-hire.co.uk', address: 'Bath', website: 'brandon-hire.co.uk', favorite: false, notes: 'Specialist lifting and access' },
 
     // Specialists
-    { id: 16, name: 'Bath Sash Windows', category: 'specialist', phone: '01225 789123', address: 'Larkhall, Bath', website: '', favorite: true, notes: 'Sash window repairs and draught proofing' },
-    { id: 17, name: 'Georgian Joinery', category: 'specialist', phone: '01225 444789', address: 'Bath', website: '', favorite: true, notes: 'Period doors, shutters, panelling' },
-    { id: 18, name: 'Bath Architectural Salvage', category: 'specialist', phone: '01225 311174', address: 'Northgate Street, Bath', website: 'bathsalvage.com', favorite: false, notes: 'Period fixtures, fireplaces, doors' },
-    { id: 19, name: 'Traditional Ironmongery', category: 'specialist', phone: '01225 318181', address: 'Bath', website: '', favorite: false, notes: 'Georgian locks, handles, hinges' },
-    { id: 20, name: 'Heritage Decorative Finishes', category: 'specialist', phone: '01225 505050', address: 'Bath', website: '', favorite: false, notes: 'Specialist plastering and decorative work' },
-    { id: 21, name: 'Bath Plastering', category: 'specialist', phone: '01225 767676', address: 'Bath', website: '', favorite: false, notes: 'Lime plastering specialists' },
-    { id: 22, name: 'Farrow & Ball Bath', category: 'specialist', phone: '01225 469300', address: 'Walcot Street, Bath', website: 'farrow-ball.com', favorite: false, notes: 'Traditional paints and wallpapers' },
-    { id: 23, name: 'Bathroom City Bath', category: 'specialist', phone: '01225 421421', address: 'Lower Bristol Road, Bath', website: '', favorite: false, notes: 'Period-style bathrooms and fittings' },
+    { id: 16, name: 'Bath Sash Windows', category: 'specialist', phone: '01225 789123', email: 'info@bathsashwindows.co.uk', address: 'Larkhall, Bath', website: '', favorite: true, notes: 'Sash window repairs and draught proofing' },
+    { id: 17, name: 'Georgian Joinery', category: 'specialist', phone: '01225 444789', email: 'info@georgianjoinery.co.uk', address: 'Bath', website: '', favorite: true, notes: 'Period doors, shutters, panelling' },
+    { id: 18, name: 'Bath Architectural Salvage', category: 'specialist', phone: '01225 311174', email: 'info@bathsalvage.com', address: 'Northgate Street, Bath', website: 'bathsalvage.com', favorite: false, notes: 'Period fixtures, fireplaces, doors' },
+    { id: 19, name: 'Traditional Ironmongery', category: 'specialist', phone: '01225 318181', email: 'info@traditionalironmongery.co.uk', address: 'Bath', website: '', favorite: false, notes: 'Georgian locks, handles, hinges' },
+    { id: 20, name: 'Heritage Decorative Finishes', category: 'specialist', phone: '01225 505050', email: 'info@heritagedecorativefinishes.co.uk', address: 'Bath', website: '', favorite: false, notes: 'Specialist plastering and decorative work' },
+    { id: 21, name: 'Bath Plastering', category: 'specialist', phone: '01225 767676', email: 'info@bathplastering.co.uk', address: 'Bath', website: '', favorite: false, notes: 'Lime plastering specialists' },
+    { id: 22, name: 'Farrow & Ball Bath', category: 'specialist', phone: '01225 469300', email: 'bath@farrow-ball.com', address: 'Walcot Street, Bath', website: 'farrow-ball.com', favorite: false, notes: 'Traditional paints and wallpapers' },
+    { id: 23, name: 'Bathroom City Bath', category: 'specialist', phone: '01225 421421', email: 'info@bathroomcitybath.co.uk', address: 'Lower Bristol Road, Bath', website: '', favorite: false, notes: 'Period-style bathrooms and fittings' },
   ]);
 
-  const [newSupplier, setNewSupplier] = useState({ name: '', category: 'merchants', phone: '', address: '', website: '', notes: '' });
+  const [newSupplier, setNewSupplier] = useState({ name: '', category: 'merchants', phone: '', email: '', address: '', website: '', notes: '' });
 
   const [timeEntries, setTimeEntries] = useLocalStorage('richs-toolkit-time-entries', []);
   const [receipts, setReceipts] = useLocalStorage('richs-toolkit-receipts', []);
@@ -1490,7 +1490,7 @@ export default function RichsToolkit() {
   const addSupplier = () => {
     if (!newSupplier.name || !newSupplier.phone) return;
     setSuppliers([...suppliers, { id: Date.now(), ...newSupplier, favorite: false }]);
-    setNewSupplier({ name: '', category: 'merchants', phone: '', address: '', website: '', notes: '' });
+    setNewSupplier({ name: '', category: 'merchants', phone: '', email: '', address: '', website: '', notes: '' });
     setShowAddSupplier(false);
   };
 
@@ -2862,7 +2862,7 @@ export default function RichsToolkit() {
               {supplier.notes && <p className="text-xs text-teal-600 bg-teal-50 px-2 py-1 rounded-lg inline-block mb-2">{supplier.notes}</p>}
               <div className="flex gap-2">
                 <a href={`tel:${supplier.phone}`} className="flex-1 p-2 bg-teal-500 text-white rounded-lg font-medium flex items-center justify-center gap-2"><PhoneCall size={16} /> Call</a>
-                <a href={`sms:${supplier.phone}`} className="flex-1 p-2 bg-gray-100 text-gray-700 rounded-lg font-medium flex items-center justify-center gap-2"><MessageSquare size={16} /> Text</a>
+                <a href={`mailto:${supplier.email}`} className="flex-1 p-2 bg-gray-100 text-gray-700 rounded-lg font-medium flex items-center justify-center gap-2"><Mail size={16} /> Email</a>
               </div>
             </div>
           ))}
@@ -2879,6 +2879,7 @@ export default function RichsToolkit() {
         <div className="space-y-4">
           <input type="text" value={newSupplier.name} onChange={(e) => setNewSupplier({ ...newSupplier, name: e.target.value })} placeholder="Supplier name" className="w-full p-3 bg-gray-100 rounded-xl" />
           <input type="tel" value={newSupplier.phone} onChange={(e) => setNewSupplier({ ...newSupplier, phone: e.target.value })} placeholder="Phone number" className="w-full p-3 bg-gray-100 rounded-xl" />
+          <input type="email" value={newSupplier.email} onChange={(e) => setNewSupplier({ ...newSupplier, email: e.target.value })} placeholder="Email address" className="w-full p-3 bg-gray-100 rounded-xl" />
           <input type="text" value={newSupplier.address} onChange={(e) => setNewSupplier({ ...newSupplier, address: e.target.value })} placeholder="Address" className="w-full p-3 bg-gray-100 rounded-xl" />
           <input type="text" value={newSupplier.website} onChange={(e) => setNewSupplier({ ...newSupplier, website: e.target.value })} placeholder="Website (e.g., example.co.uk)" className="w-full p-3 bg-gray-100 rounded-xl" />
           <textarea value={newSupplier.notes} onChange={(e) => setNewSupplier({ ...newSupplier, notes: e.target.value })} placeholder="Notes (optional)" className="w-full p-3 bg-gray-100 rounded-xl" rows="2" />
