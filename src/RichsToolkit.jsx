@@ -263,6 +263,42 @@ export default function RichsToolkit() {
   const formatTime = (hours, minutes) => `${hours}h ${minutes}m`;
   const formatCurrency = (amount) => `£${amount.toFixed(2)}`;
   const getTodayDate = () => new Date().toISOString().split('T')[0];
+
+  // Day/Night detection based on sunrise/sunset
+  const isDaytime = () => {
+    if (!weatherData?.current?.sunrise || !weatherData?.current?.sunset) return true; // Default to day
+
+    const now = new Date();
+    const currentTime = now.getHours() * 60 + now.getMinutes();
+
+    // Parse sunrise time (HH:MM format)
+    const [sunriseHour, sunriseMin] = weatherData.current.sunrise.split(':').map(Number);
+    const sunriseTime = sunriseHour * 60 + sunriseMin;
+
+    // Parse sunset time (HH:MM format)
+    const [sunsetHour, sunsetMin] = weatherData.current.sunset.split(':').map(Number);
+    const sunsetTime = sunsetHour * 60 + sunsetMin;
+
+    return currentTime >= sunriseTime && currentTime < sunsetTime;
+  };
+
+  const getTheme = () => {
+    const isDay = isDaytime();
+    return {
+      isDay,
+      bg: isDay ? 'bg-gray-50' : 'bg-slate-900',
+      cardBg: isDay ? 'bg-white' : 'bg-slate-800',
+      text: isDay ? 'text-gray-900' : 'text-gray-100',
+      textSecondary: isDay ? 'text-gray-500' : 'text-gray-400',
+      border: isDay ? 'border-gray-100' : 'border-slate-700',
+      headerGradient: isDay
+        ? 'from-sky-400 to-blue-500'
+        : 'from-indigo-900 via-purple-900 to-slate-900',
+      weatherCardGradient: isDay
+        ? 'from-sky-400 to-blue-500'
+        : 'from-indigo-600 to-purple-700',
+    };
+  };
   
   const getWeekTotal = (entries, field = 'hours') => {
     const weekAgo = new Date(); weekAgo.setDate(weekAgo.getDate() - 7);
@@ -1416,17 +1452,22 @@ export default function RichsToolkit() {
 
   // Home
   const renderHome = () => {
+    const theme = getTheme();
+
     return (
       <div className="p-4 pb-24 relative">
         {/* Weather Background Animations */}
         {weatherData && <WeatherBackground condition={weatherData.current.condition} />}
 
-        <div className="mb-6 relative z-10"><h1 className="text-2xl font-bold text-gray-900">Rich's Toolkit</h1><p className="text-gray-500">Bath Heritage Renovations</p></div>
+        <div className="mb-6 relative z-10">
+          <h1 className={`text-2xl font-bold ${theme.text} transition-colors duration-500`}>Rich's Toolkit</h1>
+          <p className={`${theme.textSecondary} transition-colors duration-500`}>Bath Heritage Renovations</p>
+        </div>
 
         {/* Weather Card - Now Tappable */}
         <div className="relative z-10">
         {weatherLoading || !weatherData ? (
-          <div className="w-full bg-gradient-to-r from-sky-400 to-blue-500 rounded-2xl p-4 mb-4 text-white">
+          <div className={`w-full bg-gradient-to-r ${theme.weatherCardGradient} rounded-2xl p-4 mb-4 text-white transition-all duration-500`}>
             <div className="flex items-center justify-center py-6">
               <Loader2 size={32} className="animate-spin text-white/80" />
             </div>
@@ -1442,7 +1483,7 @@ export default function RichsToolkit() {
             </div>
           </div>
         ) : (
-          <button onClick={() => setCurrentScreen('weather')} className="w-full text-left bg-gradient-to-r from-sky-400 to-blue-500 rounded-2xl p-4 mb-4 text-white">
+          <button onClick={() => setCurrentScreen('weather')} className={`w-full text-left bg-gradient-to-r ${theme.weatherCardGradient} rounded-2xl p-4 mb-4 text-white transition-all duration-500`}>
             <div className="flex items-center justify-between">
               <div>
                 <div className="flex items-center gap-2 mb-1">
@@ -1484,17 +1525,17 @@ export default function RichsToolkit() {
             { id: 'conversions', title: 'Conversions', icon: ArrowLeftRight, color: 'bg-indigo-500', desc: 'Imperial ↔ Metric' },
           ].map((feature) => {
             const IconComponent = feature.icon;
-            return <button key={feature.id} onClick={() => setCurrentScreen(feature.id)} className="bg-white rounded-2xl p-4 text-left shadow-sm border border-gray-100 active:scale-95 transition-transform"><div className={`${feature.color} w-12 h-12 rounded-xl flex items-center justify-center mb-3`}><IconComponent size={24} className="text-white" /></div><h3 className="font-semibold text-gray-900">{feature.title}</h3><p className="text-sm text-gray-500">{feature.desc}</p></button>;
+            return <button key={feature.id} onClick={() => setCurrentScreen(feature.id)} className={`${theme.cardBg} rounded-2xl p-4 text-left shadow-sm border ${theme.border} active:scale-95 transition-all duration-500`}><div className={`${feature.color} w-12 h-12 rounded-xl flex items-center justify-center mb-3`}><IconComponent size={24} className="text-white" /></div><h3 className={`font-semibold ${theme.text}`}>{feature.title}</h3><p className={`text-sm ${theme.textSecondary}`}>{feature.desc}</p></button>;
           })}
         </div>
         
-        <div className="mt-6">
-          <h2 className="text-lg font-semibold text-gray-900 mb-3">Recent Projects</h2>
+        <div className="mt-6 relative z-10">
+          <h2 className={`text-lg font-semibold ${theme.text} mb-3 transition-colors duration-500`}>Recent Projects</h2>
           <div className="space-y-2">
             {projects.slice(0, 2).map((project) => (
-              <div key={project.id} className="bg-white rounded-xl p-4 flex items-center justify-between shadow-sm border border-gray-100">
-                <div className="flex items-center gap-3"><div className="w-10 h-10 bg-stone-100 rounded-lg flex items-center justify-center"><Building2 size={20} className="text-stone-600" /></div><div><p className="font-medium">{project.name}</p><p className="text-sm text-gray-500">{project.grade}</p></div></div>
-                <ChevronRight size={20} className="text-gray-400" />
+              <div key={project.id} className={`${theme.cardBg} rounded-xl p-4 flex items-center justify-between shadow-sm border ${theme.border} transition-all duration-500`}>
+                <div className="flex items-center gap-3"><div className={`w-10 h-10 ${theme.isDay ? 'bg-stone-100' : 'bg-stone-700'} rounded-lg flex items-center justify-center transition-colors duration-500`}><Building2 size={20} className={`${theme.isDay ? 'text-stone-600' : 'text-stone-300'} transition-colors duration-500`} /></div><div><p className={`font-medium ${theme.text} transition-colors duration-500`}>{project.name}</p><p className={`text-sm ${theme.textSecondary} transition-colors duration-500`}>{project.grade}</p></div></div>
+                <ChevronRight size={20} className={`${theme.textSecondary} transition-colors duration-500`} />
               </div>
             ))}
           </div>
@@ -1568,12 +1609,14 @@ export default function RichsToolkit() {
     return renderHome();
   };
 
+  const theme = getTheme();
+
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-sm mx-auto bg-gray-50 min-h-screen relative">
+    <div className={`min-h-screen ${theme.bg} transition-colors duration-500`}>
+      <div className={`max-w-sm mx-auto ${theme.bg} min-h-screen relative transition-colors duration-500`}>
         {renderCurrentScreen()}
 
-        <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-6 py-3 max-w-sm mx-auto">
+        <div className={`fixed bottom-0 left-0 right-0 ${theme.cardBg} border-t ${theme.border} px-6 py-3 max-w-sm mx-auto transition-all duration-500`}>
           <div className="flex justify-around">
             {[
               { icon: Home, label: 'Home', screen: 'home' },
@@ -1583,7 +1626,7 @@ export default function RichsToolkit() {
             ].map((item) => {
               const NavIcon = item.icon;
               const isActive = currentScreen === item.screen || (item.screen === 'calculators' && currentScreen === 'calculator');
-              return <button key={item.label} onClick={() => { setCurrentScreen(item.screen); setSelectedSnaggingProject(null); setSelectedRoom(null); setHeritageSection(null); }} className={`flex flex-col items-center gap-1 ${isActive ? 'text-blue-500' : 'text-gray-400'}`}><NavIcon size={24} /><span className="text-xs">{item.label}</span></button>;
+              return <button key={item.label} onClick={() => { setCurrentScreen(item.screen); setSelectedSnaggingProject(null); setSelectedRoom(null); setHeritageSection(null); }} className={`flex flex-col items-center gap-1 transition-colors duration-500 ${isActive ? 'text-blue-500' : theme.textSecondary}`}><NavIcon size={24} /><span className="text-xs">{item.label}</span></button>;
             })}
           </div>
         </div>
