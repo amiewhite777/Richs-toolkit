@@ -155,6 +155,8 @@ export default function RichsToolkit() {
   const [showCamera, setShowCamera] = useState(false);
   const [capturedPhoto, setCapturedPhoto] = useState(null);
   const [showAnnotation, setShowAnnotation] = useState(false);
+  const [pairingMode, setPairingMode] = useState(false);
+  const [selectedForPairing, setSelectedForPairing] = useState(null);
 
   // ==================== FISHING GAME DATA ====================
 
@@ -1340,6 +1342,7 @@ export default function RichsToolkit() {
   const [tileInputs, setTileInputs] = useState({ length: '', width: '', tileLength: '300', tileWidth: '300' });
   const [concreteInputs, setConcreteInputs] = useState({ length: '', width: '', depth: '' });
   const [studInputs, setStudInputs] = useState({ length: '', height: '2400' });
+  const [vatInputs, setVatInputs] = useState({ amount: '', margin: '15' });
 
   const calculators = [
     { id: 'plaster', title: 'Plaster & Skim', icon: Layers, color: 'bg-amber-500', desc: 'Bonding, multi-finish, lime' },
@@ -1348,6 +1351,7 @@ export default function RichsToolkit() {
     { id: 'tiles', title: 'Tile Calculator', icon: Grid3X3, color: 'bg-purple-500', desc: 'Floor & wall with wastage' },
     { id: 'concrete', title: 'Concrete & Screed', icon: Package, color: 'bg-gray-600', desc: 'Volume calculations' },
     { id: 'stud', title: 'Stud Wall', icon: Building2, color: 'bg-red-500', desc: 'Timber, board, fixings' },
+    { id: 'vat', title: 'VAT & Margin', icon: DollarSign, color: 'bg-emerald-600', desc: 'Quick pricing calculations' },
   ];
 
   const supplierCategories = [
@@ -1548,6 +1552,17 @@ export default function RichsToolkit() {
     const lengthM = (parseFloat(studInputs.length) || 0) / 1000, heightM = (parseFloat(studInputs.height) || 2400) / 1000;
     const studs = Math.ceil(lengthM / 0.4) + 1;
     return { studs, boardsNeeded: Math.ceil((lengthM * heightM) / 2.88 * 1.1) };
+  };
+
+  const calculateVAT = () => {
+    const amount = parseFloat(vatInputs.amount) || 0;
+    const margin = parseFloat(vatInputs.margin) || 15;
+    const withVAT = (amount * 1.20).toFixed(2);
+    const withoutVAT = (amount / 1.20).toFixed(2);
+    const vatAmount = (amount * 0.20).toFixed(2);
+    const sellPrice = (amount * (1 + margin / 100)).toFixed(2);
+    const costFromSell = (amount / (1 + margin / 100)).toFixed(2);
+    return { withVAT, withoutVAT, vatAmount, sellPrice, costFromSell, margin };
   };
 
   const toggleSnagComplete = (projectId, roomId, itemId) => {
@@ -1858,6 +1873,38 @@ export default function RichsToolkit() {
         {/* Today View */}
         {weatherView === 'today' && (
           <>
+            {/* Work Planning Alert */}
+            {daily[1] && (
+              <div className={`rounded-2xl p-4 mb-4 ${
+                daily[1].workScore >= 80 ? 'bg-green-50 border border-green-200' :
+                daily[1].workScore < 50 ? 'bg-red-50 border border-red-200' :
+                'bg-amber-50 border border-amber-200'
+              }`}>
+                <div className="flex items-start gap-3">
+                  <div className={`p-2 rounded-lg ${
+                    daily[1].workScore >= 80 ? 'bg-green-500' :
+                    daily[1].workScore < 50 ? 'bg-red-500' :
+                    'bg-amber-500'
+                  }`}>
+                    <Calendar size={20} className="text-white" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="font-semibold text-gray-900 mb-1">Tomorrow ({daily[1].day})</p>
+                    {daily[1].workScore >= 80 && (
+                      <p className="text-sm text-gray-700">✓ Excellent day for external work. Plan outdoor tasks like lime pointing, painting, or stonework.</p>
+                    )}
+                    {daily[1].workScore >= 50 && daily[1].workScore < 80 && daily[1].rain > 30 && (
+                      <p className="text-sm text-gray-700">⚠️ Rain expected. Good day for interior work, snagging, or covered tasks.</p>
+                    )}
+                    {daily[1].workScore < 50 && (
+                      <p className="text-sm text-gray-700">⛈️ Poor conditions expected. Focus on indoor work, admin, or material ordering.</p>
+                    )}
+                    <p className="text-xs text-gray-500 mt-1">{daily[1].high}°/{daily[1].low}° • Rain: {daily[1].rain}% • Wind: {daily[1].wind}</p>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* Work Conditions */}
             <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 mb-4">
               <h3 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
@@ -2684,14 +2731,31 @@ export default function RichsToolkit() {
           <p className={`${theme.textSecondary}`}>Capture and annotate site photos</p>
         </div>
 
-        {/* Camera button */}
-        <button
-          onClick={() => setShowCamera(true)}
-          className="w-full bg-blue-500 text-white py-4 px-6 rounded-xl font-semibold mb-6 flex items-center justify-center gap-2 active:scale-95 transition"
-        >
-          <Camera size={24} />
-          Take Photo
-        </button>
+        {/* Camera and Pairing buttons */}
+        <div className="grid grid-cols-2 gap-3 mb-6">
+          <button
+            onClick={() => setShowCamera(true)}
+            className="bg-blue-500 text-white py-4 px-6 rounded-xl font-semibold flex items-center justify-center gap-2 active:scale-95 transition"
+          >
+            <Camera size={24} />
+            Take Photo
+          </button>
+          <button
+            onClick={() => { setPairingMode(!pairingMode); setSelectedForPairing(null); }}
+            className={`${pairingMode ? 'bg-purple-500' : 'bg-gray-200 text-gray-700'} text-white py-4 px-6 rounded-xl font-semibold flex items-center justify-center gap-2 active:scale-95 transition`}
+          >
+            <ArrowLeftRight size={24} />
+            {pairingMode ? 'Cancel' : 'Pair B/A'}
+          </button>
+        </div>
+
+        {pairingMode && (
+          <div className="bg-purple-50 border border-purple-200 rounded-xl p-4 mb-4">
+            <p className="text-sm text-purple-900 font-semibold">
+              {selectedForPairing ? '📷 Now select the AFTER photo' : '📷 Select the BEFORE photo'}
+            </p>
+          </div>
+        )}
 
         {/* Photos grid */}
         {photos.length === 0 ? (
@@ -2710,6 +2774,11 @@ export default function RichsToolkit() {
                     alt={photo.note || 'Site photo'}
                     className="w-full h-full object-cover"
                   />
+                  {photo.pairedWith && (
+                    <div className={`absolute top-2 right-2 px-2 py-1 rounded-lg text-xs font-bold text-white ${photo.pairType === 'before' ? 'bg-orange-500' : 'bg-green-500'}`}>
+                      {photo.pairType === 'before' ? 'BEFORE' : 'AFTER'}
+                    </div>
+                  )}
                 </div>
                 {photo.note && (
                   <div className="p-2">
@@ -2717,25 +2786,66 @@ export default function RichsToolkit() {
                   </div>
                 )}
                 <div className="p-2 flex gap-2">
-                  <button
-                    onClick={() => {
-                      setCapturedPhoto(photo.dataUrl);
-                      setShowAnnotation(true);
-                    }}
-                    className="flex-1 text-xs py-2 bg-blue-500 text-white rounded-lg"
-                  >
-                    Annotate
-                  </button>
-                  <button
-                    onClick={() => {
-                      if (confirm('Delete this photo?')) {
-                        setPhotos(photos.filter(p => p.id !== photo.id));
-                      }
-                    }}
-                    className="flex-1 text-xs py-2 bg-red-500 text-white rounded-lg"
-                  >
-                    Delete
-                  </button>
+                  {pairingMode ? (
+                    <button
+                      onClick={() => {
+                        if (!selectedForPairing) {
+                          setSelectedForPairing(photo.id);
+                        } else {
+                          // Pair the photos
+                          setPhotos(photos.map(p => {
+                            if (p.id === selectedForPairing) return { ...p, pairedWith: photo.id, pairType: 'before' };
+                            if (p.id === photo.id) return { ...p, pairedWith: selectedForPairing, pairType: 'after' };
+                            return p;
+                          }));
+                          setPairingMode(false);
+                          setSelectedForPairing(null);
+                        }
+                      }}
+                      className={`flex-1 text-xs py-2 rounded-lg ${selectedForPairing === photo.id ? 'bg-purple-600 text-white' : 'bg-purple-500 text-white'}`}
+                    >
+                      {selectedForPairing === photo.id ? '✓ Selected' : 'Select'}
+                    </button>
+                  ) : (
+                    <>
+                      <button
+                        onClick={() => {
+                          setCapturedPhoto(photo.dataUrl);
+                          setShowAnnotation(true);
+                        }}
+                        className="flex-1 text-xs py-2 bg-blue-500 text-white rounded-lg"
+                      >
+                        Annotate
+                      </button>
+                      {photo.pairedWith && (
+                        <button
+                          onClick={() => {
+                            // Unpair
+                            setPhotos(photos.map(p => {
+                              if (p.id === photo.id || p.id === photo.pairedWith) {
+                                const { pairedWith, pairType, ...rest } = p;
+                                return rest;
+                              }
+                              return p;
+                            }));
+                          }}
+                          className="flex-1 text-xs py-2 bg-purple-500 text-white rounded-lg"
+                        >
+                          Unpair
+                        </button>
+                      )}
+                      <button
+                        onClick={() => {
+                          if (confirm('Delete this photo?')) {
+                            setPhotos(photos.filter(p => p.id !== photo.id));
+                          }
+                        }}
+                        className="flex-1 text-xs py-2 bg-red-500 text-white rounded-lg"
+                      >
+                        Delete
+                      </button>
+                    </>
+                  )}
                 </div>
               </div>
             ))}
@@ -2891,24 +3001,57 @@ export default function RichsToolkit() {
     </div>
   );
 
-  const renderMaterialListModal = () => (
-    <div className="fixed inset-0 bg-black/50 z-50 flex items-end">
-      <div className="bg-white rounded-t-3xl w-full p-6 max-h-[90vh] overflow-auto">
-        <div className="flex items-center justify-between mb-4"><h2 className="text-xl font-bold">Material List</h2><button onClick={() => { setShowMaterialList(false); setSelectedSupplier(null); }} className="p-2"><X size={24} /></button></div>
-        <div className="space-y-3 mb-4">
-          {materialListItems.map((item) => (
-            <div key={item.id} className="flex gap-2">
-              <input type="text" value={item.item} onChange={(e) => updateMaterialListItem(item.id, 'item', e.target.value)} placeholder="Item" className="flex-1 p-3 bg-gray-100 rounded-xl text-sm" />
-              <input type="number" value={item.qty} onChange={(e) => updateMaterialListItem(item.id, 'qty', e.target.value)} placeholder="Qty" className="w-16 p-3 bg-gray-100 rounded-xl text-sm" />
-              {materialListItems.length > 1 && <button onClick={() => removeMaterialListItem(item.id)} className="p-3 text-gray-400"><Trash2 size={18} /></button>}
+  const renderMaterialListModal = () => {
+    // Group items by supplier
+    const groupedItems = materialListItems.reduce((acc, item) => {
+      const supplier = item.supplier || 'Unassigned';
+      if (!acc[supplier]) acc[supplier] = [];
+      acc[supplier].push(item);
+      return acc;
+    }, {});
+
+    return (
+      <div className="fixed inset-0 bg-black/50 z-50 flex items-end">
+        <div className="bg-white rounded-t-3xl w-full p-6 max-h-[90vh] overflow-auto">
+          <div className="flex items-center justify-between mb-4"><h2 className="text-xl font-bold">Material List</h2><button onClick={() => { setShowMaterialList(false); setSelectedSupplier(null); }} className="p-2"><X size={24} /></button></div>
+
+          {/* Grouped by Supplier View */}
+          {materialListItems.some(item => item.supplier) && (
+            <div className="mb-4 space-y-4">
+              <p className="text-sm font-semibold text-gray-600">📦 Grouped by Supplier</p>
+              {Object.entries(groupedItems).map(([supplier, items]) => (
+                <div key={supplier} className="bg-gray-50 rounded-xl p-3">
+                  <p className="font-semibold text-sm text-teal-600 mb-2">{supplier}</p>
+                  {items.map(item => (
+                    <p key={item.id} className="text-xs text-gray-700 ml-2">• {item.qty} {item.unit} - {item.item}</p>
+                  ))}
+                </div>
+              ))}
             </div>
-          ))}
+          )}
+
+          <p className="text-sm font-semibold text-gray-600 mb-2">All Items</p>
+          <div className="space-y-3 mb-4">
+            {materialListItems.map((item) => (
+              <div key={item.id} className="space-y-2">
+                <div className="flex gap-2">
+                  <input type="text" value={item.item} onChange={(e) => updateMaterialListItem(item.id, 'item', e.target.value)} placeholder="Item" className="flex-1 p-3 bg-gray-100 rounded-xl text-sm" />
+                  <input type="text" value={item.qty} onChange={(e) => updateMaterialListItem(item.id, 'qty', e.target.value)} placeholder="Qty" className="w-16 p-3 bg-gray-100 rounded-xl text-sm" />
+                  {materialListItems.length > 1 && <button onClick={() => removeMaterialListItem(item.id)} className="p-3 text-gray-400"><Trash2 size={18} /></button>}
+                </div>
+                <select value={item.supplier || ''} onChange={(e) => updateMaterialListItem(item.id, 'supplier', e.target.value)} className="w-full p-2 bg-gray-50 rounded-lg text-xs">
+                  <option value="">Select supplier...</option>
+                  {suppliers.filter(s => s.favorite).map(s => <option key={s.id} value={s.name}>{s.name}</option>)}
+                </select>
+              </div>
+            ))}
+          </div>
+          <button onClick={addMaterialListItem} className="w-full p-3 bg-gray-100 text-gray-600 rounded-xl mb-4 flex items-center justify-center gap-2"><Plus size={18} /> Add Item</button>
+          <button onClick={() => navigator.clipboard?.writeText(generateMaterialListText())} className="w-full p-4 bg-teal-500 text-white rounded-xl font-semibold flex items-center justify-center gap-2"><Copy size={20} /> Copy List</button>
         </div>
-        <button onClick={addMaterialListItem} className="w-full p-3 bg-gray-100 text-gray-600 rounded-xl mb-4 flex items-center justify-center gap-2"><Plus size={18} /> Add Item</button>
-        <button onClick={() => navigator.clipboard?.writeText(generateMaterialListText())} className="w-full p-4 bg-teal-500 text-white rounded-xl font-semibold flex items-center justify-center gap-2"><Copy size={20} /> Copy List</button>
       </div>
-    </div>
-  );
+    );
+  };
 
   const renderAddTimeModal = () => (
     <div className="fixed inset-0 bg-black/50 z-50 flex items-end">
@@ -3288,6 +3431,7 @@ export default function RichsToolkit() {
     else if (selectedCalc === 'timber') { results = calculateTimber(); content = (<><InputField label="Perimeter" value={timberInputs.perimeter} onChange={(v) => setTimberInputs({...timberInputs, perimeter: v})} unit="m" /><InputField label="Doors" value={timberInputs.doors} onChange={(e) => setTimberInputs({...timberInputs, doors: e})} /><div className="pt-4 border-t grid grid-cols-2 gap-3"><ResultCard label="Length" value={results.withWastage} unit="m" /><ResultCard label="3m pcs" value={results.lengths3m} unit="pcs" highlight /></div></>); }
     else if (selectedCalc === 'tiles') { results = calculateTiles(); content = (<><div className="grid grid-cols-2 gap-3"><InputField label="Length" value={tileInputs.length} onChange={(v) => setTileInputs({...tileInputs, length: v})} unit="cm" /><InputField label="Width" value={tileInputs.width} onChange={(v) => setTileInputs({...tileInputs, width: v})} unit="cm" /></div><div className="pt-4 border-t grid grid-cols-2 gap-3"><ResultCard label="Area" value={results.area} unit="m²" /><ResultCard label="Tiles" value={results.tilesWithWastage} unit="pcs" highlight /></div></>); }
     else if (selectedCalc === 'concrete') { results = calculateConcrete(); content = (<><div className="grid grid-cols-2 gap-3"><InputField label="Length" value={concreteInputs.length} onChange={(v) => setConcreteInputs({...concreteInputs, length: v})} unit="mm" /><InputField label="Width" value={concreteInputs.width} onChange={(v) => setConcreteInputs({...concreteInputs, width: v})} unit="mm" /></div><InputField label="Depth" value={concreteInputs.depth} onChange={(v) => setConcreteInputs({...concreteInputs, depth: v})} unit="mm" /><div className="pt-4 border-t grid grid-cols-2 gap-3"><ResultCard label="Volume" value={results.volume} unit="m³" /><ResultCard label="Bags" value={results.bags25kg} unit="25kg" highlight /></div></>); }
+    else if (selectedCalc === 'vat') { results = calculateVAT(); content = (<><InputField label="Amount" value={vatInputs.amount} onChange={(v) => setVatInputs({...vatInputs, amount: v})} unit="£" placeholder="Enter price" /><InputField label="Margin %" value={vatInputs.margin} onChange={(v) => setVatInputs({...vatInputs, margin: v})} unit="%" placeholder="15" /><div className="pt-4 border-t space-y-2"><p className="text-sm font-semibold text-gray-600 mb-2">VAT Calculations (20%)</p><div className="grid grid-cols-2 gap-3"><ResultCard label="+ VAT" value={`£${results.withVAT}`} /><ResultCard label="- VAT" value={`£${results.withoutVAT}`} /></div><div className="grid grid-cols-2 gap-3 mt-2"><ResultCard label="VAT Amount" value={`£${results.vatAmount}`} /></div><p className="text-sm font-semibold text-gray-600 mt-4 mb-2">Margin Calculations</p><div className="grid grid-cols-2 gap-3"><ResultCard label={`Sell (+${results.margin}%)`} value={`£${results.sellPrice}`} highlight /><ResultCard label="Cost Price" value={`£${results.costFromSell}`} /></div></div></>); }
     else { results = calculateStud(); content = (<><InputField label="Length" value={studInputs.length} onChange={(v) => setStudInputs({...studInputs, length: v})} unit="mm" /><InputField label="Height" value={studInputs.height} onChange={(v) => setStudInputs({...studInputs, height: v})} unit="mm" /><div className="pt-4 border-t grid grid-cols-2 gap-3"><ResultCard label="Studs" value={results.studs} unit="pcs" /><ResultCard label="Boards" value={results.boardsNeeded} unit="sheets" highlight /></div></>); }
     return (
       <div className="p-4 pb-24">
