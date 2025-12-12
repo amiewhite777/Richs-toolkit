@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Calculator, ChevronRight, ChevronLeft, Home, Camera, ClipboardList, PaintBucket, Ruler, Grid3X3, Package, Layers, Plus, Building2, Sun, Landmark, Image, FileText, X, Clock, MapPin, Calendar, Phone, Square, AlertTriangle, CheckCircle, Check, Flag, Send, ArrowLeftRight, Receipt, Car, Trash2, Star, MessageSquare, Copy, PhoneCall, Search, Users, Cloud, CloudRain, CloudSnow, CloudDrizzle, CloudLightning, Wind, Droplets, Thermometer, Umbrella, AlertCircle, CloudSun, Moon, Sunrise, Sunset, Eye, Loader2 } from 'lucide-react';
 import { useWeather } from './useWeather';
+import { useLocalStorage } from './useLocalStorage';
 
 export default function RichsToolkit() {
   const [currentScreen, setCurrentScreen] = useState('home');
@@ -32,7 +33,7 @@ export default function RichsToolkit() {
   const [showMaterialList, setShowMaterialList] = useState(false);
   const [selectedSupplier, setSelectedSupplier] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
-  const [materialListItems, setMaterialListItems] = useState([{ id: 1, item: '', qty: '', unit: 'bags' }]);
+  const [materialListItems, setMaterialListItems] = useLocalStorage('richs-toolkit-material-list', [{ id: 1, item: '', qty: '', unit: 'bags' }]);
   
   // Weather state
   const [weatherView, setWeatherView] = useState('today'); // today, week, alerts
@@ -119,7 +120,7 @@ export default function RichsToolkit() {
     return 'Poor';
   };
 
-  const [suppliers, setSuppliers] = useState([
+  const [suppliers, setSuppliers] = useLocalStorage('richs-toolkit-suppliers', [
     { id: 1, name: 'Travis Perkins Bath', category: 'merchants', phone: '01225 444555', address: 'Lower Bristol Road, Bath', favorite: true, notes: 'Ask for trade discount - account #TP4421' },
     { id: 2, name: 'Jewson Bath', category: 'merchants', phone: '01225 333666', address: 'Locksbrook Road, Bath', favorite: true, notes: 'Good for timber, delivers before 7am' },
     { id: 5, name: 'Hartham Park Quarry', category: 'stone', phone: '01225 811083', address: 'Corsham, Wiltshire', favorite: true, notes: 'Best for new Bath stone' },
@@ -130,15 +131,15 @@ export default function RichsToolkit() {
 
   const [newSupplier, setNewSupplier] = useState({ name: '', category: 'merchants', phone: '', address: '', notes: '' });
   
-  const [timeEntries, setTimeEntries] = useState([
+  const [timeEntries, setTimeEntries] = useLocalStorage('richs-toolkit-time-entries', [
     { id: 1, project: 'The Circus - No. 14', date: '2024-03-15', hours: 8, minutes: 30, notes: 'Plastering drawing room', break: 30 },
   ]);
-  
-  const [receipts, setReceipts] = useState([
+
+  const [receipts, setReceipts] = useLocalStorage('richs-toolkit-receipts', [
     { id: 1, date: '2024-03-15', supplier: 'Travis Perkins', amount: 147.50, category: 'Materials', project: 'The Circus - No. 14', description: 'Plaster, PVA', photo: true },
   ]);
-  
-  const [mileageEntries, setMileageEntries] = useState([
+
+  const [mileageEntries, setMileageEntries] = useLocalStorage('richs-toolkit-mileage', [
     { id: 1, date: '2024-03-15', from: 'Home', to: 'The Circus', miles: 12, project: 'The Circus - No. 14', return: true },
   ]);
 
@@ -146,7 +147,7 @@ export default function RichsToolkit() {
   const [newReceipt, setNewReceipt] = useState({ supplier: '', amount: '', category: 'Materials', project: '', description: '' });
   const [newMileage, setNewMileage] = useState({ from: 'Home', to: '', miles: '', project: '', return: true });
   
-  const [projects, setProjects] = useState([
+  const [projects, setProjects] = useLocalStorage('richs-toolkit-projects', [
     { id: 1, name: 'The Circus - No. 14', grade: 'Grade II*', address: '14 The Circus, Bath BA1 2ET', startDate: '2024-01-15', photos: [], snagging: [
       { id: 'room1', name: 'Drawing Room', items: [
         { id: 1, description: 'Touch up cornice paint', priority: 'low', complete: true, notes: '', date: '2024-03-01', photo: false },
