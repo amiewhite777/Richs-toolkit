@@ -111,6 +111,51 @@ export default function RichsToolkit() {
     }
   }, []);
 
+  // Greeting popup state
+  const [showGreeting, setShowGreeting] = useState(false);
+  const [greetingMessage, setGreetingMessage] = useState('');
+
+  // Check for time-based greeting (morning 7-9am, night 9-11:30pm)
+  useEffect(() => {
+    const hour = currentTime.getHours();
+    const minute = currentTime.getMinutes();
+    const today = currentTime.toDateString();
+
+    // Check if we've already shown a greeting today
+    const lastGreeting = localStorage.getItem('richs-toolkit-last-greeting');
+
+    if (lastGreeting !== today) {
+      // Morning greeting: 7:00am - 8:59am
+      if (hour >= 7 && hour < 9) {
+        setGreetingMessage('morning :) x');
+        setShowGreeting(true);
+        localStorage.setItem('richs-toolkit-last-greeting', today);
+
+        // Hide after 5 seconds
+        setTimeout(() => {
+          setShowGreeting(false);
+        }, 5000);
+      }
+      // Night greeting: 9:00pm - 11:30pm
+      else if (hour === 21 || hour === 22 || (hour === 23 && minute < 30)) {
+        setGreetingMessage('night x');
+        setShowGreeting(true);
+        localStorage.setItem('richs-toolkit-last-greeting', today);
+
+        // Hide after 5 seconds
+        setTimeout(() => {
+          setShowGreeting(false);
+        }, 5000);
+      }
+    }
+  }, [currentTime]);
+
+  // Gallery state
+  const [photos, setPhotos] = useLocalStorage('richs-toolkit-gallery', []);
+  const [showCamera, setShowCamera] = useState(false);
+  const [capturedPhoto, setCapturedPhoto] = useState(null);
+  const [showAnnotation, setShowAnnotation] = useState(false);
+
   // Work condition assessments
   const getWorkConditions = (temp, rain, wind, condition) => {
     const conditions = [];
@@ -895,6 +940,155 @@ export default function RichsToolkit() {
     );
   };
 
+  // Gallery Screen
+  const renderGallery = () => {
+    const theme = getTheme();
+
+    return (
+      <div className={`min-h-screen ${theme.bg} p-4 pb-24`}>
+        <button onClick={() => setCurrentScreen('home')} className="flex items-center gap-2 text-blue-500 mb-4">
+          <ChevronLeft size={20} /><span>Home</span>
+        </button>
+
+        <div className="mb-6">
+          <h2 className={`text-2xl font-bold ${theme.text} mb-2`}>Photo Gallery</h2>
+          <p className={`${theme.textSecondary}`}>Capture and annotate site photos</p>
+        </div>
+
+        {/* Camera button */}
+        <button
+          onClick={() => setShowCamera(true)}
+          className="w-full bg-blue-500 text-white py-4 px-6 rounded-xl font-semibold mb-6 flex items-center justify-center gap-2 active:scale-95 transition"
+        >
+          <Camera size={24} />
+          Take Photo
+        </button>
+
+        {/* Photos grid */}
+        {photos.length === 0 ? (
+          <div className="text-center py-20">
+            <Camera size={64} className="mx-auto text-gray-300 mb-4" />
+            <p className="text-gray-500">No photos yet</p>
+            <p className="text-sm text-gray-400 mt-1">Tap "Take Photo" to get started</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 gap-3">
+            {photos.map((photo) => (
+              <div key={photo.id} className={`${theme.cardBg} rounded-xl overflow-hidden shadow-sm border ${theme.border}`}>
+                <div className="relative aspect-square">
+                  <img
+                    src={photo.dataUrl}
+                    alt={photo.note || 'Site photo'}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+                {photo.note && (
+                  <div className="p-2">
+                    <p className={`text-xs ${theme.textSecondary}`}>{photo.note}</p>
+                  </div>
+                )}
+                <div className="p-2 flex gap-2">
+                  <button
+                    onClick={() => {
+                      setCapturedPhoto(photo.dataUrl);
+                      setShowAnnotation(true);
+                    }}
+                    className="flex-1 text-xs py-2 bg-blue-500 text-white rounded-lg"
+                  >
+                    Annotate
+                  </button>
+                  <button
+                    onClick={() => {
+                      if (confirm('Delete this photo?')) {
+                        setPhotos(photos.filter(p => p.id !== photo.id));
+                      }
+                    }}
+                    className="flex-1 text-xs py-2 bg-red-500 text-white rounded-lg"
+                  >
+                    Delete
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Camera Modal */}
+        {showCamera && (
+          <div className="fixed inset-0 bg-black z-50 flex flex-col">
+            <div className="p-4 flex items-center justify-between text-white">
+              <button onClick={() => setShowCamera(false)} className="p-2">
+                <X size={24} />
+              </button>
+              <h3 className="font-semibold">Take Photo</h3>
+              <div className="w-10" />
+            </div>
+
+            <div className="flex-1 flex items-center justify-center p-4">
+              <input
+                type="file"
+                accept="image/*"
+                capture="environment"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) {
+                    const reader = new FileReader();
+                    reader.onload = (event) => {
+                      setCapturedPhoto(event.target?.result);
+                      setShowCamera(false);
+                      setShowAnnotation(true);
+                    };
+                    reader.readAsDataURL(file);
+                  }
+                }}
+                className="w-full bg-white text-gray-900 py-4 px-6 rounded-xl font-semibold"
+              />
+            </div>
+          </div>
+        )}
+
+        {/* Annotation Modal */}
+        {showAnnotation && capturedPhoto && (
+          <div className="fixed inset-0 bg-white z-50 flex flex-col">
+            <div className="p-4 flex items-center justify-between border-b">
+              <button
+                onClick={() => {
+                  setShowAnnotation(false);
+                  setCapturedPhoto(null);
+                }}
+                className="text-gray-600"
+              >
+                <X size={24} />
+              </button>
+              <h3 className="font-semibold">Add Note & Save</h3>
+              <button
+                onClick={() => {
+                  const note = prompt('Add a note for this photo (optional):');
+                  const newPhoto = {
+                    id: Date.now().toString(),
+                    dataUrl: capturedPhoto,
+                    note: note || '',
+                    timestamp: new Date().toISOString(),
+                  };
+                  setPhotos([newPhoto, ...photos]);
+                  setShowAnnotation(false);
+                  setCapturedPhoto(null);
+                }}
+                className="text-blue-500 font-semibold"
+              >
+                Save
+              </button>
+            </div>
+
+            <div className="flex-1 overflow-auto p-4">
+              <img src={capturedPhoto} alt="Preview" className="w-full rounded-xl" />
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  };
+
   // Suppliers Screen
   const renderSuppliers = () => {
     const filteredSuppliers = getFilteredSuppliers();
@@ -1590,6 +1784,7 @@ export default function RichsToolkit() {
             { id: 'budget', title: 'Budget', icon: PiggyBank, color: 'bg-pink-500', desc: 'Track spending' },
             { id: 'suppliers', title: 'Suppliers', icon: Phone, color: 'bg-teal-500', desc: 'Quick dial' },
             { id: 'weather', title: 'Weather', icon: Cloud, color: 'bg-sky-500', desc: '7-day forecast' },
+            { id: 'gallery', title: 'Gallery', icon: Camera, color: 'bg-purple-500', desc: 'Photos & notes' },
             { id: 'conversions', title: 'Conversions', icon: ArrowLeftRight, color: 'bg-indigo-500', desc: 'Imperial ↔ Metric' },
           ].map((feature) => {
             const IconComponent = feature.icon;
@@ -1812,6 +2007,7 @@ export default function RichsToolkit() {
     if (currentScreen === 'budget') return renderBudget();
     if (currentScreen === 'suppliers') return renderSuppliers();
     if (currentScreen === 'weather') return renderWeather();
+    if (currentScreen === 'gallery') return renderGallery();
     if (currentScreen === 'snagging') {
       if (selectedRoom) return renderRoomDetail();
       if (selectedSnaggingProject) return renderProjectSnagging();
@@ -1931,6 +2127,15 @@ export default function RichsToolkit() {
           <div className={`text-sm font-semibold ${theme.text} transition-colors duration-500`}>{formatCurrentTime()}</div>
           <div className={`text-xs ${theme.textSecondary} transition-colors duration-500`}>{formatCurrentDate()}</div>
         </div>
+
+        {/* Greeting popup */}
+        {showGreeting && (
+          <div className="fixed inset-0 flex items-center justify-center z-50 pointer-events-none">
+            <div className="bg-gradient-to-br from-blue-500 to-purple-600 text-white px-8 py-6 rounded-2xl shadow-2xl animate-bounce">
+              <p className="text-3xl font-bold">{greetingMessage}</p>
+            </div>
+          </div>
+        )}
 
         {/* Special event animations */}
         {specialEvent && (
