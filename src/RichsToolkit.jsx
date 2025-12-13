@@ -4926,11 +4926,11 @@ export default function RichsToolkit() {
     <div className={`min-h-screen ${theme.bg} transition-colors duration-500`}>
       <div className={`max-w-sm mx-auto ${theme.bg} min-h-screen relative transition-colors duration-500`}>
         {/* Timer icon and Time/Date display - top right corner */}
-        <div className="fixed top-4 right-4 flex items-center gap-2 z-50">
+        <div className="fixed top-4 right-4 z-50 flex flex-row items-center gap-2">
           {/* Timer icon button */}
           <button
             onClick={() => setShowTimerView(!showTimerView)}
-            className={`${isTimerRunning ? 'bg-green-500' : 'bg-blue-500'} w-10 h-10 rounded-full shadow-lg flex items-center justify-center transition-all duration-300 hover:scale-110`}
+            className={`${isTimerRunning ? 'bg-green-500' : 'bg-blue-500'} w-10 h-10 rounded-full shadow-lg flex items-center justify-center transition-all duration-300 hover:scale-110 flex-shrink-0`}
           >
             <Clock size={20} className="text-white" />
           </button>
@@ -4939,9 +4939,9 @@ export default function RichsToolkit() {
           <div className={`${theme.cardBg} rounded-lg shadow-sm border ${theme.border} transition-all duration-500`}>
             {!showTimerView ? (
               // Date and Time view
-              <div className="px-3 py-2 text-right">
-                <div className={`text-sm font-semibold ${theme.text} transition-colors duration-500`}>{formatCurrentTime()}</div>
-                <div className={`text-xs ${theme.textSecondary} transition-colors duration-500`}>{formatCurrentDate()}</div>
+              <div className="px-3 py-2">
+                <div className={`text-sm font-semibold ${theme.text} transition-colors duration-500 text-right`}>{formatCurrentTime()}</div>
+                <div className={`text-xs ${theme.textSecondary} transition-colors duration-500 text-right`}>{formatCurrentDate()}</div>
               </div>
             ) : (
               // Timer view
