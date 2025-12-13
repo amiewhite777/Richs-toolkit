@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react';
+import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { Calculator, ChevronRight, ChevronLeft, Home, Camera, ClipboardList, PaintBucket, Ruler, Grid3X3, Package, Layers, Plus, Building2, Sun, Landmark, Image, FileText, X, Clock, MapPin, Calendar, Phone, Square, AlertTriangle, CheckCircle, Check, Flag, Send, ArrowLeftRight, Receipt, Car, Trash2, Star, MessageSquare, Copy, PhoneCall, Search, Users, Cloud, CloudRain, CloudSnow, CloudDrizzle, CloudLightning, Wind, Droplets, Thermometer, Umbrella, AlertCircle, CloudSun, Moon, Sunrise, Sunset, Eye, Loader2, DollarSign, TrendingUp, PiggyBank, CreditCard, Download, Settings, Fish, Waves, Trophy, ShoppingCart, Map, BookOpen, Target, Zap, Lock, Unlock, Mail } from 'lucide-react';
 import { useWeather } from './useWeather';
 import { useLocalStorage } from './useLocalStorage';
@@ -1377,6 +1377,35 @@ export default function RichsToolkit() {
   const [concreteInputs, setConcreteInputs] = useState({ length: '', width: '', depth: '' });
   const [studInputs, setStudInputs] = useState({ length: '', height: '2400' });
   const [vatInputs, setVatInputs] = useState({ amount: '', margin: '15' });
+
+  // Stable calculator input handlers using useCallback
+  const updatePlasterInput = useCallback((field, value) => {
+    setPlasterInputs(prev => ({ ...prev, [field]: value }));
+  }, []);
+
+  const updatePaintInput = useCallback((field, value) => {
+    setPaintInputs(prev => ({ ...prev, [field]: value }));
+  }, []);
+
+  const updateTimberInput = useCallback((field, value) => {
+    setTimberInputs(prev => ({ ...prev, [field]: value }));
+  }, []);
+
+  const updateTileInput = useCallback((field, value) => {
+    setTileInputs(prev => ({ ...prev, [field]: value }));
+  }, []);
+
+  const updateConcreteInput = useCallback((field, value) => {
+    setConcreteInputs(prev => ({ ...prev, [field]: value }));
+  }, []);
+
+  const updateVatInput = useCallback((field, value) => {
+    setVatInputs(prev => ({ ...prev, [field]: value }));
+  }, []);
+
+  const updateStudInput = useCallback((field, value) => {
+    setStudInputs(prev => ({ ...prev, [field]: value }));
+  }, []);
   const [savedCalculations, setSavedCalculations] = useLocalStorage('richs-toolkit-saved-calcs', []);
   const [showCalcHistory, setShowCalcHistory] = useState(false);
 
@@ -2086,7 +2115,7 @@ export default function RichsToolkit() {
     setShowAddMileage(false);
   };
 
-  const InputField = ({ label, value, onChange, unit, placeholder, type = 'number' }) => (
+  const InputField = React.memo(({ label, value, onChange, unit, placeholder, type = 'number' }) => (
     <div className="mb-4">
       <label className="block text-sm font-medium text-gray-600 mb-1">{label}</label>
       <div className="flex items-center gap-2">
@@ -2102,7 +2131,7 @@ export default function RichsToolkit() {
         {unit && <span className="text-gray-500 font-medium w-12">{unit}</span>}
       </div>
     </div>
-  );
+  ));
 
   const ResultCard = ({ label, value, unit, highlight }) => (
     <div className={`p-4 rounded-xl ${highlight ? 'bg-green-100' : 'bg-gray-100'}`}>
@@ -4174,10 +4203,10 @@ export default function RichsToolkit() {
           {selectedCalc === 'plaster' && (
             <>
               <div className="grid grid-cols-2 gap-3">
-                <InputField label="Length" value={plasterInputs.length} onChange={(v) => setPlasterInputs({...plasterInputs, length: v})} unit="m" />
-                <InputField label="Width" value={plasterInputs.width} onChange={(v) => setPlasterInputs({...plasterInputs, width: v})} unit="m" />
+                <InputField label="Length" value={plasterInputs.length} onChange={(v) => updatePlasterInput('length', v)} unit="m" />
+                <InputField label="Width" value={plasterInputs.width} onChange={(v) => updatePlasterInput('width', v)} unit="m" />
               </div>
-              <InputField label="Height" value={plasterInputs.height} onChange={(v) => setPlasterInputs({...plasterInputs, height: v})} unit="m" />
+              <InputField label="Height" value={plasterInputs.height} onChange={(v) => updatePlasterInput('height', v)} unit="m" />
               <div className="pt-4 border-t grid grid-cols-2 gap-3">
                 <ResultCard label="Area" value={results.totalArea} unit="m²" />
                 <ResultCard label="Bags" value={results.bags} unit="bags" highlight />
@@ -4188,10 +4217,10 @@ export default function RichsToolkit() {
           {selectedCalc === 'paint' && (
             <>
               <div className="grid grid-cols-2 gap-3">
-                <InputField label="Length" value={paintInputs.length} onChange={(v) => setPaintInputs({...paintInputs, length: v})} unit="m" />
-                <InputField label="Width" value={paintInputs.width} onChange={(v) => setPaintInputs({...paintInputs, width: v})} unit="m" />
+                <InputField label="Length" value={paintInputs.length} onChange={(v) => updatePaintInput('length', v)} unit="m" />
+                <InputField label="Width" value={paintInputs.width} onChange={(v) => updatePaintInput('width', v)} unit="m" />
               </div>
-              <InputField label="Height" value={paintInputs.height} onChange={(v) => setPaintInputs({...paintInputs, height: v})} unit="m" />
+              <InputField label="Height" value={paintInputs.height} onChange={(v) => updatePaintInput('height', v)} unit="m" />
               <div className="pt-4 border-t grid grid-cols-2 gap-3">
                 <ResultCard label="Litres" value={results.litres} unit="L" />
                 <ResultCard label="Tins" value={results.tins25} unit="2.5L" highlight />
@@ -4201,8 +4230,8 @@ export default function RichsToolkit() {
 
           {selectedCalc === 'timber' && (
             <>
-              <InputField label="Perimeter" value={timberInputs.perimeter} onChange={(v) => setTimberInputs({...timberInputs, perimeter: v})} unit="m" />
-              <InputField label="Doors" value={timberInputs.doors} onChange={(v) => setTimberInputs({...timberInputs, doors: v})} />
+              <InputField label="Perimeter" value={timberInputs.perimeter} onChange={(v) => updateTimberInput('perimeter', v)} unit="m" />
+              <InputField label="Doors" value={timberInputs.doors} onChange={(v) => updateTimberInput('doors', v)} />
               <div className="pt-4 border-t grid grid-cols-2 gap-3">
                 <ResultCard label="Length" value={results.withWastage} unit="m" />
                 <ResultCard label="3m pcs" value={results.lengths3m} unit="pcs" highlight />
@@ -4213,8 +4242,8 @@ export default function RichsToolkit() {
           {selectedCalc === 'tiles' && (
             <>
               <div className="grid grid-cols-2 gap-3">
-                <InputField label="Length" value={tileInputs.length} onChange={(v) => setTileInputs({...tileInputs, length: v})} unit="cm" />
-                <InputField label="Width" value={tileInputs.width} onChange={(v) => setTileInputs({...tileInputs, width: v})} unit="cm" />
+                <InputField label="Length" value={tileInputs.length} onChange={(v) => updateTileInput('length', v)} unit="cm" />
+                <InputField label="Width" value={tileInputs.width} onChange={(v) => updateTileInput('width', v)} unit="cm" />
               </div>
               <div className="pt-4 border-t grid grid-cols-2 gap-3">
                 <ResultCard label="Area" value={results.area} unit="m²" />
@@ -4226,10 +4255,10 @@ export default function RichsToolkit() {
           {selectedCalc === 'concrete' && (
             <>
               <div className="grid grid-cols-2 gap-3">
-                <InputField label="Length" value={concreteInputs.length} onChange={(v) => setConcreteInputs({...concreteInputs, length: v})} unit="mm" />
-                <InputField label="Width" value={concreteInputs.width} onChange={(v) => setConcreteInputs({...concreteInputs, width: v})} unit="mm" />
+                <InputField label="Length" value={concreteInputs.length} onChange={(v) => updateConcreteInput('length', v)} unit="mm" />
+                <InputField label="Width" value={concreteInputs.width} onChange={(v) => updateConcreteInput('width', v)} unit="mm" />
               </div>
-              <InputField label="Depth" value={concreteInputs.depth} onChange={(v) => setConcreteInputs({...concreteInputs, depth: v})} unit="mm" />
+              <InputField label="Depth" value={concreteInputs.depth} onChange={(v) => updateConcreteInput('depth', v)} unit="mm" />
               <div className="pt-4 border-t grid grid-cols-2 gap-3">
                 <ResultCard label="Volume" value={results.volume} unit="m³" />
                 <ResultCard label="Bags" value={results.bags25kg} unit="25kg" highlight />
@@ -4239,8 +4268,8 @@ export default function RichsToolkit() {
 
           {selectedCalc === 'vat' && (
             <>
-              <InputField label="Amount" value={vatInputs.amount} onChange={(v) => setVatInputs({...vatInputs, amount: v})} unit="£" placeholder="Enter price" />
-              <InputField label="Margin %" value={vatInputs.margin} onChange={(v) => setVatInputs({...vatInputs, margin: v})} unit="%" placeholder="15" />
+              <InputField label="Amount" value={vatInputs.amount} onChange={(v) => updateVatInput('amount', v)} unit="£" placeholder="Enter price" />
+              <InputField label="Margin %" value={vatInputs.margin} onChange={(v) => updateVatInput('margin', v)} unit="%" placeholder="15" />
               <div className="pt-4 border-t space-y-2">
                 <p className="text-sm font-semibold text-gray-600 mb-2">VAT Calculations (20%)</p>
                 <div className="grid grid-cols-2 gap-3">
@@ -4261,8 +4290,8 @@ export default function RichsToolkit() {
 
           {selectedCalc === 'stud' && (
             <>
-              <InputField label="Length" value={studInputs.length} onChange={(v) => setStudInputs({...studInputs, length: v})} unit="mm" />
-              <InputField label="Height" value={studInputs.height} onChange={(v) => setStudInputs({...studInputs, height: v})} unit="mm" />
+              <InputField label="Length" value={studInputs.length} onChange={(v) => updateStudInput('length', v)} unit="mm" />
+              <InputField label="Height" value={studInputs.height} onChange={(v) => updateStudInput('height', v)} unit="mm" />
               <div className="pt-4 border-t grid grid-cols-2 gap-3">
                 <ResultCard label="Studs" value={results.studs} unit="pcs" />
                 <ResultCard label="Boards" value={results.boardsNeeded} unit="sheets" highlight />
@@ -4435,15 +4464,7 @@ export default function RichsToolkit() {
         {weatherData && <WeatherBackground condition={weatherData.current.condition} />}
 
         <div className="mb-6 relative z-10">
-          <div className="flex items-center justify-between mb-1">
-            <h1 className={`text-2xl font-bold ${theme.text} transition-colors duration-500`}>Rich's Toolkit</h1>
-            <button
-              onClick={() => setShowTimerView(!showTimerView)}
-              className={`${isTimerRunning ? 'bg-green-500' : 'bg-blue-500'} w-10 h-10 rounded-full shadow-lg flex items-center justify-center transition-all duration-300 hover:scale-110`}
-            >
-              <Clock size={20} className="text-white" />
-            </button>
-          </div>
+          <h1 className={`text-2xl font-bold ${theme.text} transition-colors duration-500`}>Rich's Toolkit</h1>
           <p className={`${theme.textSecondary} transition-colors duration-500`}>Bath Heritage Renovations</p>
           <div className={`mt-2 px-3 py-2 rounded-lg ${theme.cardBg} border ${theme.border} transition-all duration-500`}>
             <p className={`text-sm italic ${theme.textSecondary} transition-colors duration-500 text-center`}>"{getDailyAffirmation()}"</p>
@@ -4904,37 +4925,48 @@ export default function RichsToolkit() {
   return (
     <div className={`min-h-screen ${theme.bg} transition-colors duration-500`}>
       <div className={`max-w-sm mx-auto ${theme.bg} min-h-screen relative transition-colors duration-500`}>
-        {/* Time and date display OR Timer - top right corner */}
-        <div className={`fixed top-4 right-4 ${theme.cardBg} rounded-lg shadow-sm border ${theme.border} transition-all duration-500 z-50`}>
-          {!showTimerView ? (
-            // Date and Time view
-            <div className="px-3 py-2 text-right">
-              <div className={`text-sm font-semibold ${theme.text} transition-colors duration-500`}>{formatCurrentTime()}</div>
-              <div className={`text-xs ${theme.textSecondary} transition-colors duration-500`}>{formatCurrentDate()}</div>
-            </div>
-          ) : (
-            // Timer view
-            <div className="px-3 py-2">
-              {isTimerRunning ? (
-                <div>
-                  <div className="text-xs text-green-700 font-semibold mb-1">⏱️ Timer Running</div>
-                  <div className="text-lg font-bold text-green-600">{formatTimerDisplay(timerSeconds)}</div>
-                  {timerProject && <div className="text-xs text-green-600 truncate max-w-[120px]">{timerProject}</div>}
-                  <div className="flex gap-1 mt-2">
-                    <button onClick={stopTimer} className="flex-1 text-xs py-1 bg-green-600 text-white rounded">Stop & Save</button>
-                    <button onClick={resetTimer} className="px-2 text-xs py-1 bg-gray-300 text-gray-700 rounded">Reset</button>
+        {/* Timer icon and Time/Date display - top right corner */}
+        <div className="fixed top-4 right-4 flex items-center gap-2 z-50">
+          {/* Timer icon button */}
+          <button
+            onClick={() => setShowTimerView(!showTimerView)}
+            className={`${isTimerRunning ? 'bg-green-500' : 'bg-blue-500'} w-10 h-10 rounded-full shadow-lg flex items-center justify-center transition-all duration-300 hover:scale-110`}
+          >
+            <Clock size={20} className="text-white" />
+          </button>
+
+          {/* Date/Time or Timer display */}
+          <div className={`${theme.cardBg} rounded-lg shadow-sm border ${theme.border} transition-all duration-500`}>
+            {!showTimerView ? (
+              // Date and Time view
+              <div className="px-3 py-2 text-right">
+                <div className={`text-sm font-semibold ${theme.text} transition-colors duration-500`}>{formatCurrentTime()}</div>
+                <div className={`text-xs ${theme.textSecondary} transition-colors duration-500`}>{formatCurrentDate()}</div>
+              </div>
+            ) : (
+              // Timer view
+              <div className="px-3 py-2">
+                {isTimerRunning ? (
+                  <div>
+                    <div className="text-xs text-green-700 font-semibold mb-1">⏱️ Timer Running</div>
+                    <div className="text-lg font-bold text-green-600">{formatTimerDisplay(timerSeconds)}</div>
+                    {timerProject && <div className="text-xs text-green-600 truncate max-w-[120px]">{timerProject}</div>}
+                    <div className="flex gap-1 mt-2">
+                      <button onClick={stopTimer} className="flex-1 text-xs py-1 bg-green-600 text-white rounded">Stop & Save</button>
+                      <button onClick={resetTimer} className="px-2 text-xs py-1 bg-gray-300 text-gray-700 rounded">Reset</button>
+                    </div>
                   </div>
-                </div>
-              ) : (
-                <div>
-                  <div className="text-xs text-gray-600 mb-2">Start Timer</div>
-                  <button onClick={() => setShowTimerModal(true)} className="w-full text-xs py-2 bg-blue-500 text-white rounded-lg flex items-center justify-center gap-1">
-                    <Clock size={12} /> Start
-                  </button>
-                </div>
-              )}
-            </div>
-          )}
+                ) : (
+                  <div>
+                    <div className="text-xs text-gray-600 mb-2">Start Timer</div>
+                    <button onClick={() => setShowTimerModal(true)} className="w-full text-xs py-2 bg-blue-500 text-white rounded-lg flex items-center justify-center gap-1">
+                      <Clock size={12} /> Start
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Greeting popup */}
