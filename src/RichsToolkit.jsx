@@ -1534,9 +1534,9 @@ export default function RichsToolkit() {
     }));
   };
 
-  // Day/Night detection based on sunrise/sunset
-  const isDaytime = () => {
-    if (!weatherData?.current?.sunrise || !weatherData?.current?.sunset) return true; // Default to day
+  // Day/Night detection based on sunrise/sunset with transition periods
+  const getTimeOfDay = () => {
+    if (!weatherData?.current?.sunrise || !weatherData?.current?.sunset) return 'day'; // Default to day
 
     const now = new Date();
     const currentTime = now.getHours() * 60 + now.getMinutes();
@@ -1549,14 +1549,40 @@ export default function RichsToolkit() {
     const [sunsetHour, sunsetMin] = weatherData.current.sunset.split(':').map(Number);
     const sunsetTime = sunsetHour * 60 + sunsetMin;
 
-    return currentTime >= sunriseTime && currentTime < sunsetTime;
+    // Transition period: 30 minutes before and after sunrise/sunset
+    const transitionMinutes = 30;
+
+    // Dawn: 30 min before to 30 min after sunrise
+    if (currentTime >= sunriseTime - transitionMinutes && currentTime < sunriseTime + transitionMinutes) {
+      return 'dawn';
+    }
+
+    // Dusk: 30 min before to 30 min after sunset
+    if (currentTime >= sunsetTime - transitionMinutes && currentTime < sunsetTime + transitionMinutes) {
+      return 'dusk';
+    }
+
+    // Day: after dawn and before dusk
+    if (currentTime >= sunriseTime + transitionMinutes && currentTime < sunsetTime - transitionMinutes) {
+      return 'day';
+    }
+
+    // Night: after dusk and before dawn
+    return 'night';
+  };
+
+  const isDaytime = () => {
+    const timeOfDay = getTimeOfDay();
+    return timeOfDay === 'day' || timeOfDay === 'dawn';
   };
 
   const getTheme = () => {
-    const isDay = isDaytime();
-    return {
+    const timeOfDay = getTimeOfDay();
+    const isDay = timeOfDay === 'day' || timeOfDay === 'dawn';
+
+    // Base theme properties
+    const baseTheme = {
       isDay,
-      bg: isDay ? 'bg-gray-50' : 'bg-slate-900',
       cardBg: isDay ? 'bg-white' : 'bg-slate-800',
       text: isDay ? 'text-gray-900' : 'text-gray-100',
       textSecondary: isDay ? 'text-gray-500' : 'text-gray-400',
@@ -1568,6 +1594,33 @@ export default function RichsToolkit() {
         ? 'from-sky-400 to-blue-500'
         : 'from-indigo-600 to-purple-700',
     };
+
+    // Special gradient backgrounds for dawn and dusk
+    if (timeOfDay === 'dawn') {
+      return {
+        ...baseTheme,
+        bg: 'bg-gradient-to-b from-indigo-900 via-orange-200 to-sky-100',
+        gradientBg: true,
+      };
+    } else if (timeOfDay === 'dusk') {
+      return {
+        ...baseTheme,
+        bg: 'bg-gradient-to-b from-sky-100 via-orange-200 to-indigo-900',
+        gradientBg: true,
+      };
+    } else if (timeOfDay === 'day') {
+      return {
+        ...baseTheme,
+        bg: 'bg-gray-50',
+        gradientBg: false,
+      };
+    } else {
+      return {
+        ...baseTheme,
+        bg: 'bg-slate-900',
+        gradientBg: false,
+      };
+    }
   };
   
   const getWeekTotal = (entries, field = 'hours') => {
