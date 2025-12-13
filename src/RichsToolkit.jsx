@@ -4464,15 +4464,7 @@ export default function RichsToolkit() {
         {weatherData && <WeatherBackground condition={weatherData.current.condition} />}
 
         <div className="mb-6 relative z-10">
-          <div className="flex items-center justify-between mb-1">
-            <h1 className={`text-2xl font-bold ${theme.text} transition-colors duration-500`}>Rich's Toolkit</h1>
-            <button
-              onClick={() => setShowTimerView(!showTimerView)}
-              className={`${isTimerRunning ? 'bg-green-500' : 'bg-blue-500'} w-10 h-10 rounded-full shadow-lg flex items-center justify-center transition-all duration-300 hover:scale-110`}
-            >
-              <Clock size={20} className="text-white" />
-            </button>
-          </div>
+          <h1 className={`text-2xl font-bold ${theme.text} transition-colors duration-500`}>Rich's Toolkit</h1>
           <p className={`${theme.textSecondary} transition-colors duration-500`}>Bath Heritage Renovations</p>
           <div className={`mt-2 px-3 py-2 rounded-lg ${theme.cardBg} border ${theme.border} transition-all duration-500`}>
             <p className={`text-sm italic ${theme.textSecondary} transition-colors duration-500 text-center`}>"{getDailyAffirmation()}"</p>
@@ -4933,37 +4925,48 @@ export default function RichsToolkit() {
   return (
     <div className={`min-h-screen ${theme.bg} transition-colors duration-500`}>
       <div className={`max-w-sm mx-auto ${theme.bg} min-h-screen relative transition-colors duration-500`}>
-        {/* Time and date display OR Timer - top right corner */}
-        <div className={`fixed top-4 right-4 ${theme.cardBg} rounded-lg shadow-sm border ${theme.border} transition-all duration-500 z-50`}>
-          {!showTimerView ? (
-            // Date and Time view
-            <div className="px-3 py-2 text-right">
-              <div className={`text-sm font-semibold ${theme.text} transition-colors duration-500`}>{formatCurrentTime()}</div>
-              <div className={`text-xs ${theme.textSecondary} transition-colors duration-500`}>{formatCurrentDate()}</div>
-            </div>
-          ) : (
-            // Timer view
-            <div className="px-3 py-2">
-              {isTimerRunning ? (
-                <div>
-                  <div className="text-xs text-green-700 font-semibold mb-1">⏱️ Timer Running</div>
-                  <div className="text-lg font-bold text-green-600">{formatTimerDisplay(timerSeconds)}</div>
-                  {timerProject && <div className="text-xs text-green-600 truncate max-w-[120px]">{timerProject}</div>}
-                  <div className="flex gap-1 mt-2">
-                    <button onClick={stopTimer} className="flex-1 text-xs py-1 bg-green-600 text-white rounded">Stop & Save</button>
-                    <button onClick={resetTimer} className="px-2 text-xs py-1 bg-gray-300 text-gray-700 rounded">Reset</button>
+        {/* Timer icon and Time/Date display - top right corner */}
+        <div className="fixed top-4 right-4 flex items-center gap-2 z-50">
+          {/* Timer icon button */}
+          <button
+            onClick={() => setShowTimerView(!showTimerView)}
+            className={`${isTimerRunning ? 'bg-green-500' : 'bg-blue-500'} w-10 h-10 rounded-full shadow-lg flex items-center justify-center transition-all duration-300 hover:scale-110`}
+          >
+            <Clock size={20} className="text-white" />
+          </button>
+
+          {/* Date/Time or Timer display */}
+          <div className={`${theme.cardBg} rounded-lg shadow-sm border ${theme.border} transition-all duration-500`}>
+            {!showTimerView ? (
+              // Date and Time view
+              <div className="px-3 py-2 text-right">
+                <div className={`text-sm font-semibold ${theme.text} transition-colors duration-500`}>{formatCurrentTime()}</div>
+                <div className={`text-xs ${theme.textSecondary} transition-colors duration-500`}>{formatCurrentDate()}</div>
+              </div>
+            ) : (
+              // Timer view
+              <div className="px-3 py-2">
+                {isTimerRunning ? (
+                  <div>
+                    <div className="text-xs text-green-700 font-semibold mb-1">⏱️ Timer Running</div>
+                    <div className="text-lg font-bold text-green-600">{formatTimerDisplay(timerSeconds)}</div>
+                    {timerProject && <div className="text-xs text-green-600 truncate max-w-[120px]">{timerProject}</div>}
+                    <div className="flex gap-1 mt-2">
+                      <button onClick={stopTimer} className="flex-1 text-xs py-1 bg-green-600 text-white rounded">Stop & Save</button>
+                      <button onClick={resetTimer} className="px-2 text-xs py-1 bg-gray-300 text-gray-700 rounded">Reset</button>
+                    </div>
                   </div>
-                </div>
-              ) : (
-                <div>
-                  <div className="text-xs text-gray-600 mb-2">Start Timer</div>
-                  <button onClick={() => setShowTimerModal(true)} className="w-full text-xs py-2 bg-blue-500 text-white rounded-lg flex items-center justify-center gap-1">
-                    <Clock size={12} /> Start
-                  </button>
-                </div>
-              )}
-            </div>
-          )}
+                ) : (
+                  <div>
+                    <div className="text-xs text-gray-600 mb-2">Start Timer</div>
+                    <button onClick={() => setShowTimerModal(true)} className="w-full text-xs py-2 bg-blue-500 text-white rounded-lg flex items-center justify-center gap-1">
+                      <Clock size={12} /> Start
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Greeting popup */}
